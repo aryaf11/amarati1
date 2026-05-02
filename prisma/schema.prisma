@@ -1,0 +1,250 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String      @id @default(cuid())
+  email        String      @unique
+  passwordHash String
+  name         String
+  phone        String?
+  accountKind  String   @default("RESIDENT")
+  createdAt    DateTime    @default(now())
+
+  buildingsCreated Building[] @relation("BuildingCreator")
+  memberships      Membership[]
+  messages         ChatMessage[]
+  announcements    Announcement[]
+  maintenanceCreated MaintenanceRequest[] @relation("MaintCreatedBy")
+  votesCast        VoteBallot[]
+  payments         Payment[]
+  invitationsSent  InviteToken[] @relation("InviteCreator")
+  companyProfile   MaintenanceCompany?
+  applications     CompanyApplication[] @relation("ApplicantUser")
+  supervisorVoteOptions VoteOption[] @relation("SupervisorCandidate")
+}
+
+model Building {
+  id          String   @id @default(cuid())
+  name        String
+  address     String
+  city        String
+  inviteCode  String   @unique
+  createdAt   DateTime @default(now())
+  creatorId   String
+  creator     User     @relation("BuildingCreator", fields: [creatorId], references: [id])
+
+  units                Unit[]
+  votes                Vote[]
+  announcements        Announcement[]
+  chatMessages         ChatMessage[]
+  maintenanceRequests  MaintenanceRequest[]
+  payments             Payment[]
+  inviteTokens         InviteToken[]
+  healthScores         BuildingHealthScore[]
+  predictiveAlerts     PredictiveMaintenanceAlert[]
+}
+
+model Unit {
+  id         String   @id @default(cuid())
+  buildingId String
+  label      String
+  building   Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+
+  memberships          Membership[]
+  historyEvents        ApartmentHistoryEvent[]
+  maintenancePersonal  MaintenanceRequest[]
+  inviteTokens         InviteToken[]
+
+  @@unique([buildingId, label])
+}
+
+model Membership {
+  id          String         @id @default(cuid())
+  userId      String
+  unitId      String
+  kind        String
+  isSupervisor Boolean       @default(false)
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unit        Unit           @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, unitId])
+}
+
+model InviteToken {
+  id          String         @id @default(cuid())
+  token       String         @unique
+  buildingId  String
+  unitId      String
+  kind        String
+  expiresAt   DateTime
+  createdAt   DateTime       @default(now())
+  createdById String
+  building    Building       @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  unit        Unit           @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  createdBy   User           @relation("InviteCreator", fields: [createdById], references: [id])
+}
+
+model Vote {
+  id                   String   @id @default(cuid())
+  buildingId           String
+  type                 String
+  title                String
+  description          String?
+  status               String   @default("OPEN")
+  endsAt               DateTime
+  maintenanceRequestId String?  @unique
+  createdAt            DateTime @default(now())
+  building             Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  maintenanceRequest   MaintenanceRequest? @relation(fields: [maintenanceRequestId], references: [id])
+  options              VoteOption[]
+  ballots              VoteBallot[]
+}
+
+model VoteOption {
+  id         String @id @default(cuid())
+  voteId     String
+  label      String
+  userId     String?
+  companyId  String?
+  vote       Vote              @relation(fields: [voteId], references: [id], onDelete: Cascade)
+  user       User?             @relation("SupervisorCandidate", fields: [userId], references: [id])
+  company    MaintenanceCompany? @relation(fields: [companyId], references: [id])
+  ballots    VoteBallot[]
+}
+
+model VoteBallot {
+  id       String @id @default(cuid())
+  voteId   String
+  userId   String
+  optionId String
+  vote     Vote       @relation(fields: [voteId], references: [id], onDelete: Cascade)
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  option   VoteOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  @@unique([voteId, userId])
+}
+
+model MaintenanceCompany {
+  id        String   @id @default(cuid())
+  name      String
+  userId    String   @unique
+  specialty String?
+  city      String?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  requests    MaintenanceRequest[]
+  voteOptions VoteOption[]
+}
+
+model CompanyApplication {
+  id          String            @id @default(cuid())
+  businessName String
+  email       String
+  phone       String?
+  notes       String?
+  status      String   @default("PENDING")
+  reviewerNote String?
+  createdAt   DateTime          @default(now())
+  reviewedAt  DateTime?
+  applicantId String?
+  applicant   User?             @relation("ApplicantUser", fields: [applicantId], references: [id])
+  inviteToken String?           @unique
+}
+
+model MaintenanceRequest {
+  id            String             @id @default(cuid())
+  buildingId    String
+  unitId        String?
+  scope       String
+  title         String
+  description   String
+  status        String   @default("OPEN")
+  aiSummary     String?
+  aiSuggestions String?
+  createdById   String
+  companyId     String?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  building      Building           @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  unit          Unit?              @relation(fields: [unitId], references: [id])
+  createdBy     User               @relation("MaintCreatedBy", fields: [createdById], references: [id])
+  company       MaintenanceCompany? @relation(fields: [companyId], references: [id])
+  vote          Vote?
+  payments      Payment[]
+  historyEvents ApartmentHistoryEvent[]
+}
+
+model ApartmentHistoryEvent {
+  id                   String               @id @default(cuid())
+  unitId               String
+  title                String
+  detail               String?
+  maintenanceRequestId String?
+  createdAt            DateTime             @default(now())
+  unit                 Unit                 @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  maintenanceRequest   MaintenanceRequest?  @relation(fields: [maintenanceRequestId], references: [id])
+}
+
+model Payment {
+  id                   String        @id @default(cuid())
+  userId               String
+  buildingId           String?
+  maintenanceRequestId String?
+  amountCents          Int
+  currency             String        @default("SAR")
+  description          String
+  status               String   @default("PENDING")
+  paidAt               DateTime?
+  createdAt            DateTime      @default(now())
+  user                 User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  building             Building?     @relation(fields: [buildingId], references: [id])
+  maintenanceRequest   MaintenanceRequest? @relation(fields: [maintenanceRequestId], references: [id])
+}
+
+model Announcement {
+  id          String   @id @default(cuid())
+  buildingId  String
+  userId      String
+  title       String
+  body        String
+  createdAt   DateTime @default(now())
+  building    Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model ChatMessage {
+  id         String   @id @default(cuid())
+  buildingId String
+  userId     String
+  body       String
+  createdAt  DateTime @default(now())
+  building   Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id])
+}
+
+model BuildingHealthScore {
+  id         String   @id @default(cuid())
+  buildingId String
+  month      String
+  score      Int
+  summary    String?
+  createdAt  DateTime @default(now())
+  building   Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+
+  @@unique([buildingId, month])
+}
+
+model PredictiveMaintenanceAlert {
+  id         String   @id @default(cuid())
+  buildingId String
+  title      String
+  detail     String
+  severity   String
+  createdAt  DateTime @default(now())
+  building   Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+}

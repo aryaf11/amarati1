@@ -1,0 +1,115 @@
+import { notFound, redirect } from "next/navigation";
+import { supervisorRefreshInsightsAction } from "@/actions/platform";
+import { loadBuildingContext } from "@/components/BuildingNav";
+import { getCurrentUser } from "@/lib/current-user";
+import { prisma } from "@/lib/prisma";
+import { Button, Card } from "@/components/ui";
+
+export default async function SupervisorPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ buildingId: string }>;
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { buildingId } = await params;
+  const sp = await searchParams;
+  const err = sp.error ? decodeURIComponent(sp.error) : null;
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+  const { building, membership } = await loadBuildingContext(buildingId, user.id);
+  if (!building || !membership) notFound();
+  if (!membership.isSupervisor) {
+    return (
+      <Card title="لوحة المشرف">
+        <p className="text-sm text-slate-600 dark:text-slate-300">هذه الصفحة للمشرف فقط.</p>
+      </Card>
+    );
+  }
+  const scores = await prisma.buildingHealthScore.findMany({
+    where: { buildingId },
+    orderBy: { month: "desc" },
+    take: 6,
+  });
+  const alerts = await prisma.predictiveMaintenanceAlert.findMany({
+    where: { buildingId },
+    orderBy: { createdAt: "desc" },
+    take: 10,
+  });
+  const reportRows = await prisma.maintenanceRequest.findMany({
+    where: { buildingId },
+    orderBy: { createdAt: "desc" },
+    take: 15,
+    include: { unit: true, company: true },
+  });
+  return (
+    <div className="space-y-6">
+      {err ? (
+        <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-200">
+          {err}
+        </p>
+      ) : null}
+      <Card title="تحديث السكور والتنبؤات">
+        <p className="mb-3 text-sm text-slate-600 dark:text-slate-300">
+          يُحدَّث سكور المبنى شهرياً بنمط بسيط من الطلبات، وتُولَّد تنبيهات استباقية تجريبية
+          (قابلة لربط نموذج ذكاء اصطناعي لاحقاً).
+        </p>
+        <form action={supervisorRefreshInsightsAction}>
+          <input type="hidden" name="buildingId" value={buildingId} />
+          <Button type="submit">تحديث الآن</Button>
+        </form>
+      </Card>
+      <Card title="سجل السكور الشهري">
+        <ul className="space-y-2 text-sm">
+          {scores.map((s) => (
+            <li key={s.id} className="flex justify-between gap-2">
+              <span>{s.month}</span>
+              <span className="font-mono font-semibold">{s.score}</span>
+            </li>
+          ))}
+        </ul>
+        {scores.length === 0 ? (
+          <p className="text-sm text-slate-600 dark:text-slate-300">اضغط تحديث لإنشاء أول سجل.</p>
+        ) : null}
+      </Card>
+      <Card title="تنبيهات صيانة تنبؤية">
+        <ul className="space-y-2 text-sm">
+          {alerts.map((a) => (
+            <li key={a.id} className="rounded-lg border border-slate-100 p-2 dark:border-slate-800">
+              <p className="font-medium">{a.title}</p>
+              <p className="text-xs text-slate-500">{a.severity}</p>
+              <p className="mt-1">{a.detail}</p>
+            </li>
+          ))}
+        </ul>
+      </Card>
+      <Card title="تقرير سريع (تصدير يدوي)">
+        <p className="mb-2 text-xs text-slate-500">
+          انسخ الجدول أو صدّره لاحقاً — نسخة أولى داخل التطبيق.
+        </p>
+        <div className="overflow-x-auto text-xs">
+          <table className="w-full border-collapse text-right">
+            <thead>
+              <tr className="border-b border-slate-200 dark:border-slate-800">
+                <th className="p-2">العنوان</th>
+                <th className="p-2">النطاق</th>
+                <th className="p-2">الحالة</th>
+                <th className="p-2">الشركة</th>
+              </tr>
+            </thead>
+            <tbody>
+              {reportRows.map((r) => (
+                <tr key={r.id} className="border-b border-slate-100 dark:border-slate-900">
+                  <td className="p-2">{r.title}</td>
+                  <td className="p-2">{r.scope}</td>
+                  <td className="p-2">{r.status}</td>
+                  <td className="p-2">{r.company?.name ?? "-"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </div>
+  );
+}

@@ -1,0 +1,59 @@
+import { notFound, redirect } from "next/navigation";
+import { postAnnouncementAction } from "@/actions/social";
+import { loadBuildingContext } from "@/components/BuildingNav";
+import { getCurrentUser } from "@/lib/current-user";
+import { prisma } from "@/lib/prisma";
+import { Button, Card, Input, TextArea } from "@/components/ui";
+
+export default async function AnnouncementsPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ buildingId: string }>;
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { buildingId } = await params;
+  const sp = await searchParams;
+  const err = sp.error ? decodeURIComponent(sp.error) : null;
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+  const { building, membership } = await loadBuildingContext(buildingId, user.id);
+  if (!building || !membership) notFound();
+  const rows = await prisma.announcement.findMany({
+    where: { buildingId },
+    orderBy: { createdAt: "desc" },
+    include: { user: true },
+  });
+  return (
+    <div className="space-y-6">
+      {err ? (
+        <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-200">
+          {err}
+        </p>
+      ) : null}
+      <Card title="إعلان جديد">
+        <form action={postAnnouncementAction} className="space-y-3">
+          <input type="hidden" name="buildingId" value={buildingId} />
+          <Input name="title" placeholder="عنوان الإعلان" required />
+          <TextArea name="body" rows={4} placeholder="تفاصيل..." required />
+          <Button type="submit" className="w-full">
+            نشر
+          </Button>
+        </form>
+      </Card>
+      <Card title="آخر الإعلانات">
+        <ul className="space-y-4">
+          {rows.map((a) => (
+            <li key={a.id} className="rounded-xl border border-slate-100 p-3 text-sm dark:border-slate-800">
+              <p className="font-semibold">{a.title}</p>
+              <p className="text-xs text-slate-500">
+                {a.user.name} — {a.createdAt.toLocaleString("ar-SA")}
+              </p>
+              <p className="mt-2 whitespace-pre-line">{a.body}</p>
+            </li>
+          ))}
+        </ul>
+      </Card>
+    </div>
+  );
+}
