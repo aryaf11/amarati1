@@ -1,0 +1,15 @@
+# Netlify — عمارتي / Next.js + Prisma
+# https://docs.netlify.com/build/frameworks/framework-setup-guides/nextjs/overview/
+
+[build]
+  command = "npm run build"
+  # يُدار تلقائياً عبر الإضافة؛ لا تضبط publish يدوياً لـ Next
+
+[build.environment]
+  NODE_VERSION = "22"
+  # Prisma يقرأ DATABASE_URL عند `prisma generate` حتى بدون اتصال بقاعدة حقيقية.
+  # يجب تعيين نفس المتغير (قيمة إنتاج) في لوحة Netlify: Site settings → Environment variables
+  DATABASE_URL = "file:./prisma/.netlify-build.db"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
