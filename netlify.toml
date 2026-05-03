@@ -3,8 +3,9 @@
 
 [build]
   command = "npm run build"
-  # مطلوب لـ @netlify/plugin-nextjs: لا يجوز أن يكون publish هو جذر المستودع
-  publish = ".netlify/output/public"
+  # الإضافة تتحقق من مخرجات Next.js هنا (قبل onPostBuild). جذر المستودع مرفوض.
+  # لا تستخدم .netlify/output/public — ذلك ليس مسار مخرجات @netlify/plugin-nextjs v5.
+  publish = ".next"
 
 [build.environment]
   NODE_VERSION = "22"
