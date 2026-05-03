@@ -9,7 +9,8 @@
     "dev": "next dev",
     "dev:docker": "docker compose up -d && prisma migrate deploy && next dev",
     "build": "prisma generate && next build",
-    "build:netlify": "prisma migrate deploy && prisma generate && next build",
+    "build:netlify": "node scripts/netlify-build.cjs",
+    "netlify:env-import": "npx netlify-cli env:import .env"
     "start": "next start",
     "lint": "eslint",
     "db:push": "prisma db push",
@@ -36,6 +37,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
     "prisma": "5.22.0",

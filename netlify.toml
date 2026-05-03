@@ -9,10 +9,12 @@
 
 [build.environment]
   NODE_VERSION = "22"
-  # عيّن في لوحة Netlify (Build + Runtime/Functions) بدون استثناء:
-  #   DATABASE_URL = postgresql://... (Neon/Supabase وغيرها)
-  #   AUTH_SECRET = نص عشوائي 32+ محرف
-  # لا تضع هنا DATABASE_URL وهمي؛ `prisma migrate deploy` يحتاج اتصالاً حقيقياً أثناء البناء.
+  # مطلوب في لوحة Netlify → Environment variables (Builds + Functions):
+  #   DATABASE_URL  رابط Neon كامل
+  #   AUTH_SECRET     32+ محرف
+  #
+  # أو مرة واحدة من جهازك (بعد npx netlify login && npx netlify link):
+  #   npm run netlify:env-import
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
