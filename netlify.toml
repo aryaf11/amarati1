@@ -3,7 +3,8 @@
 
 [build]
   command = "npm run build"
-  # يُدار تلقائياً عبر الإضافة؛ لا تضبط publish يدوياً لـ Next
+  # مطلوب لـ @netlify/plugin-nextjs: لا يجوز أن يكون publish هو جذر المستودع
+  publish = ".netlify/output/public"
 
 [build.environment]
   NODE_VERSION = "22"
