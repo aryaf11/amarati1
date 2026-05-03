@@ -13,23 +13,27 @@ export default async function HomePage() {
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-12">
         <div className="space-y-4">
           <p className="text-sm font-medium text-teal-700 dark:text-teal-400">
-            إدارة مباني سكنية — أقرب لروح «اتحاد الملاك»
+            عَمارتي — إدارة مباني سكنية بالعنوان الوطني
           </p>
           <h1 className="text-3xl font-bold leading-snug md:text-4xl">
             تواصل سكان العمارة: صيانة ذكية، تصويت، مدفوعات، وإعلانات — في مكان واحد.
           </h1>
           <p className="max-w-2xl text-slate-600 dark:text-slate-300">
-            أنشئ مبنى، ادعُ الجيران برابط أو رمز، صوّت لاختيار مشرف أو شركة صيانة
-            للأعطال المجتمعية، وتابع «جواز» شقتك الرقمي لكل الإصلاحات.
+            سجّل مبناك وفق العنوان الوطني السعودي، وادعُ الجيران برمز المبنى، وصوّت لاختيار مشرف أو شركة
+            صيانة للأعطال المجتمعية، وتابع «جواز» شقتك الرقمي.
           </p>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <Link href="/register">
-              <Button>ابدأ مجاناً</Button>
+              <Button>إضافة مبنى</Button>
             </Link>
             <Link href="/login">
-              <Button variant="ghost">لدي حساب</Button>
+              <Button variant="ghost">دخول</Button>
             </Link>
           </div>
+          <p className="max-w-xl text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+            «إضافة مبنى» تبدأ بإنشاء حساب مجاناً، ثم تسجيل بيانات العمارة والعنوان الوطني من لوحة التحكم.
+            يمكنك تثبيت الموقع كتطبيق على الجوال («إضافة إلى الشاشة الرئيسية») لتجربة أقرب لتطبيق أصلي.
+          </p>
         </div>
         <div className="grid gap-4 md:grid-cols-3">
           <Card title="صيانة">

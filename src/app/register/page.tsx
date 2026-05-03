@@ -18,7 +18,7 @@ export default async function RegisterPage({
     <div className="flex min-h-full flex-col">
       <TopNav />
       <main className="mx-auto w-full max-w-md flex-1 px-4 py-10">
-        <Card title="إنشاء حساب ساكن">
+        <Card title="انضم إلى عَمارتي — حساب ساكن">
           {err ? (
             <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800 dark:bg-red-950/40 dark:text-red-200">
               {err}

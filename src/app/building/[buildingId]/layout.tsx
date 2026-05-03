@@ -25,11 +25,30 @@ export default async function BuildingLayout({
             <p className="text-xs text-slate-500">المبنى</p>
             <h1 className="text-2xl font-bold">{building.name}</h1>
             <p className="text-sm text-slate-600 dark:text-slate-300">
-              {building.city} — رمز الدعوة العام:{" "}
+              {building.region ? `${building.region} — ` : null}
+              {building.city}
+              {building.postalCode ? ` — الرمز البريدي ${building.postalCode}` : null}
+              {" — "}
+              رمز الدعوة:{" "}
               <span dir="ltr" className="font-mono font-semibold text-teal-700 dark:text-teal-400">
                 {building.inviteCode}
               </span>
             </p>
+            <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+              {building.address}
+            </p>
+            {building.latitude != null && building.longitude != null ? (
+              <p className="mt-2 text-sm">
+                <a
+                  href={`https://www.google.com/maps?q=${building.latitude},${building.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-teal-700 underline dark:text-teal-400"
+                >
+                  فتح الموقع على الخريطة
+                </a>
+              </p>
+            ) : null}
           </div>
           <Link href="/dashboard">
             <span className="text-sm text-teal-700 underline dark:text-teal-400">

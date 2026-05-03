@@ -47,18 +47,77 @@ export default async function DashboardPage({
         ) : null}
         <div className="grid gap-6 lg:grid-cols-2">
           <Card title="إنشاء مبنى جديد">
+            <p className="mb-4 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+              أدخل بيانات العنوان الوطني وفق معايير البريد السعودي (
+              <a
+                href="https://splonline.com.sa/ar/national-address-1/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-teal-700 underline dark:text-teal-400"
+              >
+                العنوان الوطني
+              </a>
+              ). الرمز البريدي خمسة أرقام؛ الرقم المختصر 8 خانات عند توفره.
+            </p>
             <form action={createBuildingAction} className="space-y-3">
               <div>
                 <label className="mb-1 block text-xs text-slate-500">اسم العمارة</label>
-                <Input name="name" required />
+                <Input name="name" required placeholder="مثال: عمارة النور" />
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-xs text-slate-500">المنطقة</label>
+                  <Input name="region" required placeholder="مثال: منطقة الرياض" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-slate-500">المدينة</label>
+                  <Input name="city" required placeholder="مثال: الرياض" />
+                </div>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-xs text-slate-500">الحي</label>
+                  <Input name="district" required />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-slate-500">اسم الشارع</label>
+                  <Input name="streetName" required />
+                </div>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-xs text-slate-500">رقم المبنى</label>
+                  <Input name="buildingNumber" required dir="ltr" className="text-left" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-slate-500">الرقم الإضافي (اختياري)</label>
+                  <Input name="additionalNumber" dir="ltr" className="text-left" />
+                </div>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-xs text-slate-500">الرمز البريدي (5 أرقام)</label>
+                  <Input name="postalCode" required maxLength={5} minLength={5} dir="ltr" className="text-left" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-slate-500">الرمز المختصر (8 خانات، اختياري)</label>
+                  <Input name="shortAddressCode" maxLength={8} minLength={8} dir="ltr" className="text-left" />
+                </div>
               </div>
               <div>
-                <label className="mb-1 block text-xs text-slate-500">العنوان</label>
-                <Input name="address" required />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs text-slate-500">المدينة</label>
-                <Input name="city" required />
+                <p className="mb-2 text-xs text-slate-500">
+                  تحديد الموقع (اختياري): الصق خط العرض وخط الطول من خرائط Google أو أي تطبيق خرائط.
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-xs text-slate-500">خط العرض</label>
+                    <Input name="latitude" dir="ltr" className="text-left" placeholder="24.7136" />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs text-slate-500">خط الطول</label>
+                    <Input name="longitude" dir="ltr" className="text-left" placeholder="46.6753" />
+                  </div>
+                </div>
               </div>
               <div>
                 <label className="mb-1 block text-xs text-slate-500">رقم شقتك</label>

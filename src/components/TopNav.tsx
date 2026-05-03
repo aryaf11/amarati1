@@ -1,7 +1,10 @@
+import Image from "next/image";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/current-user";
 import { logoutAction } from "@/actions/auth";
 import { Button } from "@/components/ui";
+
+const brandName = "عَمارتي";
 
 export async function TopNav() {
   const user = await getCurrentUser();
@@ -16,9 +19,10 @@ export async function TopNav() {
                 : "/dashboard"
               : "/"
           }
-          className="text-lg font-bold text-teal-700 dark:text-teal-400"
+          className="flex items-center gap-2 text-lg font-bold text-teal-700 dark:text-teal-400"
         >
-          عمارتي
+          <Image src="/logo.svg" alt="شعار عَمارتي" width={36} height={36} className="size-9 shrink-0" priority />
+          <span>{brandName}</span>
         </Link>
         <nav className="flex flex-wrap items-center gap-2 text-sm">
           <Link className="rounded-lg px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-900" href="/chatbot">

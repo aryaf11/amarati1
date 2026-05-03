@@ -9,7 +9,7 @@ export function ChatbotClient() {
   const [lines, setLines] = useState<{ q: string; a: string }[]>([]);
   const [p, start] = useTransition();
   return (
-    <Card title="مساعد عمارتي">
+    <Card title="مساعد عَمارتي">
       <div className="mb-4 max-h-64 space-y-3 overflow-y-auto text-sm">
         {lines.map((l, i) => (
           <div key={i} className="rounded-lg bg-slate-50 p-2 dark:bg-slate-900/60">

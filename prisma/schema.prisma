@@ -32,8 +32,22 @@ model User {
 model Building {
   id          String   @id @default(cuid())
   name        String
+  /// سطر عنوان كامل للعرض (يُبنى من حقول العنوان الوطني)
   address     String
   city        String
+  /// حسب التقسيم الإداري للمملكة (مثلاً: منطقة الرياض)
+  region      String?
+  /// الحي
+  district    String?
+  streetName  String?
+  buildingNumber String?
+  additionalNumber String?
+  /// رمز بريدي سعودي (5 أرقام)
+  postalCode  String?
+  /// الرقم المختصر للعنوان الوطني عند توفره (مثلاً من البريد السعودي)
+  shortAddressCode String?
+  latitude    Float?
+  longitude   Float?
   inviteCode  String   @unique
   createdAt   DateTime @default(now())
   creatorId   String
