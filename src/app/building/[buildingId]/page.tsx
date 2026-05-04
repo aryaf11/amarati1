@@ -6,6 +6,8 @@ import {
 } from "@/actions/governance";
 import { loadBuildingContext } from "@/components/BuildingNav";
 import { getCurrentUser } from "@/lib/current-user";
+import { getLocale } from "@/lib/locale";
+import { ui } from "@/lib/ui-strings";
 import { prisma } from "@/lib/prisma";
 import { Button, Card } from "@/components/ui";
 
@@ -23,6 +25,9 @@ export default async function BuildingHomePage({
   if (!user) redirect("/login");
   const { building, membership } = await loadBuildingContext(buildingId, user.id);
   if (!building || !membership) notFound();
+  const locale = await getLocale();
+  const th = ui(locale).buildingHome;
+  const td = ui(locale).dashboard;
   const supervisors = await prisma.membership.findMany({
     where: { unit: { buildingId }, isSupervisor: true },
     include: { user: true, unit: true },
@@ -32,6 +37,7 @@ export default async function BuildingHomePage({
     include: { user: true, unit: true },
   });
   const isCreator = building.creatorId === user.id;
+  const kindLabel = membership.kind === "OWNER" ? td.owner : td.tenant;
   return (
     <div className="space-y-6">
       {err ? (
@@ -39,30 +45,27 @@ export default async function BuildingHomePage({
           {err}
         </p>
       ) : null}
-      <Card title="حالتك في هذا المبنى">
+      <Card title={th.yourStatus}>
         <p className="text-sm">
-          شقة <strong>{membership.unit.label}</strong> —{" "}
-          {membership.kind === "OWNER" ? "مالك" : "مستأجر"}
-          {membership.isSupervisor ? " — أنت المشرف" : ""}
+          {th.unitPrefix} <strong>{membership.unit.label}</strong> — {kindLabel}
+          {membership.isSupervisor ? ` — ${th.youSupervisor}` : ""}
         </p>
       </Card>
-      <Card title="المشرف الحالي">
+      <Card title={th.currentSupervisor}>
         {supervisors.length === 0 ? (
-          <p className="text-sm text-slate-600 dark:text-slate-300">
-            لا يوجد مشرف محدد. يمكن لمنشئ المبنى التعيين أو فتح تصويت من قسم التصويت.
-          </p>
+          <p className="text-sm text-slate-600 dark:text-slate-300">{th.noSupervisor}</p>
         ) : (
           <ul className="space-y-1 text-sm">
             {supervisors.map((s) => (
               <li key={s.id}>
-                {s.user.name} (شقة {s.unit.label})
+                {s.user.name} ({th.unitPrefix} {s.unit.label})
               </li>
             ))}
           </ul>
         )}
         {isCreator ? (
           <div className="mt-4 space-y-3 border-t border-slate-100 pt-4 dark:border-slate-800">
-            <p className="text-xs text-slate-500">تعيين مشرف (صلاحية منشئ المبنى)</p>
+            <p className="text-xs text-slate-500">{th.assignHint}</p>
             <form action={assignSupervisorAction} className="flex flex-wrap gap-2">
               <input type="hidden" name="buildingId" value={buildingId} />
               <select
@@ -70,7 +73,7 @@ export default async function BuildingHomePage({
                 className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                 required
               >
-                <option value="">اختر عضواً</option>
+                <option value="">{th.chooseMember}</option>
                 {members.map((x) => (
                   <option key={x.userId} value={x.userId}>
                     {x.user.name} — {x.unit.label}
@@ -78,31 +81,31 @@ export default async function BuildingHomePage({
                 ))}
               </select>
               <Button type="submit" className="!py-2 !text-xs">
-                تعيين كن مشرف
+                {th.assignSubmit}
               </Button>
             </form>
             <form action={openSupervisorVoteAction} className="flex flex-wrap items-center gap-2">
               <input type="hidden" name="buildingId" value={buildingId} />
               <Button type="submit" variant="ghost" className="!py-2 !text-xs">
-                بدء تصويت لاختيار مشرف
+                {th.startVote}
               </Button>
-              <span className="text-xs text-slate-500">يتطلب مالكين فأكثر</span>
+              <span className="text-xs text-slate-500">{th.ownersRequired}</span>
             </form>
           </div>
         ) : null}
       </Card>
-      <Card title="اختصار">
+      <Card title={th.shortcuts}>
         <div className="flex flex-wrap gap-2 text-sm">
           <Link className="underline text-teal-700 dark:text-teal-400" href={`/building/${buildingId}/maintenance`}>
-            تقديم طلب صيانة
+            {th.linkMaintenance}
           </Link>
           <span className="text-slate-300">|</span>
           <Link className="underline text-teal-700 dark:text-teal-400" href={`/building/${buildingId}/votes`}>
-            التصويتات
+            {th.linkVotes}
           </Link>
           <span className="text-slate-300">|</span>
           <Link className="underline text-teal-700 dark:text-teal-400" href={`/building/${buildingId}/invite`}>
-            دعوة مستأجر برابط
+            {th.linkInvite}
           </Link>
         </div>
       </Card>

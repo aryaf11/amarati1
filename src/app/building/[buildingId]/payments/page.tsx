@@ -2,6 +2,8 @@ import { notFound, redirect } from "next/navigation";
 import { mockPayAction } from "@/actions/social";
 import { loadBuildingContext } from "@/components/BuildingNav";
 import { getCurrentUser } from "@/lib/current-user";
+import { getLocale } from "@/lib/locale";
+import { ui } from "@/lib/ui-strings";
 import { prisma } from "@/lib/prisma";
 import { Button, Card, Input } from "@/components/ui";
 
@@ -19,6 +21,8 @@ export default async function PaymentsPage({
   if (!user) redirect("/login");
   const { building, membership } = await loadBuildingContext(buildingId, user.id);
   if (!building || !membership) notFound();
+  const locale = await getLocale();
+  const p = ui(locale).payments;
   const payments = await prisma.payment.findMany({
     where: { userId: user.id, buildingId },
     orderBy: { createdAt: "desc" },
@@ -34,45 +38,43 @@ export default async function PaymentsPage({
           {err}
         </p>
       ) : null}
-      <Card title="سجل المدفوعات">
+      <Card title={p.log}>
         <ul className="space-y-2 text-sm">
-          {payments.map((p) => (
+          {payments.map((pay) => (
             <li
-              key={p.id}
+              key={pay.id}
               className="flex flex-wrap justify-between gap-2 rounded-lg border border-slate-100 px-3 py-2 dark:border-slate-800"
             >
-              <span>{p.description}</span>
+              <span>{pay.description}</span>
               <span dir="ltr" className="font-mono">
-                {(p.amountCents / 100).toFixed(2)} {p.currency} — {p.status}
+                {(pay.amountCents / 100).toFixed(2)} {pay.currency} — {pay.status}
               </span>
             </li>
           ))}
         </ul>
         {payments.length === 0 ? (
-          <p className="text-sm text-slate-600 dark:text-slate-300">لا مدفوعات مسجلة بعد.</p>
+          <p className="text-sm text-slate-600 dark:text-slate-300">{p.none}</p>
         ) : null}
       </Card>
-      <Card title="دفع تجريبي عبر التطبيق">
-        <p className="mb-3 text-xs text-slate-500">
-          للتوضيح فقط — اربط لاحقاً بوابة دفع محلية (مدى، STC Pay، إلخ).
-        </p>
+      <Card title={p.mockTitle}>
+        <p className="mb-3 text-xs text-slate-500">{p.mockHint}</p>
         <form action={mockPayAction} className="space-y-3">
           <input type="hidden" name="buildingId" value={buildingId} />
           <div>
-            <label className="mb-1 block text-xs text-slate-500">المبلغ (ريال)</label>
+            <label className="mb-1 block text-xs text-slate-500">{p.amount}</label>
             <Input name="amount" type="number" step="0.01" min="1" required dir="ltr" className="text-left" />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-slate-500">البيان</label>
-            <Input name="description" placeholder="اشتراك صيانة / سداد..." />
+            <label className="mb-1 block text-xs text-slate-500">{p.desc}</label>
+            <Input name="description" placeholder={p.descPh} />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-slate-500">ربط بطلب صيانة (اختياري)</label>
+            <label className="mb-1 block text-xs text-slate-500">{p.linkMaint}</label>
             <select
               name="maintenanceRequestId"
               className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
             >
-              <option value="">—</option>
+              <option value="">{p.noneOpt}</option>
               {reqs.map((r) => (
                 <option key={r.id} value={r.id}>
                   {r.title}
@@ -81,7 +83,7 @@ export default async function PaymentsPage({
             </select>
           </div>
           <Button type="submit" className="w-full">
-            تسجيل دفع ناجح (تجريبي)
+            {p.mockSubmit}
           </Button>
         </form>
       </Card>

@@ -14,14 +14,13 @@
   --font-sans: var(--font-cairo);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #020617;
-    --foreground: #e2e8f0;
-    --card: #0f172a;
-    --accent: #14b8a6;
-    --accent-foreground: #042f2e;
-  }
+/* يُتحكم بالمظهر عبر class على html (زر شريط التنقل) */
+html.dark {
+  --background: #020617;
+  --foreground: #e2e8f0;
+  --card: #0f172a;
+  --accent: #14b8a6;
+  --accent-foreground: #042f2e;
 }
 
 body {

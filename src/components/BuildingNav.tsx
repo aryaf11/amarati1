@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { getMembership } from "@/lib/access";
 import { getCurrentUser } from "@/lib/current-user";
+import { getLocale } from "@/lib/locale";
+import { ui } from "@/lib/ui-strings";
 import { prisma } from "@/lib/prisma";
 
 export async function BuildingNav({
@@ -12,19 +14,21 @@ export async function BuildingNav({
   if (!user) return null;
   const m = await getMembership(user.id, buildingId);
   if (!m) return null;
+  const locale = await getLocale();
+  const t = ui(locale);
   const base = `/building/${buildingId}`;
   const links: { href: string; label: string }[] = [
-    { href: base, label: "نظرة عامة" },
-    { href: `${base}/maintenance`, label: "صيانة" },
-    { href: `${base}/votes`, label: "تصويت" },
-    { href: `${base}/payments`, label: "مدفوعات" },
-    { href: `${base}/announcements`, label: "إعلانات" },
-    { href: `${base}/chat`, label: "محادثة" },
-    { href: `${base}/passport`, label: "جواز الشقة" },
-    { href: `${base}/invite`, label: "دعوات" },
+    { href: base, label: t.buildingNav.overview },
+    { href: `${base}/maintenance`, label: t.buildingNav.maintenance },
+    { href: `${base}/votes`, label: t.buildingNav.votes },
+    { href: `${base}/payments`, label: t.buildingNav.payments },
+    { href: `${base}/announcements`, label: t.buildingNav.announcements },
+    { href: `${base}/chat`, label: t.buildingNav.chat },
+    { href: `${base}/passport`, label: t.buildingNav.passport },
+    { href: `${base}/invite`, label: t.buildingNav.invite },
   ];
   if (m.isSupervisor) {
-    links.push({ href: `${base}/supervisor`, label: "لوحة المشرف" });
+    links.push({ href: `${base}/supervisor`, label: t.buildingNav.supervisor });
   }
   return (
     <nav className="flex flex-wrap gap-2 border-b border-slate-200 pb-3 text-sm dark:border-slate-800">

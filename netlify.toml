@@ -9,12 +9,15 @@
 
 [build.environment]
   NODE_VERSION = "22"
-  # مطلوب في لوحة Netlify → Environment variables (Builds + Functions):
-  #   DATABASE_URL  رابط Neon كامل
-  #   AUTH_SECRET     32+ محرف
+  # مطلوب في لوحة Netlify → Environment variables مع اختيار **All scopes** (أو Builds + Functions + Post processing):
+#   DATABASE_URL   — يُفضّل رابط Neon **pooling** للتشغيل (يحتوي غالباً على -pooler)
+#   DIRECT_URL     — اختياري لكن مُستحسن: رابط Neon **direct** لـ prisma migrate في البناء (نفس لوحة Neon → Connection details)
+#   AUTH_SECRET    — 32+ محرف عشوائي (مطلوب لجلسة تسجيل الدخول في الـ Functions)
+#   بعد تغيير binaryTargets في prisma/schema شغّل نشراً كاملاً (ليس «retry deploy» فقط إن فشل generate).
   #
-  # أو مرة واحدة من جهازك (بعد npx netlify login && npx netlify link):
-  #   npm run netlify:env-import
+  # شائع: وضع المتغيرات على «Builds» فقط فينتج البناء نجاحاً لكن التسجيل يفشل عند التشغيل — فعّلها للـ Functions أيضاً.
+  #
+  # أو مرة واحدة من جهازك: npx netlify login && npx netlify link && npm run netlify:env-import
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"

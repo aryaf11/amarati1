@@ -1,9 +1,10 @@
 import { notFound, redirect } from "next/navigation";
-import { applyCompanyWinnerAction } from "@/actions/maintenance";
 import { closeVoteAndApplySupervisorAction } from "@/actions/governance";
 import { castVoteAction } from "@/actions/votes";
 import { loadBuildingContext } from "@/components/BuildingNav";
 import { getCurrentUser } from "@/lib/current-user";
+import { getLocale } from "@/lib/locale";
+import { pickDateLocale, ui } from "@/lib/ui-strings";
 import { prisma } from "@/lib/prisma";
 import { Button, Card } from "@/components/ui";
 
@@ -21,6 +22,9 @@ export default async function VotesPage({
   if (!user) redirect("/login");
   const { building, membership } = await loadBuildingContext(buildingId, user.id);
   if (!building || !membership) notFound();
+  const locale = await getLocale();
+  const v = ui(locale).votes;
+  const df = pickDateLocale(locale);
   const votes = await prisma.vote.findMany({
     where: { buildingId },
     orderBy: { createdAt: "desc" },
@@ -33,71 +37,63 @@ export default async function VotesPage({
           {err}
         </p>
       ) : null}
-      <Card title="التصويتات">
+      <Card title={v.title}>
         <ul className="space-y-6">
-          {votes.map((v) => {
-            const mine = v.ballots.find((b) => b.userId === user.id);
+          {votes.map((vote) => {
+            const mine = vote.ballots.find((b) => b.userId === user.id);
             const counts = new Map<string, number>();
-            for (const o of v.options) counts.set(o.id, 0);
-            for (const b of v.ballots) {
+            for (const o of vote.options) counts.set(o.id, 0);
+            for (const b of vote.ballots) {
               counts.set(b.optionId, (counts.get(b.optionId) ?? 0) + 1);
             }
+            const typeLabel =
+              vote.type === "SUPERVISOR" ? v.typeSupervisor : v.typeLegacyPoll;
             return (
               <li
-                key={v.id}
+                key={vote.id}
                 className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/40"
               >
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
-                    <p className="font-semibold">{v.title}</p>
+                    <p className="font-semibold">{vote.title}</p>
                     <p className="text-xs text-slate-500">
-                      {v.type === "SUPERVISOR" ? "مشرف" : "شركة صيانة"} —{" "}
-                      {v.status === "OPEN" ? "مفتوح" : "مغلق"} — ينتهي {v.endsAt.toLocaleString("ar-SA")}
+                      {typeLabel} —{" "}
+                      {vote.status === "OPEN" ? v.open : v.closed} — {v.ends}{" "}
+                      {vote.endsAt.toLocaleString(df)}
                     </p>
-                    {v.description ? (
-                      <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                        {v.description}
-                      </p>
+                    {vote.description ? (
+                      <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{vote.description}</p>
                     ) : null}
                   </div>
                 </div>
                 <ul className="mt-3 space-y-2 text-sm">
-                  {v.options.map((o) => (
+                  {vote.options.map((o) => (
                     <li key={o.id} className="flex flex-wrap items-center justify-between gap-2">
                       <span>
                         {o.label}{" "}
                         <span className="text-xs text-slate-500">
-                          ({counts.get(o.id) ?? 0} صوت)
+                          ({counts.get(o.id) ?? 0} {v.votes})
                         </span>
                       </span>
-                      {v.status === "OPEN" && v.endsAt > new Date() ? (
+                      {vote.status === "OPEN" && vote.endsAt > new Date() ? (
                         <form action={castVoteAction}>
-                          <input type="hidden" name="voteId" value={v.id} />
+                          <input type="hidden" name="voteId" value={vote.id} />
                           <input type="hidden" name="optionId" value={o.id} />
                           <Button type="submit" className="!py-1 !text-xs">
-                            {mine?.optionId === o.id ? "صوتك هنا" : "صوّت"}
+                            {mine?.optionId === o.id ? v.yourVote : v.vote}
                           </Button>
                         </form>
                       ) : null}
                     </li>
                   ))}
                 </ul>
-                {(membership.isSupervisor || building.creatorId === user.id) &&
-                v.status === "OPEN" ? (
+                {(membership.isSupervisor || building.creatorId === user.id) && vote.status === "OPEN" ? (
                   <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
-                    {v.type === "SUPERVISOR" ? (
+                    {vote.type === "SUPERVISOR" ? (
                       <form action={closeVoteAndApplySupervisorAction}>
-                        <input type="hidden" name="voteId" value={v.id} />
+                        <input type="hidden" name="voteId" value={vote.id} />
                         <Button type="submit" variant="ghost" className="!py-1 !text-xs">
-                          إغلاق وتعيين المشرف الفائز
-                        </Button>
-                      </form>
-                    ) : null}
-                    {v.type === "MAINTENANCE_COMPANY" && membership.isSupervisor ? (
-                      <form action={applyCompanyWinnerAction}>
-                        <input type="hidden" name="voteId" value={v.id} />
-                        <Button type="submit" variant="ghost" className="!py-1 !text-xs">
-                          إغلاق وتعيين شركة الفائزة للطلب
+                          {v.closeSupervisor}
                         </Button>
                       </form>
                     ) : null}
@@ -108,7 +104,7 @@ export default async function VotesPage({
           })}
         </ul>
         {votes.length === 0 ? (
-          <p className="text-sm text-slate-600 dark:text-slate-300">لا تصويتات بعد.</p>
+          <p className="text-sm text-slate-600 dark:text-slate-300">{v.none}</p>
         ) : null}
       </Card>
     </div>

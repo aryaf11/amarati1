@@ -2,6 +2,8 @@ import { notFound, redirect } from "next/navigation";
 import { postAnnouncementAction } from "@/actions/social";
 import { loadBuildingContext } from "@/components/BuildingNav";
 import { getCurrentUser } from "@/lib/current-user";
+import { getLocale } from "@/lib/locale";
+import { pickDateLocale, ui } from "@/lib/ui-strings";
 import { prisma } from "@/lib/prisma";
 import { Button, Card, Input, TextArea } from "@/components/ui";
 
@@ -19,6 +21,9 @@ export default async function AnnouncementsPage({
   if (!user) redirect("/login");
   const { building, membership } = await loadBuildingContext(buildingId, user.id);
   if (!building || !membership) notFound();
+  const locale = await getLocale();
+  const a = ui(locale).announcements;
+  const df = pickDateLocale(locale);
   const rows = await prisma.announcement.findMany({
     where: { buildingId },
     orderBy: { createdAt: "desc" },
@@ -31,25 +36,25 @@ export default async function AnnouncementsPage({
           {err}
         </p>
       ) : null}
-      <Card title="إعلان جديد">
+      <Card title={a.new}>
         <form action={postAnnouncementAction} className="space-y-3">
           <input type="hidden" name="buildingId" value={buildingId} />
-          <Input name="title" placeholder="عنوان الإعلان" required />
-          <TextArea name="body" rows={4} placeholder="تفاصيل..." required />
+          <Input name="title" placeholder={a.titlePh} required />
+          <TextArea name="body" rows={4} placeholder={a.bodyPh} required />
           <Button type="submit" className="w-full">
-            نشر
+            {a.publish}
           </Button>
         </form>
       </Card>
-      <Card title="آخر الإعلانات">
+      <Card title={a.recent}>
         <ul className="space-y-4">
-          {rows.map((a) => (
-            <li key={a.id} className="rounded-xl border border-slate-100 p-3 text-sm dark:border-slate-800">
-              <p className="font-semibold">{a.title}</p>
+          {rows.map((row) => (
+            <li key={row.id} className="rounded-xl border border-slate-100 p-3 text-sm dark:border-slate-800">
+              <p className="font-semibold">{row.title}</p>
               <p className="text-xs text-slate-500">
-                {a.user.name} — {a.createdAt.toLocaleString("ar-SA")}
+                {row.user.name} — {row.createdAt.toLocaleString(df)}
               </p>
-              <p className="mt-2 whitespace-pre-line">{a.body}</p>
+              <p className="mt-2 whitespace-pre-line">{row.body}</p>
             </li>
           ))}
         </ul>

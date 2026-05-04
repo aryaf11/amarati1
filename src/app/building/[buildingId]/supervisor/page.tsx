@@ -2,6 +2,8 @@ import { notFound, redirect } from "next/navigation";
 import { supervisorRefreshInsightsAction } from "@/actions/platform";
 import { loadBuildingContext } from "@/components/BuildingNav";
 import { getCurrentUser } from "@/lib/current-user";
+import { getLocale } from "@/lib/locale";
+import { ui } from "@/lib/ui-strings";
 import { prisma } from "@/lib/prisma";
 import { Button, Card } from "@/components/ui";
 
@@ -19,10 +21,13 @@ export default async function SupervisorPage({
   if (!user) redirect("/login");
   const { building, membership } = await loadBuildingContext(buildingId, user.id);
   if (!building || !membership) notFound();
+  const locale = await getLocale();
+  const s = ui(locale).supervisor;
+  const m = ui(locale).maintenance;
   if (!membership.isSupervisor) {
     return (
-      <Card title="لوحة المشرف">
-        <p className="text-sm text-slate-600 dark:text-slate-300">هذه الصفحة للمشرف فقط.</p>
+      <Card title={s.panelTitle}>
+        <p className="text-sm text-slate-600 dark:text-slate-300">{s.only}</p>
       </Card>
     );
   }
@@ -40,8 +45,10 @@ export default async function SupervisorPage({
     where: { buildingId },
     orderBy: { createdAt: "desc" },
     take: 15,
-    include: { unit: true, company: true },
+    include: { unit: true },
   });
+  const scopeCell = (scope: string) =>
+    scope === "PERSONAL" ? m.scopeLabelPersonal : m.scopeLabelCommunity;
   return (
     <div className="space-y-6">
       {err ? (
@@ -49,30 +56,29 @@ export default async function SupervisorPage({
           {err}
         </p>
       ) : null}
-      <Card title="تحديث السكور والتنبؤات">
-        <p className="mb-3 text-sm text-slate-600 dark:text-slate-300">
-          يُحدَّث سكور المبنى شهرياً بنمط بسيط من الطلبات، وتُولَّد تنبيهات استباقية تجريبية
-          (قابلة لربط نموذج ذكاء اصطناعي لاحقاً).
-        </p>
+      <Card title={s.refreshTitle}>
+        <p className="mb-3 text-sm text-slate-600 dark:text-slate-300">{s.refreshP1}</p>
+        <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">{s.refreshP2}</p>
+        <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">{s.refreshP3}</p>
         <form action={supervisorRefreshInsightsAction}>
           <input type="hidden" name="buildingId" value={buildingId} />
-          <Button type="submit">تحديث الآن</Button>
+          <Button type="submit">{s.refreshBtn}</Button>
         </form>
       </Card>
-      <Card title="سجل السكور الشهري">
+      <Card title={s.scoreTitle}>
         <ul className="space-y-2 text-sm">
-          {scores.map((s) => (
-            <li key={s.id} className="flex justify-between gap-2">
-              <span>{s.month}</span>
-              <span className="font-mono font-semibold">{s.score}</span>
+          {scores.map((sc) => (
+            <li key={sc.id} className="flex justify-between gap-2">
+              <span>{sc.month}</span>
+              <span className="font-mono font-semibold">{sc.score}</span>
             </li>
           ))}
         </ul>
         {scores.length === 0 ? (
-          <p className="text-sm text-slate-600 dark:text-slate-300">اضغط تحديث لإنشاء أول سجل.</p>
+          <p className="text-sm text-slate-600 dark:text-slate-300">{s.scoreEmpty}</p>
         ) : null}
       </Card>
-      <Card title="تنبيهات صيانة تنبؤية">
+      <Card title={s.alertsTitle}>
         <ul className="space-y-2 text-sm">
           {alerts.map((a) => (
             <li key={a.id} className="rounded-lg border border-slate-100 p-2 dark:border-slate-800">
@@ -83,27 +89,23 @@ export default async function SupervisorPage({
           ))}
         </ul>
       </Card>
-      <Card title="تقرير سريع (تصدير يدوي)">
-        <p className="mb-2 text-xs text-slate-500">
-          انسخ الجدول أو صدّره لاحقاً — نسخة أولى داخل التطبيق.
-        </p>
+      <Card title={s.reportTitle}>
+        <p className="mb-2 text-xs text-slate-500 dark:text-slate-400">{s.reportHint}</p>
         <div className="overflow-x-auto text-xs">
           <table className="w-full border-collapse text-right">
             <thead>
               <tr className="border-b border-slate-200 dark:border-slate-800">
-                <th className="p-2">العنوان</th>
-                <th className="p-2">النطاق</th>
-                <th className="p-2">الحالة</th>
-                <th className="p-2">الشركة</th>
+                <th className="p-2">{s.thTitle}</th>
+                <th className="p-2">{s.thScope}</th>
+                <th className="p-2">{s.thStatus}</th>
               </tr>
             </thead>
             <tbody>
               {reportRows.map((r) => (
                 <tr key={r.id} className="border-b border-slate-100 dark:border-slate-900">
                   <td className="p-2">{r.title}</td>
-                  <td className="p-2">{r.scope}</td>
+                  <td className="p-2">{scopeCell(r.scope)}</td>
                   <td className="p-2">{r.status}</td>
-                  <td className="p-2">{r.company?.name ?? "-"}</td>
                 </tr>
               ))}
             </tbody>

@@ -1,3 +1,4 @@
+import { fetchExternalMaintenanceMl } from "./ml-inference";
 import { prisma } from "./prisma";
 
 const KEYWORDS: { k: string[]; labels: string[] }[] = [
@@ -20,31 +21,29 @@ function classify(description: string) {
 export async function analyzeMaintenance(options: {
   description: string;
   city: string;
+  buildingId?: string;
 }) {
-  const tags = classify(options.description);
-  const companies = await prisma.maintenanceCompany.findMany({
-    take: 24,
-    orderBy: { name: "asc" },
+  const ext = await fetchExternalMaintenanceMl({
+    description: options.description,
+    city: options.city,
+    buildingId: options.buildingId,
   });
-  const filtered = options.city
-    ? companies.filter(
-        (c) =>
-          !c.city ||
-          c.city.toLowerCase() === options.city.toLowerCase()
-      )
-    : companies;
-  const top = filtered.slice(0, 5);
-  const summary = tags.length
+  let tags = classify(options.description);
+  if (ext?.tags?.length) {
+    tags = Array.from(new Set([...tags, ...ext.tags]));
+  }
+  const localSummary = tags.length
     ? `تم تصنيف المشكلة ضمن: ${tags.join("، ")}.`
     : "لم يتم تحديد تصنيف دقيق؛ يُنصح بوصف أوضح مع صور إن وجدت.";
-  const recs = top.map(
-    (c) =>
-      `${c.name}${c.specialty ? ` — تخصص مذكور: ${c.specialty}` : ""}${c.city ? ` — ${c.city}` : ""}`
-  );
-  const suggestions =
-    recs.length > 0
-      ? recs.join("\n")
-      : "لا توجد شركات مسجلة بعد في المنصة لنفس المدينة؛ راجع لوحة المشرف أو أضف طلباً لمراجعته.";
+  const summary = ext?.summary?.trim()
+    ? `${ext.summary.trim()}\n\n${localSummary}`
+    : localSummary;
+  const localSuggestions = tags.length
+    ? `مجالات مقترحة للمتابعة مع مزوّدي الخدمة أو المشرف: ${tags.join("، ")}.`
+    : "راجع الوصف مع المشرف أو الجهات المحلية المناسبة حسب نوع العطل.";
+  const suggestions = ext?.suggestions?.trim()
+    ? `${ext.suggestions.trim()}\n\n${localSuggestions}`
+    : localSuggestions;
   return { summary, suggestions, tags };
 }
 

@@ -1,7 +1,10 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { postChatAction } from "@/actions/social";
 import { loadBuildingContext } from "@/components/BuildingNav";
 import { getCurrentUser } from "@/lib/current-user";
+import { getLocale } from "@/lib/locale";
+import { ui } from "@/lib/ui-strings";
 import { prisma } from "@/lib/prisma";
 import { Button, Card, TextArea } from "@/components/ui";
 
@@ -19,6 +22,8 @@ export default async function ChatPage({
   if (!user) redirect("/login");
   const { building, membership } = await loadBuildingContext(buildingId, user.id);
   if (!building || !membership) notFound();
+  const locale = await getLocale();
+  const c = ui(locale).chat;
   const rows = await prisma.chatMessage.findMany({
     where: { buildingId },
     orderBy: { createdAt: "asc" },
@@ -32,10 +37,16 @@ export default async function ChatPage({
           {err}
         </p>
       ) : null}
-      <Card title="محادثة السكان (اختيارية)">
-        <p className="mb-3 text-xs text-slate-500">
-          دردشة بسيطة داخل المبنى — يمكن تعطيلها لاحقاً أو استبدالها بخدمة متخصصة.
-        </p>
+      <Card title={c.title}>
+        <div className="mb-3 flex justify-end">
+          <Link
+            href={`/building/${buildingId}`}
+            className="text-xs font-medium text-teal-700 underline underline-offset-2 hover:text-teal-900 dark:text-teal-400"
+          >
+            {c.back}
+          </Link>
+        </div>
+        <p className="mb-3 text-xs text-slate-500">{c.hint}</p>
         <div className="max-h-80 space-y-2 overflow-y-auto rounded-xl border border-slate-100 p-3 text-sm dark:border-slate-800">
           {rows.map((m) => (
             <div key={m.id}>
@@ -46,8 +57,8 @@ export default async function ChatPage({
         </div>
         <form action={postChatAction} className="mt-3 space-y-2">
           <input type="hidden" name="buildingId" value={buildingId} />
-          <TextArea name="body" rows={2} placeholder="رسالة..." required />
-          <Button type="submit">إرسال</Button>
+          <TextArea name="body" rows={2} placeholder={c.placeholder} required />
+          <Button type="submit">{c.send}</Button>
         </form>
       </Card>
     </div>

@@ -1,10 +1,13 @@
 "use client";
 
-import { useTransition, useState } from "react";
+import { useState, useTransition } from "react";
 import { acceptInviteAction } from "@/actions/invites";
+import type { AppLocale } from "@/lib/locale";
+import { ui } from "@/lib/ui-strings";
 import { Button } from "@/components/ui";
 
-export function JoinAcceptButton(props: { token: string }) {
+export function JoinAcceptButton(props: { token: string; locale: AppLocale }) {
+  const t = ui(props.locale);
   const [err, setErr] = useState<string | null>(null);
   const [p, start] = useTransition();
   return (
@@ -26,7 +29,7 @@ export function JoinAcceptButton(props: { token: string }) {
           });
         }}
       >
-        قبول والانضمام
+        {t.join.accept}
       </Button>
     </div>
   );

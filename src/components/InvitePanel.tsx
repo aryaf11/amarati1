@@ -2,22 +2,23 @@
 
 import { useState, useTransition } from "react";
 import { createInviteLinkAction } from "@/actions/invites";
+import type { AppLocale } from "@/lib/locale";
+import { ui } from "@/lib/ui-strings";
 import { Button, Card } from "@/components/ui";
 
 export function InvitePanel(props: {
   buildingId: string;
   canInviteTenant: boolean;
   canInviteOwner: boolean;
+  locale: AppLocale;
 }) {
+  const t = ui(props.locale);
   const [url, setUrl] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [pending, start] = useTransition();
   return (
-    <Card title="رابط دعوة (لوحدة شقتك الحالية)">
-      <p className="mb-3 text-sm text-slate-600 dark:text-slate-300">
-        أي عضو يمكنه نسخ الرابط ومشاركته. المستأجر لا يملك خيار إضافة مستأجرين آخرين بعد
-        انضمامه.
-      </p>
+    <Card title={t.invitePanel.title}>
+      <p className="mb-3 text-sm text-slate-600 dark:text-slate-300">{t.invitePanel.hint}</p>
       <form
         className="space-y-3"
         onSubmit={(e) => {
@@ -34,16 +35,16 @@ export function InvitePanel(props: {
       >
         <input type="hidden" name="buildingId" value={props.buildingId} />
         <div>
-          <label className="mb-1 block text-xs text-slate-500">نوع المدعو</label>
+          <label className="mb-1 block text-xs text-slate-500">{t.invitePanel.inviteeType}</label>
           <select
             name="kind"
             className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
           >
             {props.canInviteTenant ? (
-              <option value="TENANT">مستأجر لنفس الشقة</option>
+              <option value="TENANT">{t.invitePanel.tenantSame}</option>
             ) : null}
             {props.canInviteOwner ? (
-              <option value="OWNER">مالك مشارك (نفس الشقة)</option>
+              <option value="OWNER">{t.invitePanel.ownerShare}</option>
             ) : null}
           </select>
         </div>
@@ -58,7 +59,7 @@ export function InvitePanel(props: {
           </p>
         ) : null}
         <Button type="submit" disabled={pending} className="w-full">
-          إنشاء رابط
+          {t.invitePanel.createLink}
         </Button>
       </form>
     </Card>

@@ -6,12 +6,13 @@ require("dotenv").config();
 
 const { execSync } = require("node:child_process");
 
-function run(cmd) {
-  execSync(cmd, { stdio: "inherit", env: process.env });
+function run(cmd, opts = {}) {
+  execSync(cmd, { stdio: "inherit", env: process.env, ...opts });
 }
 
-const db = process.env.DATABASE_URL && String(process.env.DATABASE_URL).trim();
-if (!db) {
+const dbPooled = process.env.DATABASE_URL && String(process.env.DATABASE_URL).trim();
+const dbDirect = process.env.DIRECT_URL && String(process.env.DIRECT_URL).trim();
+if (!dbPooled) {
   console.error(`
 [Netlify build] DATABASE_URL is not set.
 
@@ -30,6 +31,8 @@ if (!process.env.AUTH_SECRET || String(process.env.AUTH_SECRET).length < 16) {
   );
 }
 
-run("npx prisma migrate deploy");
+// الهجرات تحتاج اتصالاً مباشراً على Neon؛ التشغيل يمكنه استخدام pooler في DATABASE_URL
+const migrateEnv = { ...process.env, DATABASE_URL: dbDirect || dbPooled };
+run("npx prisma migrate deploy", { env: migrateEnv });
 run("npx prisma generate");
 run("npx next build");

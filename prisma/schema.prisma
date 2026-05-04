@@ -1,5 +1,7 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  /// مطلوب لبيئات Linux على Netlify (دوال Next)؛ native للتطوير المحلي
+  binaryTargets = ["native", "debian-openssl-3.0.x", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
@@ -15,6 +17,10 @@ model User {
   phone        String?
   accountKind  String   @default("RESIDENT")
   createdAt    DateTime    @default(now())
+  /// يُعبأ تلقائياً عند غياب مزود البريد؛ أو بعد فتح رابط التحقق
+  emailVerifiedAt      DateTime?
+  emailVerifyToken     String?   @unique
+  emailVerifyExpires   DateTime?
 
   buildingsCreated Building[] @relation("BuildingCreator")
   memberships      Membership[]
@@ -24,8 +30,6 @@ model User {
   votesCast        VoteBallot[]
   payments         Payment[]
   invitationsSent  InviteToken[] @relation("InviteCreator")
-  companyProfile   MaintenanceCompany?
-  applications     CompanyApplication[] @relation("ApplicantUser")
   supervisorVoteOptions VoteOption[] @relation("SupervisorCandidate")
 }
 
@@ -125,10 +129,8 @@ model VoteOption {
   voteId     String
   label      String
   userId     String?
-  companyId  String?
   vote       Vote              @relation(fields: [voteId], references: [id], onDelete: Cascade)
   user       User?             @relation("SupervisorCandidate", fields: [userId], references: [id])
-  company    MaintenanceCompany? @relation(fields: [companyId], references: [id])
   ballots    VoteBallot[]
 }
 
@@ -144,32 +146,6 @@ model VoteBallot {
   @@unique([voteId, userId])
 }
 
-model MaintenanceCompany {
-  id        String   @id @default(cuid())
-  name      String
-  userId    String   @unique
-  specialty String?
-  city      String?
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  requests    MaintenanceRequest[]
-  voteOptions VoteOption[]
-}
-
-model CompanyApplication {
-  id          String            @id @default(cuid())
-  businessName String
-  email       String
-  phone       String?
-  notes       String?
-  status      String   @default("PENDING")
-  reviewerNote String?
-  createdAt   DateTime          @default(now())
-  reviewedAt  DateTime?
-  applicantId String?
-  applicant   User?             @relation("ApplicantUser", fields: [applicantId], references: [id])
-  inviteToken String?           @unique
-}
-
 model MaintenanceRequest {
   id            String             @id @default(cuid())
   buildingId    String
@@ -181,13 +157,11 @@ model MaintenanceRequest {
   aiSummary     String?
   aiSuggestions String?
   createdById   String
-  companyId     String?
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
   building      Building           @relation(fields: [buildingId], references: [id], onDelete: Cascade)
   unit          Unit?              @relation(fields: [unitId], references: [id])
   createdBy     User               @relation("MaintCreatedBy", fields: [createdById], references: [id])
-  company       MaintenanceCompany? @relation(fields: [companyId], references: [id])
   vote          Vote?
   payments      Payment[]
   historyEvents ApartmentHistoryEvent[]

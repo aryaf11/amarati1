@@ -1,0 +1,6 @@
+# خادم scripts/maintenance_ml_server.py (استدلال Colab / sklearn)
+flask>=3.0
+numpy>=1.26
+pandas>=2.1
+scikit-learn>=1.3
+joblib>=1.3
