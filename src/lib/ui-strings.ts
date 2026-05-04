@@ -17,6 +17,7 @@ const AR = {
     email: "البريد",
     password: "كلمة المرور",
     submit: "دخول",
+    submitPending: "جاري تسجيل الدخول…",
     noAccount: "لا تملك حساباً؟",
     signUp: "سجّل",
     verifyEmailFirst: "يرجى تأكيد البريد من الرابط المرسل قبل تسجيل الدخول.",
@@ -32,6 +33,7 @@ const AR = {
     phone: "الجوال (اختياري)",
     password: "كلمة المرور",
     submit: "إنشاء الحساب",
+    submitPending: "جاري إنشاء الحساب…",
     hasAccount: "لديك حساب؟",
     login: "دخول",
     invalidForm: "بيانات غير صالحة",
@@ -45,7 +47,15 @@ const AR = {
     verifySendFailedNoSender:
       "وضع الإنتاج يتطلّب RESEND_API_KEY حقيقياً من resend.com/api-keys. أو استخدم npm run dev لطباعة الرابط في الطرفية.",
     verifySendFailedResend:
-      "رفضت Resend الإرسال: تحقق من المفتاح، وإضافة بريد المستلم في لوحة Resend (التجربة)، وصحة RESEND_FROM_EMAIL.",
+      "رفضت Resend الإرسال. راجع Logs في resend.com/emails؛ غالباً مفتاح منتهي أو بريد وهمي (مثل @example.com)، أو عنوان مرسل غير صالح.",
+    verifySendFailedResendTestingRecipient:
+      "وضع التجربة في Resend: مع onboarding@resend.dev يمكن الإرسال فقط إلى البريد نفسه المسجل في حسابك في Resend. سجّل في عَمارتي بنفس ذلك البريد، أو أكمل التحقق من نطاقك في Domains واستخدم from من نطاقك.",
+    verifySendFailedResendFromDomain:
+      "عنوان المرسل (RESEND_FROM_EMAIL) يجب أن يكون من نطاق مُفعَّل في Resend → Domains (SPF/DKIM). أو أعد التجربة بـ onboarding@resend.dev.",
+    verifySendFailedResendInvalidKey:
+      "رفض Resend المفتاح (منتهي، محذوف، أو غير صالح). أنشئ مفتاحاً جديداً Full access من resend.com/api-keys وحدّث RESEND_API_KEY ثم أعد تشغيل السيرفر.",
+    verifySendFailedResendBlockedEmail:
+      "لا يمكن الإرسال إلى نطاق بريد وهمي تجريبي (غالباً @example.com). استخدم بريداً حقيقياً أو عناوين Resend مثل delivered@resend.dev.",
   },
   registerCheckEmail: {
     title: "تحقق من بريدك",
@@ -271,6 +281,7 @@ const EN = {
     email: "Email",
     password: "Password",
     submit: "Sign in",
+    submitPending: "Signing in…",
     noAccount: "Don’t have an account?",
     signUp: "Sign up",
     verifyEmailFirst: "Please confirm your email using the link we sent before signing in.",
@@ -286,6 +297,7 @@ const EN = {
     phone: "Phone (optional)",
     password: "Password",
     submit: "Create account",
+    submitPending: "Creating account…",
     hasAccount: "Already have an account?",
     login: "Log in",
     invalidForm: "Invalid data",
@@ -299,7 +311,15 @@ const EN = {
     verifySendFailedNoSender:
       "Production requires a real RESEND_API_KEY from resend.com/api-keys. Or use npm run dev to print the link in the terminal.",
     verifySendFailedResend:
-      "Resend rejected the send: check the API key, add the recipient in the Resend dashboard (sandbox), and RESEND_FROM_EMAIL.",
+      "Resend rejected the send. Check Logs at resend.com/emails — often an invalid key, a disposable test address (e.g. @example.com), or an invalid from address.",
+    verifySendFailedResendTestingRecipient:
+      "Resend test mode: with onboarding@resend.dev you may only send to the same email as your Resend account. Register using that address, or verify a domain in Resend → Domains and set RESEND_FROM_EMAIL on that domain.",
+    verifySendFailedResendFromDomain:
+      "RESEND_FROM_EMAIL must use a domain you verified in Resend → Domains (SPF/DKIM). Or use onboarding@resend.dev for initial testing.",
+    verifySendFailedResendInvalidKey:
+      "Resend rejected the API key (revoked, wrong, or missing). Create a new key with Full access at resend.com/api-keys, update RESEND_API_KEY, and restart the server.",
+    verifySendFailedResendBlockedEmail:
+      "That recipient domain is blocked for testing (e.g. @example.com). Use a real inbox or a Resend test address like delivered@resend.dev.",
   },
   registerCheckEmail: {
     title: "Check your email",

@@ -14,13 +14,28 @@ import { ui } from "@/lib/ui-strings";
 
 function verificationDeliveryUserMessage(
   t: ReturnType<typeof ui>,
-  reason: "no_base_url" | "send_failed" | "no_sender"
+  reason:
+    | "no_base_url"
+    | "send_failed"
+    | "no_sender"
+    | "resend_testing_recipient_only"
+    | "resend_from_domain"
+    | "resend_invalid_api_key"
+    | "resend_blocked_recipient"
 ) {
   switch (reason) {
     case "no_base_url":
       return t.register.verifySendFailedNoUrl;
     case "no_sender":
       return t.register.verifySendFailedNoSender;
+    case "resend_testing_recipient_only":
+      return t.register.verifySendFailedResendTestingRecipient;
+    case "resend_from_domain":
+      return t.register.verifySendFailedResendFromDomain;
+    case "resend_invalid_api_key":
+      return t.register.verifySendFailedResendInvalidKey;
+    case "resend_blocked_recipient":
+      return t.register.verifySendFailedResendBlockedEmail;
     case "send_failed":
       return t.register.verifySendFailedResend;
     default:
@@ -38,11 +53,15 @@ const registerSchema = z.object({
 export async function registerAction(formData: FormData) {
   const locale = await getLocale();
   const t = ui(locale);
+  const emailRaw = String(formData.get("email") ?? "").trim();
+  const nameRaw = String(formData.get("name") ?? "").trim();
+  const passwordRaw = String(formData.get("password") ?? "");
+  const phoneRaw = String(formData.get("phone") ?? "").trim();
   const parsed = registerSchema.safeParse({
-    email: formData.get("email"),
-    password: formData.get("password"),
-    name: formData.get("name"),
-    phone: formData.get("phone") || undefined,
+    email: emailRaw,
+    password: passwordRaw,
+    name: nameRaw,
+    phone: phoneRaw || undefined,
   });
   if (!parsed.success) {
     redirect("/register?error=" + encodeURIComponent(t.register.invalidForm));
@@ -98,8 +117,8 @@ export async function loginAction(formData: FormData) {
   const locale = await getLocale();
   const t = ui(locale);
   const parsed = loginSchema.safeParse({
-    email: formData.get("email"),
-    password: formData.get("password"),
+    email: String(formData.get("email") ?? "").trim(),
+    password: String(formData.get("password") ?? ""),
   });
   if (!parsed.success) {
     redirect("/login?error=" + encodeURIComponent(t.login.invalidForm));

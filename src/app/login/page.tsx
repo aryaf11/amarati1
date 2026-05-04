@@ -4,8 +4,10 @@ import { loginAction } from "@/actions/auth";
 import { getCurrentUser } from "@/lib/current-user";
 import { TopNav } from "@/components/TopNav";
 import { getLocale } from "@/lib/locale";
+import { isEmailVerificationRequired } from "@/lib/send-verification-email";
 import { ui } from "@/lib/ui-strings";
-import { Button, Card, Input } from "@/components/ui";
+import { SubmitButton } from "@/components/SubmitButton";
+import { Card, Input } from "@/components/ui";
 
 export default async function LoginPage({
   searchParams,
@@ -16,6 +18,7 @@ export default async function LoginPage({
   if (user) redirect("/dashboard");
   const locale = await getLocale();
   const t = ui(locale).login;
+  const verifyOn = isEmailVerificationRequired();
   const sp = await searchParams;
   const err = sp.error ? decodeURIComponent(sp.error) : null;
   const ok = sp.verified === "1";
@@ -24,7 +27,7 @@ export default async function LoginPage({
       <TopNav />
       <main className="mx-auto w-full max-w-md flex-1 px-4 py-10">
         <Card title={t.title}>
-          {ok ? (
+          {ok && verifyOn ? (
             <p className="mb-3 rounded-lg bg-teal-50 px-3 py-2 text-sm text-teal-900 dark:bg-teal-950/40 dark:text-teal-100">
               {t.emailVerified}
             </p>
@@ -44,16 +47,18 @@ export default async function LoginPage({
               <label className="mb-1 block text-xs text-slate-500">{t.password}</label>
               <Input name="password" type="password" required dir="ltr" className="text-left" />
             </div>
-            <Button type="submit" className="w-full">
+            <SubmitButton className="w-full" pendingLabel={t.submitPending}>
               {t.submit}
-            </Button>
+            </SubmitButton>
           </form>
-          <p className="mt-3 text-center text-xs text-slate-500 dark:text-slate-400">
-            {t.resendVerifyHint}{" "}
-            <Link href="/register/check-email" className="text-teal-700 underline dark:text-teal-400">
-              {t.resendVerifyLink}
-            </Link>
-          </p>
+          {verifyOn ? (
+            <p className="mt-3 text-center text-xs text-slate-500 dark:text-slate-400">
+              {t.resendVerifyHint}{" "}
+              <Link href="/register/check-email" className="text-teal-700 underline dark:text-teal-400">
+                {t.resendVerifyLink}
+              </Link>
+            </p>
+          ) : null}
           <p className="mt-4 text-center text-sm text-slate-600 dark:text-slate-400">
             {t.noAccount}{" "}
             <Link href="/register" className="text-teal-700 underline dark:text-teal-400">

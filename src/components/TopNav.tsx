@@ -12,6 +12,10 @@ export async function TopNav() {
   const locale = await getLocale();
   const t = navT(locale);
   const logoAlt = locale === "en" ? "Amarati logo" : "شعار عَمارتي";
+  const ghostNav =
+    "inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-800 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800";
+  const primaryNav =
+    "inline-flex items-center justify-center rounded-xl bg-teal-600 px-2 py-1 text-xs font-medium text-white transition hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600";
   return (
     <header className="border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
       <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-4 py-3">
@@ -38,13 +42,11 @@ export async function TopNav() {
             </>
           ) : (
             <>
-              <Link href="/login">
-                <Button variant="ghost" className="!py-1 !text-xs">
-                  {t.login}
-                </Button>
+              <Link href="/login" className={ghostNav}>
+                {t.login}
               </Link>
-              <Link href="/register">
-                <Button className="!py-1 !text-xs">{t.register}</Button>
+              <Link href="/register" className={primaryNav}>
+                {t.register}
               </Link>
             </>
           )}

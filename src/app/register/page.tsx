@@ -6,6 +6,7 @@ import { TopNav } from "@/components/TopNav";
 import { getLocale } from "@/lib/locale";
 import { isEmailVerificationRequired } from "@/lib/send-verification-email";
 import { ui } from "@/lib/ui-strings";
+import { SubmitButton } from "@/components/SubmitButton";
 import { Button, Card, Input } from "@/components/ui";
 
 export default async function RegisterPage({
@@ -52,9 +53,9 @@ export default async function RegisterPage({
               <label className="mb-1 block text-xs text-slate-500">{t.password}</label>
               <Input name="password" type="password" required minLength={6} dir="ltr" className="text-left" />
             </div>
-            <Button type="submit" className="w-full">
+            <SubmitButton className="w-full" pendingLabel={t.submitPending}>
               {t.submit}
-            </Button>
+            </SubmitButton>
           </form>
           <p className="mt-4 text-center text-sm text-slate-600 dark:text-slate-400">
             {t.hasAccount}{" "}

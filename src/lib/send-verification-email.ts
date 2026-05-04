@@ -17,7 +17,11 @@ export function buildVerificationUrl(token: string): string | null {
  * مفتاح Resend بعد تجاهل القيم الوهمية (مثل re_PASTE_YOUR_KEY_HERE).
  */
 export function getConfiguredResendApiKey(): string | null {
-  const k = process.env.RESEND_API_KEY?.trim();
+  let k = process.env.RESEND_API_KEY?.trim();
+  if (!k) return null;
+  if ((k.startsWith('"') && k.endsWith('"')) || (k.startsWith("'") && k.endsWith("'"))) {
+    k = k.slice(1, -1).trim();
+  }
   if (!k) return null;
   if (!k.startsWith("re_")) return null;
   if (k.length < 12) return null;
@@ -35,27 +39,92 @@ export function isEmailVerificationRequired(): boolean {
   return true;
 }
 
+/** نص للمطابقة من جسم الاستجابة (قد يكون JSON من Resend). */
+function resendErrorText(body: string): string {
+  const raw = body.toLowerCase();
+  try {
+    const j = JSON.parse(body) as { message?: string; name?: string };
+    const m = (j.message ?? "").toLowerCase();
+    const n = (j.name ?? "").toLowerCase();
+    return `${raw} ${m} ${n}`;
+  } catch {
+    return raw;
+  }
+}
+
+/** يطابق رسائل Resend المعروفة (انظر docs/api-reference/errors). */
+function resendFailureKind(
+  status: number,
+  body: string
+):
+  | "testing_recipient_only"
+  | "from_domain_unverified"
+  | "invalid_key"
+  | "blocked_disposable_domain"
+  | "generic" {
+  const b = resendErrorText(body);
+  if (status === 401 || (status === 403 && b.includes("invalid api key"))) {
+    return "invalid_key";
+  }
+  if (
+    status === 403 &&
+    (b.includes("only send testing emails") ||
+      b.includes("your own email address") ||
+      b.includes("testing emails to your own"))
+  ) {
+    return "testing_recipient_only";
+  }
+  if (status === 403 && (b.includes("domain is not verified") || b.includes("verify a domain"))) {
+    return "from_domain_unverified";
+  }
+  if (
+    status === 422 &&
+    (b.includes("example.com") || b.includes("test.com") || b.includes("@example"))
+  ) {
+    return "blocked_disposable_domain";
+  }
+  return "generic";
+}
+
 async function postResend(
   apiKey: string,
   to: string,
   subject: string,
   html: string
-): Promise<{ ok: true } | { ok: false; reason: "send_failed" }> {
+): Promise<
+  | { ok: true }
+  | { ok: false; reason: "send_failed" }
+  | { ok: false; reason: "resend_testing_recipient_only" }
+  | { ok: false; reason: "resend_from_domain" }
+  | { ok: false; reason: "resend_invalid_api_key" }
+  | { ok: false; reason: "resend_blocked_recipient" }
+> {
   const from = process.env.RESEND_FROM_EMAIL?.trim() || "onboarding@resend.dev";
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ from, to: [to], subject, html }),
-  });
-  if (!res.ok) {
-    const t = await res.text().catch(() => "");
-    console.error("Resend error", res.status, t);
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ from, to: [to], subject, html }),
+      signal: AbortSignal.timeout(25_000),
+    });
+    if (!res.ok) {
+      const t = await res.text().catch(() => "");
+      console.error("Resend error", res.status, t);
+      const kind = resendFailureKind(res.status, t);
+      if (kind === "testing_recipient_only") return { ok: false, reason: "resend_testing_recipient_only" };
+      if (kind === "from_domain_unverified") return { ok: false, reason: "resend_from_domain" };
+      if (kind === "invalid_key") return { ok: false, reason: "resend_invalid_api_key" };
+      if (kind === "blocked_disposable_domain") return { ok: false, reason: "resend_blocked_recipient" };
+      return { ok: false, reason: "send_failed" };
+    }
+    return { ok: true };
+  } catch (e) {
+    console.error("Resend request failed", e);
     return { ok: false, reason: "send_failed" };
   }
-  return { ok: true };
 }
 
 function verificationEmailContent(link: string, locale: AppLocale): { subject: string; html: string } {
@@ -78,7 +147,20 @@ export async function deliverVerificationEmail(
   to: string,
   token: string,
   locale: AppLocale
-): Promise<{ ok: true } | { ok: false; reason: "no_base_url" | "send_failed" | "no_sender" }> {
+): Promise<
+  | { ok: true }
+  | {
+      ok: false;
+      reason:
+        | "no_base_url"
+        | "send_failed"
+        | "no_sender"
+        | "resend_testing_recipient_only"
+        | "resend_from_domain"
+        | "resend_invalid_api_key"
+        | "resend_blocked_recipient";
+    }
+> {
   const link = buildVerificationUrl(token);
   if (!link) return { ok: false, reason: "no_base_url" };
 
