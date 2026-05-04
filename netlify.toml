@@ -18,6 +18,10 @@
   # شائع: وضع المتغيرات على «Builds» فقط فينتج البناء نجاحاً لكن التسجيل يفشل عند التشغيل — فعّلها للـ Functions أيضاً.
   #
   # أو مرة واحدة من جهازك: npx netlify login && npx netlify link && npm run netlify:env-import
+  #
+  # إن المتغير السرّي لا يصل لـ Build وأردت تجاوز فحص البناء (⚠ مخاطرة): ضع متغّراً غير سريّ قيمته true:
+  #   NETLIFY_BUILD_NO_DATABASE
+  # ثم اضبط DATABASE_URL لتشغيل الموقع (Functions) وأكمل: npx prisma migrate deploy ضد Neon من جهازك.
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"

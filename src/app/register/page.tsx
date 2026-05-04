@@ -7,7 +7,7 @@ import { getLocale } from "@/lib/locale";
 import { isEmailVerificationRequired } from "@/lib/send-verification-email";
 import { ui } from "@/lib/ui-strings";
 import { SubmitButton } from "@/components/SubmitButton";
-import { Button, Card, Input } from "@/components/ui";
+import { Card, Input } from "@/components/ui";
 
 export default async function RegisterPage({
   searchParams,
