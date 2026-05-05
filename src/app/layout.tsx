@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Cairo } from "next/font/google";
-import { ThemeScript } from "@/components/ThemeScript";
 import { getLocale } from "@/lib/locale";
+import { THEME_BOOTSTRAP_SCRIPT } from "@/lib/theme-bootstrap";
 import "./globals.css";
 
 const cairo = Cairo({
@@ -53,11 +53,11 @@ export default async function RootLayout({
   const locale = await getLocale();
   const dir = locale === "en" ? "ltr" : "rtl";
   return (
-    <html lang={locale} dir={dir} className={`${cairo.variable} h-full`}>
-      <body className="min-h-full font-sans antialiased">
-        <ThemeScript />
-        {children}
-      </body>
+    <html lang={locale} dir={dir} className={`${cairo.variable} h-full`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }} />
+      </head>
+      <body className="min-h-full font-sans antialiased">{children}</body>
     </html>
   );
 }

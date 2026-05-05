@@ -13,6 +13,7 @@ const AR = {
   },
   login: {
     title: "تسجيل الدخول",
+    subtitle: "أي بريد وكلمة مرور جديدة (6 أحرف فأكثر) ينشئ حساباً ويدخلك مباشرة.",
     emailVerified: "تم تأكيد بريدك. يمكنك الآن تسجيل الدخول.",
     email: "البريد",
     password: "كلمة المرور",
@@ -23,6 +24,7 @@ const AR = {
     verifyEmailFirst: "يرجى تأكيد البريد من الرابط المرسل قبل تسجيل الدخول.",
     invalidForm: "بيانات غير صالحة",
     invalidCredentials: "بريد أو كلمة مرور غير صحيحة",
+    passwordMinForNew: "للحسابات الجديدة: كلمة المرور 6 أحرف على الأقل.",
     resendVerifyHint: "لم يصلك الرابط؟ أعد الإرسال من صفحة التحقق.",
     resendVerifyLink: "إعادة إرسال رابط التأكيد",
   },
@@ -277,6 +279,7 @@ const EN = {
   },
   login: {
     title: "Log in",
+    subtitle: "Any email with a new password (6+ characters) creates an account and signs you in.",
     emailVerified: "Your email is verified. You can sign in now.",
     email: "Email",
     password: "Password",
@@ -287,6 +290,7 @@ const EN = {
     verifyEmailFirst: "Please confirm your email using the link we sent before signing in.",
     invalidForm: "Invalid data",
     invalidCredentials: "Incorrect email or password",
+    passwordMinForNew: "New accounts need a password of at least 6 characters.",
     resendVerifyHint: "Didn’t get the email? Resend the link from the verification page.",
     resendVerifyLink: "Resend confirmation link",
   },

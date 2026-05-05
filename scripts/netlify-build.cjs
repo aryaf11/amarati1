@@ -1,6 +1,6 @@
 /**
  * Netlify production build: migrate → generate → next build.
- * DATABASE_URL must be set for migrate (Neon). See netlify.toml comments.
+ * DATABASE_URL must be set for migrate. See netlify.toml comments.
  */
 require("dotenv").config();
 
@@ -35,7 +35,7 @@ if (!dbPooled) {
   ← لن يُشغَّل prisma migrate deploy في البناء.
 
   ⚠ تأكد أن DATABASE_URL مضبوط لنطاق التشغيل (Functions/Runtime) وإلا الموقع لن يتصل بقاعدة البيانات.
-  ⚠ نفّذ الهجرات يدوياً من جهازك ضد Neon:
+  ⚠ نفّذ الهجرات يدوياً من جهازك ضد قاعدة البيانات:
        npx prisma migrate deploy
 `);
     run("npx prisma generate");
@@ -50,7 +50,7 @@ if (!dbPooled) {
   • أضِف متغيراً اسمه DATABASE_URL بالضبط.
   • إنفعّل "Contains secret values" واختَر كل النطاقات التي تشمل عملية البناء (Build / Site builds)
     وليس تشغيل الموقع فقط (Runtime)— وإلا لن ترى المتغير أثناء npm run build:netlify.
-  • مع خيار "Different value..." الصق سلسلة Neon في خانة Production على الأقل.
+  • مع خيار "Different value..." الصق سلسلة DATABASE_URL في خانة Production على الأقل.
 
 — أو من هذا الجهاز (بعد ربط المشروع بـ Netlify CLI):
     npx netlify login && npx netlify link && npm run netlify:env-import
@@ -68,7 +68,7 @@ if (!process.env.AUTH_SECRET || String(process.env.AUTH_SECRET).length < 16) {
   );
 }
 
-// Neon: migrate يُفضل DIRECT_URL؛ إن لم يُضبط يُستخدم DATABASE_URL
+// للهجرات يُفضّل DIRECT_URL إن وُجد؛ وإلا يُستخدم DATABASE_URL
 process.env.DATABASE_URL = dbPooled;
 const migrateEnv = { ...process.env, DATABASE_URL: dbDirect || dbPooled };
 run("npx prisma migrate deploy", { env: migrateEnv });

@@ -10,8 +10,8 @@
 [build.environment]
   NODE_VERSION = "22"
   # مطلوب في لوحة Netlify → Environment variables مع اختيار **All scopes** (أو Builds + Functions + Post processing):
-#   DATABASE_URL   — يُفضّل رابط Neon **pooling** للتشغيل (يحتوي غالباً على -pooler)
-#   DIRECT_URL     — اختياري لكن مُستحسن: رابط Neon **direct** لـ prisma migrate في البناء (نفس لوحة Neon → Connection details)
+#   DATABASE_URL   — PostgreSQL (مع Supabase: Transaction pooler + ?pgbouncer=true)
+#   DIRECT_URL     — رابط مباشر 5432 (Supabase / migrate؛ مطلوب في schema)
 #   AUTH_SECRET    — 32+ محرف عشوائي (مطلوب لجلسة تسجيل الدخول في الـ Functions)
 #   بعد تغيير binaryTargets في prisma/schema شغّل نشراً كاملاً (ليس «retry deploy» فقط إن فشل generate).
   #
@@ -21,7 +21,7 @@
   #
   # إن المتغير السرّي لا يصل لـ Build وأردت تجاوز فحص البناء (⚠ مخاطرة): ضع متغّراً غير سريّ قيمته true:
   #   NETLIFY_BUILD_NO_DATABASE
-  # ثم اضبط DATABASE_URL لتشغيل الموقع (Functions) وأكمل: npx prisma migrate deploy ضد Neon من جهازك.
+  # ثم اضبط DATABASE_URL لتشغيل الموقع (Functions) وأكمل: npx prisma migrate deploy من جهازك ضد نفس القاعدة.
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"

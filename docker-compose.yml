@@ -1,3 +1,4 @@
+# اختياري: PostgreSQL محلي فقط. مع Supabase احذف الاعتماد على هذا الملف واستخدم DATABASE_URL / DIRECT_URL في `.env`.
 services:
   db:
     image: postgres:16-alpine

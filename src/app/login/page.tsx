@@ -27,6 +27,7 @@ export default async function LoginPage({
       <TopNav />
       <main className="mx-auto w-full max-w-md flex-1 px-4 py-10">
         <Card title={t.title}>
+          <p className="mb-4 text-xs leading-relaxed text-slate-600 dark:text-slate-400">{t.subtitle}</p>
           {ok && verifyOn ? (
             <p className="mb-3 rounded-lg bg-teal-50 px-3 py-2 text-sm text-teal-900 dark:bg-teal-950/40 dark:text-teal-100">
               {t.emailVerified}
@@ -45,7 +46,7 @@ export default async function LoginPage({
             </div>
             <div>
               <label className="mb-1 block text-xs text-slate-500">{t.password}</label>
-              <Input name="password" type="password" required dir="ltr" className="text-left" />
+              <Input name="password" type="password" required minLength={1} dir="ltr" className="text-left" />
             </div>
             <SubmitButton className="w-full" pendingLabel={t.submitPending}>
               {t.submit}

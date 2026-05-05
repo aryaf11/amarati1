@@ -4,9 +4,12 @@ import { cookies } from "next/headers";
 const COOKIE = "amarati_session";
 
 function secretKey() {
-  const s = process.env.AUTH_SECRET;
+  let s = process.env.AUTH_SECRET?.trim();
   if (!s || s.length < 16) {
-    throw new Error("AUTH_SECRET must be set (min 16 chars)");
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("AUTH_SECRET must be set (min 16 chars)");
+    }
+    s = "amarati-local-dev-auth-secret-min-16chars!";
   }
   return new TextEncoder().encode(s);
 }

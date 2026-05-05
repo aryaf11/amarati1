@@ -30,13 +30,12 @@ export function getConfiguredResendApiKey(): string | null {
 }
 
 /**
- * التحقق من البريد عند التسجيل مفعّل افتراضياً.
- * عطّله بـ REQUIRE_EMAIL_VERIFICATION=false (مثلاً بيئة تجريبية بدون بريد).
+ * التحقق من البريد عند التسجيل: مفعّل فقط إذا REQUIRE_EMAIL_VERIFICATION=true
+ * (افتراضياً معطّل لتسهيل التجربة والدخول).
  */
 export function isEmailVerificationRequired(): boolean {
   const flag = process.env.REQUIRE_EMAIL_VERIFICATION?.trim().toLowerCase();
-  if (flag === "false" || flag === "0") return false;
-  return true;
+  return flag === "true" || flag === "1";
 }
 
 /** نص للمطابقة من جسم الاستجابة (قد يكون JSON من Resend). */

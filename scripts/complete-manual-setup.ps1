@@ -1,4 +1,4 @@
-# Amarati - finish local setup (Windows). Requires Docker Desktop running, or set DATABASE_URL (e.g. Neon) in .env
+# Amarati - finish local setup (Windows). Docker للمحلي، أو Supabase/other: DATABASE_URL + DIRECT_URL في .env
 # From repo root: npm run setup:local
 # Or: powershell -ExecutionPolicy Bypass -File ./scripts/complete-manual-setup.ps1
 
@@ -20,7 +20,7 @@ function Find-Docker {
 Write-Host "[1/2] Starting PostgreSQL (docker compose up -d)..." -ForegroundColor Cyan
 $docker = Find-Docker
 if (-not $docker) {
-  Write-Host "Docker not found. Install Docker Desktop, or put a Neon DATABASE_URL in .env and run: npx prisma migrate deploy" -ForegroundColor Yellow
+  Write-Host "Docker not found. Install Docker Desktop, or set DATABASE_URL + DIRECT_URL in .env (e.g. Supabase) and run: npx prisma migrate deploy" -ForegroundColor Yellow
   exit 1
 }
 
@@ -33,7 +33,7 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host "[2/2] prisma migrate deploy..." -ForegroundColor Cyan
 npx prisma migrate deploy
 if ($LASTEXITCODE -ne 0) {
-  Write-Host "migrate failed. Check DATABASE_URL in .env" -ForegroundColor Red
+  Write-Host "migrate failed. Check DATABASE_URL and DIRECT_URL in .env" -ForegroundColor Red
   exit $LASTEXITCODE
 }
 
