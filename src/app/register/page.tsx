@@ -7,5 +7,5 @@ export default async function RegisterPage({
 }) {
   const sp = await searchParams;
   const qs = sp.error ? `?error=${encodeURIComponent(sp.error)}` : "";
-  redirect(`/login${qs}`);
+  redirect(`/signup${qs}`);
 }

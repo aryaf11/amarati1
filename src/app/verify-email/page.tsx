@@ -6,7 +6,7 @@ import { ui } from "@/lib/ui-strings";
 import { Card, PageShell } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 
-const accent = "#157083";
+const accent = "var(--accent)";
 
 export default async function VerifyEmailPage({
   searchParams,

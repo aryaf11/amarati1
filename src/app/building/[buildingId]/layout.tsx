@@ -9,7 +9,7 @@ import { ui } from "@/lib/ui-strings";
 import { PageShell } from "@/components/ui";
 import { navT } from "@/lib/nav-dict";
 
-const accent = "#157083";
+const accent = "var(--accent)";
 
 export default async function BuildingLayout({
   children,

@@ -4,8 +4,6 @@ import type {
   TextareaHTMLAttributes,
 } from "react";
 
-const accent = "#157083";
-
 export function Button(
   props: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "ghost" }
 ) {
@@ -14,12 +12,21 @@ export function Button(
     "inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-2.5 text-sm font-semibold transition disabled:opacity-50";
   const styles =
     variant === "primary"
-      ? "text-white shadow-md hover:brightness-105 active:brightness-95"
-      : "border-2 bg-white shadow-sm hover:bg-[#f0fffd] active:bg-[#e6faf7] dark:bg-slate-900 dark:hover:bg-slate-800";
+      ? "shadow-md hover:brightness-105 active:brightness-95"
+      : "border-2 shadow-sm hover:bg-[var(--accent-soft)] active:brightness-95";
   const inlineStyle =
     variant === "primary"
-      ? { backgroundColor: accent, ...style }
-      : { borderColor: accent, color: accent, ...style };
+      ? {
+          backgroundColor: "var(--accent)",
+          color: "var(--accent-foreground)",
+          ...style,
+        }
+      : {
+          backgroundColor: "var(--card)",
+          borderColor: "var(--accent)",
+          color: "var(--accent)",
+          ...style,
+        };
   return (
     <button
       type={type}
@@ -31,16 +38,33 @@ export function Button(
 }
 
 const fieldClass =
-  "w-full rounded-xl border border-[#157083]/25 bg-white px-3 py-2.5 text-sm outline-none ring-[#157083]/30 transition focus:border-[#157083]/60 focus:ring-2 dark:border-teal-700/40 dark:bg-slate-900";
+  "w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition focus:ring-2";
+const fieldStyle = {
+  backgroundColor: "var(--field-bg)",
+  borderColor: "var(--field-border)",
+  color: "var(--foreground)",
+} as const;
 
 export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
-  const { className = "", ...rest } = props;
-  return <input className={`${fieldClass} ${className}`} {...rest} />;
+  const { className = "", style, ...rest } = props;
+  return (
+    <input
+      className={`${fieldClass} ${className}`}
+      style={{ ...fieldStyle, ...style }}
+      {...rest}
+    />
+  );
 }
 
 export function TextArea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  const { className = "", ...rest } = props;
-  return <textarea className={`${fieldClass} ${className}`} {...rest} />;
+  const { className = "", style, ...rest } = props;
+  return (
+    <textarea
+      className={`${fieldClass} ${className}`}
+      style={{ ...fieldStyle, ...style }}
+      {...rest}
+    />
+  );
 }
 
 export function Card(props: {
@@ -50,13 +74,14 @@ export function Card(props: {
 }) {
   return (
     <section
-      className={`rounded-2xl border border-[#157083]/15 bg-white/85 p-5 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70 ${props.className ?? ""}`}
+      className={`rounded-2xl border p-5 shadow-sm backdrop-blur ${props.className ?? ""}`}
+      style={{
+        backgroundColor: "color-mix(in srgb, var(--card) 92%, transparent)",
+        borderColor: "var(--card-border)",
+      }}
     >
       {props.title ? (
-        <h2
-          className="mb-3 text-base font-semibold"
-          style={{ color: accent }}
-        >
+        <h2 className="mb-3 text-base font-semibold text-accent">
           {props.title}
         </h2>
       ) : null}

@@ -44,13 +44,6 @@ function verificationDeliveryUserMessage(
   }
 }
 
-function displayNameFromEmail(email: string): string {
-  let local = email.split("@")[0]?.trim() || "member";
-  local = local.slice(0, 120);
-  if (local.length < 2) local = `${local}01`.slice(0, 2);
-  return local;
-}
-
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
@@ -132,46 +125,18 @@ export async function loginAction(formData: FormData) {
     redirect("/login?error=" + encodeURIComponent(t.login.invalidForm));
   }
   try {
-    let user = await prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { email: parsed.data.email },
     });
 
     if (!user) {
-      if (parsed.data.password.length < 6) {
-        redirect("/login?error=" + encodeURIComponent(t.login.passwordMinForNew));
-      }
-      const passwordHash = await hashPassword(parsed.data.password);
-      const gate = isEmailVerificationRequired();
-      const verifyToken = gate ? randomBytes(24).toString("base64url") : null;
-      user = await prisma.user.create({
-        data: {
-          email: parsed.data.email,
-          passwordHash,
-          name: displayNameFromEmail(parsed.data.email),
-          accountKind: "RESIDENT",
-          emailVerifiedAt: gate ? null : new Date(),
-          emailVerifyToken: verifyToken,
-          emailVerifyExpires: gate ? new Date(Date.now() + 86400000) : null,
-        },
-      });
-      if (gate && verifyToken) {
-        const sent = await deliverVerificationEmail(parsed.data.email, verifyToken, locale);
-        if (!sent.ok) {
-          await prisma.user.delete({ where: { id: user.id } });
-          redirect(
-            "/login?error=" +
-              encodeURIComponent(verificationDeliveryUserMessage(t, sent.reason))
-          );
-        }
-        redirect("/register/check-email");
-      }
-    } else {
-      if (!(await verifyPassword(parsed.data.password, user.passwordHash))) {
-        redirect("/login?error=" + encodeURIComponent(t.login.invalidCredentials));
-      }
-      if (isEmailVerificationRequired() && !user.emailVerifiedAt) {
-        redirect("/login?error=" + encodeURIComponent(t.login.verifyEmailFirst));
-      }
+      redirect("/login?error=" + encodeURIComponent(t.login.noAccountFull) + "&noAccount=1");
+    }
+    if (!(await verifyPassword(parsed.data.password, user.passwordHash))) {
+      redirect("/login?error=" + encodeURIComponent(t.login.invalidCredentials));
+    }
+    if (isEmailVerificationRequired() && !user.emailVerifiedAt) {
+      redirect("/login?error=" + encodeURIComponent(t.login.verifyEmailFirst));
     }
 
     await createSession(user.id);

@@ -10,7 +10,7 @@ import { getLocale } from "@/lib/locale";
 import { isEmailVerificationRequired } from "@/lib/send-verification-email";
 import { ui, pickDateLocale } from "@/lib/ui-strings";
 
-const accent = "#157083";
+const accent = "var(--accent)";
 
 export default async function ProfilePage({
   searchParams,

@@ -5,7 +5,7 @@ import { getLocale } from "@/lib/locale";
 import { ui } from "@/lib/ui-strings";
 import { Button, Card, Input, PageShell } from "@/components/ui";
 
-const accent = "#157083";
+const accent = "var(--accent)";
 
 export default async function RegisterCheckEmailPage({
   searchParams,

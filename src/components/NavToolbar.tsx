@@ -84,7 +84,12 @@ export function NavToolbar({
     theme === "dark" ? t.themeDark : theme === "light" ? t.themeLight : t.themeSystem;
 
   const iconBtn =
-    "inline-flex items-center justify-center rounded-full border border-[#157083]/25 bg-white/80 p-2 text-[#157083] shadow-sm backdrop-blur transition hover:bg-white hover:shadow dark:border-teal-700/40 dark:bg-slate-900/70 dark:text-teal-200 dark:hover:bg-slate-900";
+    "inline-flex items-center justify-center rounded-full border p-2 shadow-sm backdrop-blur transition hover:shadow";
+  const iconBtnStyle = {
+    backgroundColor: "color-mix(in srgb, var(--card) 80%, transparent)",
+    borderColor: "var(--card-border)",
+    color: "var(--accent)",
+  } as const;
 
   return (
     <div className="flex items-center gap-1.5">
@@ -92,6 +97,7 @@ export function NavToolbar({
         type="button"
         onClick={cycleTheme}
         className={iconBtn}
+        style={iconBtnStyle}
         title={`${t.theme} — ${themeLabel}`}
         aria-label={`${t.theme} — ${themeLabel}`}
       >
@@ -101,6 +107,7 @@ export function NavToolbar({
         type="button"
         onClick={toggleLocale}
         className={iconBtn}
+        style={iconBtnStyle}
         title={t.language}
         aria-label={t.language}
       >
@@ -111,6 +118,7 @@ export function NavToolbar({
           type="button"
           onClick={toggleNotifications}
           className={iconBtn}
+          style={iconBtnStyle}
           title={t.notifications}
           aria-label={t.notifications}
           aria-pressed={notifyOn}

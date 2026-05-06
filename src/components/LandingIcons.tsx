@@ -159,6 +159,68 @@ export function HomeIcon({ className }: { className?: string }) {
   );
 }
 
+export function EyeIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8" />
+    </svg>
+  );
+}
+
+export function EyeOffIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M3 3l18 18M10.6 10.6a3 3 0 0 0 4.24 4.24M9.88 5.08A10.5 10.5 0 0 1 12 5c6.5 0 10 7 10 7a17.7 17.7 0 0 1-3.16 4.19M6.11 6.11C3.7 7.86 2 12 2 12s3.5 7 10 7c1.7 0 3.22-.4 4.55-1.04"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function KeyIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle cx="8" cy="15" r="4" stroke="currentColor" strokeWidth="1.8" />
+      <path
+        d="M11 13l8.5-8.5M16 7l3 3M14 9l3 3"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function BuildingIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M4 21V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v15M16 21V11h3a1 1 0 0 1 1 1v9M2 21h20"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M8 8h2M8 12h2M8 16h2M12 8h-2M12 12h-2M12 16h-2"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export function LogoutIcon({ className }: { className?: string }) {
   return (
     <svg className={className} width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>

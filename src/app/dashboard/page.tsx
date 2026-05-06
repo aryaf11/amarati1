@@ -12,7 +12,7 @@ import { ui } from "@/lib/ui-strings";
 import { Button, Card, Input, PageShell } from "@/components/ui";
 import { HomeIcon } from "@/components/LandingIcons";
 
-const accent = "#157083";
+const accent = "var(--accent)";
 
 export default async function DashboardPage({
   searchParams,

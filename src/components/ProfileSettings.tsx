@@ -14,7 +14,7 @@ import {
 
 const THEME_KEY = "amarati-theme";
 const NOTIFY_KEY = "amarati-notifications";
-const accent = "#157083";
+const accent = "var(--accent)";
 
 type ThemeMode = "light" | "dark" | "system";
 
@@ -90,6 +90,20 @@ export function ProfileSettings({
     { id: "system", icon: <MonitorIcon />, label: t.themeSystem },
   ];
 
+  const activeBtn =
+    "inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold shadow-md";
+  const inactiveBtn =
+    "inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-medium shadow-sm transition";
+  const activeStyle = {
+    backgroundColor: "var(--accent)",
+    color: "var(--accent-foreground)",
+  } as const;
+  const inactiveStyle = {
+    backgroundColor: "var(--card)",
+    borderColor: "var(--card-border)",
+    color: "var(--accent)",
+  } as const;
+
   return (
     <div className="space-y-6">
       <div>
@@ -105,11 +119,8 @@ export function ProfileSettings({
                 type="button"
                 onClick={() => applyTheme(opt.id)}
                 aria-pressed={active}
-                className={
-                  active
-                    ? "inline-flex items-center gap-2 rounded-full bg-[#157083] px-4 py-1.5 text-xs font-semibold text-white shadow-md"
-                    : "inline-flex items-center gap-2 rounded-full border border-[#157083]/25 bg-white/80 px-4 py-1.5 text-xs font-medium text-[#157083] shadow-sm transition hover:bg-white dark:border-teal-700/40 dark:bg-slate-900/70 dark:text-teal-200"
-                }
+                className={active ? activeBtn : inactiveBtn}
+                style={active ? activeStyle : inactiveStyle}
               >
                 <span aria-hidden>{opt.icon}</span>
                 {opt.label}
@@ -126,7 +137,8 @@ export function ProfileSettings({
         <button
           type="button"
           onClick={changeLocale}
-          className="inline-flex items-center gap-2 rounded-full border border-[#157083]/25 bg-white/80 px-4 py-1.5 text-xs font-medium text-[#157083] shadow-sm transition hover:bg-white dark:border-teal-700/40 dark:bg-slate-900/70 dark:text-teal-200"
+          className={inactiveBtn}
+          style={inactiveStyle}
         >
           <GlobeIcon />
           <span>{locale === "ar" ? "English" : "عربي"}</span>
@@ -141,16 +153,13 @@ export function ProfileSettings({
           type="button"
           onClick={toggleNotifications}
           aria-pressed={notifyOn}
-          className={
-            notifyOn
-              ? "inline-flex items-center gap-2 rounded-full bg-[#157083] px-4 py-1.5 text-xs font-semibold text-white shadow-md"
-              : "inline-flex items-center gap-2 rounded-full border border-[#157083]/25 bg-white/80 px-4 py-1.5 text-xs font-medium text-[#157083] shadow-sm transition hover:bg-white dark:border-teal-700/40 dark:bg-slate-900/70 dark:text-teal-200"
-          }
+          className={notifyOn ? activeBtn : inactiveBtn}
+          style={notifyOn ? activeStyle : inactiveStyle}
         >
           {notifyOn ? <BellIcon /> : <BellOffIcon />}
           <span>{notifyOn ? t.notificationsOn : t.notificationsOff}</span>
         </button>
-        <p className="mt-2 text-xs text-slate-500 dark:text-slate-300">{t.notificationsHint}</p>
+        <p className="mt-2 text-xs text-muted">{t.notificationsHint}</p>
       </div>
     </div>
   );

@@ -3,10 +3,16 @@
 :root {
   --background: #f5fcfb;
   --foreground: #0f172a;
+  --muted: #4a5d63;
   --card: #ffffff;
+  --card-border: rgba(21, 112, 131, 0.18);
   --accent: #157083;
-  --accent-foreground: #ecfdf5;
+  --accent-strong: #0d4e5c;
   --accent-soft: #e0f7f4;
+  --accent-foreground: #ffffff;
+  --field-bg: #ffffff;
+  --field-border: rgba(21, 112, 131, 0.25);
+  --field-border-focus: rgba(21, 112, 131, 0.6);
 }
 
 @theme inline {
@@ -16,12 +22,18 @@
 }
 
 html.dark {
-  --background: #04181c;
-  --foreground: #e2e8f0;
-  --card: #0a1f24;
-  --accent: #2aa6bb;
-  --accent-foreground: #042f2e;
-  --accent-soft: #0c2a30;
+  --background: #051821;
+  --foreground: #f1f5f9;
+  --muted: #b9c7cd;
+  --card: #0d2730;
+  --card-border: rgba(125, 211, 226, 0.22);
+  --accent: #5cc6dc;
+  --accent-strong: #99e2f0;
+  --accent-soft: #0d3641;
+  --accent-foreground: #04222b;
+  --field-bg: #0a2129;
+  --field-border: rgba(125, 211, 226, 0.30);
+  --field-border-focus: rgba(125, 211, 226, 0.7);
 }
 
 html,
@@ -44,8 +56,17 @@ body {
 html.dark body {
   background-image: radial-gradient(
     ellipse 120% 80% at 50% -20%,
-    #0b3a44 0%,
-    #07262d 45%,
+    #0a3744 0%,
+    #072731 45%,
     var(--background) 100%
   );
 }
+
+/* مساعدات لون اللون الأساسي ليتكيّف تلقائياً مع الوضعين */
+.text-accent { color: var(--accent); }
+.text-accent-strong { color: var(--accent-strong); }
+.bg-accent { background-color: var(--accent); }
+.bg-accent-soft { background-color: var(--accent-soft); }
+.border-accent { border-color: var(--accent); }
+.border-accent-soft { border-color: var(--card-border); }
+.text-muted { color: var(--muted); }

@@ -12,7 +12,7 @@ import {
 import { getLocale } from "@/lib/locale";
 import { navT } from "@/lib/nav-dict";
 
-const accent = "#157083";
+const accent = "var(--accent)";
 
 export async function TopNav() {
   const user = await getCurrentUser();
@@ -21,12 +21,27 @@ export async function TopNav() {
   const logoAlt = locale === "en" ? "Amarati logo" : "شعار عَمارتي";
 
   const ghostBtn =
-    "inline-flex items-center gap-2 rounded-full border border-[#157083]/25 bg-white/80 px-3 py-1.5 text-xs font-medium text-[#157083] shadow-sm backdrop-blur transition hover:bg-white hover:shadow dark:border-teal-700/40 dark:bg-slate-900/70 dark:text-teal-200 dark:hover:bg-slate-900";
+    "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium shadow-sm backdrop-blur transition hover:shadow";
+  const ghostBtnStyle = {
+    backgroundColor: "color-mix(in srgb, var(--card) 80%, transparent)",
+    borderColor: "var(--card-border)",
+    color: "var(--accent)",
+  } as const;
   const primaryBtn =
-    "inline-flex items-center gap-2 rounded-full bg-[#157083] px-3 py-1.5 text-xs font-medium text-white shadow-md transition hover:brightness-105 active:brightness-95";
+    "inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium shadow-md transition hover:brightness-105 active:brightness-95";
+  const primaryBtnStyle = {
+    backgroundColor: "var(--accent)",
+    color: "var(--accent-foreground)",
+  } as const;
 
   return (
-    <header className="sticky top-0 z-30 border-b border-[#157083]/10 bg-white/70 backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/70">
+    <header
+      className="sticky top-0 z-30 border-b backdrop-blur-md"
+      style={{
+        backgroundColor: "color-mix(in srgb, var(--card) 70%, transparent)",
+        borderColor: "var(--card-border)",
+      }}
+    >
       <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3">
         <Link
           href={user ? "/dashboard" : "/"}
@@ -38,7 +53,13 @@ export async function TopNav() {
         </Link>
         <nav className="flex flex-wrap items-center gap-1.5 text-sm">
           {user ? (
-            <Link href="/chatbot" className={ghostBtn} title={t.chatbot} aria-label={t.chatbot}>
+            <Link
+              href="/chatbot"
+              className={ghostBtn}
+              style={ghostBtnStyle}
+              title={t.chatbot}
+              aria-label={t.chatbot}
+            >
               <ChatBubbleIcon />
               <span className="hidden sm:inline">{t.chatbot}</span>
             </Link>
@@ -49,6 +70,7 @@ export async function TopNav() {
               <Link
                 href="/profile"
                 className={ghostBtn}
+                style={ghostBtnStyle}
                 title={user.name}
                 aria-label={t.profile}
               >
@@ -59,6 +81,7 @@ export async function TopNav() {
                 <button
                   type="submit"
                   className={ghostBtn}
+                  style={ghostBtnStyle}
                   title={t.logout}
                   aria-label={t.logout}
                 >
@@ -68,7 +91,7 @@ export async function TopNav() {
               </form>
             </>
           ) : (
-            <Link href="/login" className={primaryBtn}>
+            <Link href="/login" className={primaryBtn} style={primaryBtnStyle}>
               <LoginDoorIcon className="size-4" />
               <span>{t.login}</span>
             </Link>

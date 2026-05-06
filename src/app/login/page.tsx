@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { loginAction } from "@/actions/auth";
@@ -8,6 +9,8 @@ import { isEmailVerificationRequired } from "@/lib/send-verification-email";
 import { ui } from "@/lib/ui-strings";
 import { SubmitButton } from "@/components/SubmitButton";
 import { Card, Input, PageShell } from "@/components/ui";
+import { PasswordInput } from "@/components/PasswordInput";
+import { LoginDoorIcon, PlusIcon } from "@/components/LandingIcons";
 
 export default async function LoginPage({
   searchParams,
@@ -16,75 +19,110 @@ export default async function LoginPage({
     error?: string;
     next?: string;
     verified?: string;
-    create?: string;
+    noAccount?: string;
   }>;
 }) {
   const user = await getCurrentUser();
   if (user) redirect("/dashboard");
   const locale = await getLocale();
   const t = ui(locale).login;
+  const tLanding = ui(locale).landing;
   const verifyOn = isEmailVerificationRequired();
   const sp = await searchParams;
   const err = sp.error ? decodeURIComponent(sp.error) : null;
   const ok = sp.verified === "1";
-  const isCreateFlow = sp.create === "1";
-
-  const heading = isCreateFlow
-    ? locale === "en"
-      ? "Create your building"
-      : "إنشاء مبناك"
-    : t.title;
-  const subtitle = isCreateFlow
-    ? locale === "en"
-      ? "Enter your email and a new password (6+ characters) — we’ll create your account, then you can register your building."
-      : "أدخل بريدك وكلمة مرور جديدة (٦ أحرف فأكثر) — ننشئ حسابك مباشرة، ثم تسجّل مبناك."
-    : t.subtitle;
+  const noAccount = sp.noAccount === "1";
+  const logoAlt = tLanding.logoAlt;
 
   return (
     <div className="flex min-h-full flex-col">
       <TopNav />
       <PageShell className="max-w-md">
-        <Card title={heading}>
-          <p className="mb-4 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
-            {subtitle}
+        <div className="flex flex-col items-center text-center">
+          <Image
+            src="/logo.svg"
+            alt={logoAlt}
+            width={84}
+            height={84}
+            className="size-20 rounded-2xl shadow-md sm:size-24"
+            priority
+          />
+          <h1 className="mt-4 text-3xl font-bold tracking-tight text-accent">
+            {tLanding.nameAr}
+          </h1>
+          <p className="mt-1 text-xs font-semibold uppercase tracking-[0.35em] text-accent">
+            AMARATI
           </p>
+          <p className="mt-3 text-sm text-muted">{tLanding.tagline}</p>
+        </div>
+
+        <Card title={t.title}>
+          <p className="mb-4 text-xs leading-relaxed text-muted">{t.subtitle}</p>
           {ok && verifyOn ? (
-            <p className="mb-3 rounded-xl border border-teal-200 bg-teal-50/80 px-3 py-2 text-sm text-teal-900 dark:border-teal-900/50 dark:bg-teal-950/40 dark:text-teal-100">
+            <p className="mb-3 rounded-xl border px-3 py-2 text-sm border-accent-soft bg-accent-soft text-accent-strong">
               {t.emailVerified}
             </p>
           ) : null}
           {err ? (
-            <p className="mb-3 rounded-xl border border-red-200 bg-red-50/80 px-3 py-2 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
-              {err}
-            </p>
+            <div className="mb-3 rounded-xl border border-red-200 bg-red-50/80 px-3 py-2 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
+              <p>{err}</p>
+              {noAccount ? (
+                <p className="mt-2">
+                  <Link
+                    href="/signup"
+                    className="font-semibold underline text-accent"
+                  >
+                    {t.signUp}
+                  </Link>
+                </p>
+              ) : null}
+            </div>
           ) : null}
           <form action={loginAction} className="space-y-3">
             <input type="hidden" name="next" value={sp.next ?? ""} />
             <div>
-              <label className="mb-1 block text-xs text-slate-500">{t.email}</label>
-              <Input name="email" type="email" required dir="ltr" className="text-left" />
+              <label className="mb-1 block text-xs text-muted">{t.email}</label>
+              <Input name="email" type="email" required dir="ltr" className="text-left" autoComplete="email" />
             </div>
             <div>
-              <label className="mb-1 block text-xs text-slate-500">{t.password}</label>
-              <Input name="password" type="password" required minLength={1} dir="ltr" className="text-left" />
+              <label className="mb-1 block text-xs text-muted">{t.password}</label>
+              <PasswordInput
+                name="password"
+                required
+                minLength={1}
+                dir="ltr"
+                className="text-left"
+                autoComplete="current-password"
+                showLabel={t.showPassword}
+                hideLabel={t.hidePassword}
+              />
             </div>
             <SubmitButton className="w-full" pendingLabel={t.submitPending}>
+              <LoginDoorIcon className="size-4" />
               {t.submit}
             </SubmitButton>
           </form>
+
           {verifyOn ? (
-            <p className="mt-3 text-center text-xs text-slate-500 dark:text-slate-400">
+            <p className="mt-3 text-center text-xs text-muted">
               {t.resendVerifyHint}{" "}
-              <Link
-                href="/register/check-email"
-                className="font-medium underline"
-                style={{ color: "#157083" }}
-              >
+              <Link href="/register/check-email" className="font-medium underline text-accent">
                 {t.resendVerifyLink}
               </Link>
             </p>
           ) : null}
         </Card>
+
+        <div className="rounded-2xl border p-4 text-center text-sm border-accent-soft" style={{ backgroundColor: "color-mix(in srgb, var(--card) 70%, transparent)" }}>
+          <p className="text-muted">{t.noAccount}</p>
+          <Link
+            href="/signup"
+            className="mt-2 inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-2.5 text-sm font-semibold border-2 border-accent text-accent transition hover:bg-[var(--accent-soft)]"
+          >
+            <PlusIcon className="size-4" />
+            {t.signUp}
+          </Link>
+        </div>
       </PageShell>
     </div>
   );
