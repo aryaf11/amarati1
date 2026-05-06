@@ -68,7 +68,7 @@ export default async function HomePage() {
               <span>{t.login}</span>
             </Link>
             <Link
-              href="/register"
+              href="/login?create=1"
               className={`inline-flex ${btnFlex} w-full items-center justify-center gap-3 rounded-2xl border-2 bg-white px-6 py-4 text-base font-semibold shadow-sm transition hover:bg-[#f0fffd] active:bg-[#e6faf7]`}
               style={{ borderColor: accent, color: accent }}
             >

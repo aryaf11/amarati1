@@ -4,46 +4,57 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { AppLocale } from "@/lib/locale";
 import { navT } from "@/lib/nav-dict";
+import {
+  BellIcon,
+  BellOffIcon,
+  GlobeIcon,
+  MonitorIcon,
+  MoonIcon,
+  SunIcon,
+} from "@/components/LandingIcons";
 
 const THEME_KEY = "amarati-theme";
+const NOTIFY_KEY = "amarati-notifications";
 
-export function NavToolbar({ locale }: { locale: AppLocale }) {
+type ThemeMode = "light" | "dark" | "system";
+
+export function NavToolbar({
+  locale,
+  loggedIn,
+}: {
+  locale: AppLocale;
+  loggedIn: boolean;
+}) {
   const router = useRouter();
   const t = navT(locale);
-  const [themeHint, setThemeHint] = useState<string>(t.themeSystem);
+  const [theme, setTheme] = useState<ThemeMode>("system");
+  const [notifyOn, setNotifyOn] = useState(false);
 
   useEffect(() => {
-    const sync = () => {
-      const stored = localStorage.getItem(THEME_KEY);
-      if (stored === "dark") setThemeHint(t.themeDark);
-      else if (stored === "light") setThemeHint(t.themeLight);
-      else setThemeHint(t.themeSystem);
-    };
-    sync();
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    mq.addEventListener("change", sync);
-    return () => mq.removeEventListener("change", sync);
-  }, [t.themeDark, t.themeLight, t.themeSystem]);
+    const stored = localStorage.getItem(THEME_KEY);
+    if (stored === "dark") setTheme("dark");
+    else if (stored === "light") setTheme("light");
+    else setTheme("system");
+    setNotifyOn(localStorage.getItem(NOTIFY_KEY) === "1");
+  }, []);
 
   function cycleTheme() {
     const root = document.documentElement;
-    const stored = localStorage.getItem(THEME_KEY);
-    let next: "light" | "dark" | "system";
-    if (stored === "light") next = "dark";
-    else if (stored === "dark") next = "system";
+    let next: ThemeMode;
+    if (theme === "light") next = "dark";
+    else if (theme === "dark") next = "system";
     else next = "light";
 
     if (next === "system") {
       localStorage.removeItem(THEME_KEY);
       if (window.matchMedia("(prefers-color-scheme: dark)").matches) root.classList.add("dark");
       else root.classList.remove("dark");
-      setThemeHint(t.themeSystem);
     } else {
       localStorage.setItem(THEME_KEY, next);
       if (next === "dark") root.classList.add("dark");
       else root.classList.remove("dark");
-      setThemeHint(next === "dark" ? t.themeDark : t.themeLight);
     }
+    setTheme(next);
   }
 
   function toggleLocale() {
@@ -52,42 +63,61 @@ export function NavToolbar({ locale }: { locale: AppLocale }) {
     router.refresh();
   }
 
-  async function notificationPrefs() {
-    const on = localStorage.getItem("amarati-notifications") === "1";
-    const next = !on;
-    localStorage.setItem("amarati-notifications", next ? "1" : "0");
+  async function toggleNotifications() {
+    const next = !notifyOn;
+    localStorage.setItem(NOTIFY_KEY, next ? "1" : "0");
+    setNotifyOn(next);
     if (next && typeof window !== "undefined" && "Notification" in window) {
-      if (Notification.permission === "default") await Notification.requestPermission();
+      if (Notification.permission === "default") {
+        try {
+          await Notification.requestPermission();
+        } catch {
+          /* ignore */
+        }
+      }
     }
-    router.refresh();
   }
 
+  const themeIcon =
+    theme === "dark" ? <MoonIcon /> : theme === "light" ? <SunIcon /> : <MonitorIcon />;
+  const themeLabel =
+    theme === "dark" ? t.themeDark : theme === "light" ? t.themeLight : t.themeSystem;
+
+  const iconBtn =
+    "inline-flex items-center justify-center rounded-full border border-[#157083]/25 bg-white/80 p-2 text-[#157083] shadow-sm backdrop-blur transition hover:bg-white hover:shadow dark:border-teal-700/40 dark:bg-slate-900/70 dark:text-teal-200 dark:hover:bg-slate-900";
+
   return (
-    <div className="flex flex-wrap items-center gap-1 border-s border-slate-200 ps-2 dark:border-slate-800">
+    <div className="flex items-center gap-1.5">
       <button
         type="button"
         onClick={cycleTheme}
-        className="rounded-lg px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-900"
-        title={t.theme}
+        className={iconBtn}
+        title={`${t.theme} — ${themeLabel}`}
+        aria-label={`${t.theme} — ${themeLabel}`}
       >
-        {themeHint}
+        {themeIcon}
       </button>
       <button
         type="button"
         onClick={toggleLocale}
-        className="rounded-lg px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-900"
+        className={iconBtn}
         title={t.language}
+        aria-label={t.language}
       >
-        {locale === "ar" ? "EN" : "عربي"}
+        <GlobeIcon />
       </button>
-      <button
-        type="button"
-        onClick={notificationPrefs}
-        className="rounded-lg px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-900"
-        title={t.notifications}
-      >
-        🔔
-      </button>
+      {loggedIn ? (
+        <button
+          type="button"
+          onClick={toggleNotifications}
+          className={iconBtn}
+          title={t.notifications}
+          aria-label={t.notifications}
+          aria-pressed={notifyOn}
+        >
+          {notifyOn ? <BellIcon /> : <BellOffIcon />}
+        </button>
+      ) : null}
     </div>
   );
 }

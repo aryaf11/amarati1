@@ -5,6 +5,7 @@ import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { dbOrSessionErrorHint, flattenError } from "@/lib/action-error-hints";
+import { getCurrentUser } from "@/lib/current-user";
 import { getLocale } from "@/lib/locale";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
@@ -71,13 +72,13 @@ export async function registerAction(formData: FormData) {
     phone: phoneRaw || undefined,
   });
   if (!parsed.success) {
-    redirect("/register?error=" + encodeURIComponent(t.register.invalidForm));
+    redirect("/login?error=" + encodeURIComponent(t.register.invalidForm));
   }
   const exists = await prisma.user.findUnique({
     where: { email: parsed.data.email },
   });
   if (exists) {
-    redirect("/register?error=" + encodeURIComponent(t.register.emailTaken));
+    redirect("/login?error=" + encodeURIComponent(t.register.emailTaken));
   }
   const passwordHash = await hashPassword(parsed.data.password);
   const gate = isEmailVerificationRequired();
@@ -100,7 +101,7 @@ export async function registerAction(formData: FormData) {
       if (!sent.ok) {
         await prisma.user.delete({ where: { id: user.id } });
         redirect(
-          "/register?error=" +
+          "/login?error=" +
             encodeURIComponent(verificationDeliveryUserMessage(t, sent.reason))
         );
       }
@@ -110,7 +111,7 @@ export async function registerAction(formData: FormData) {
   } catch (e) {
     if (isRedirectError(e)) throw e;
     console.error("registerAction", flattenError(e), e);
-    redirect("/register?error=" + encodeURIComponent(dbOrSessionErrorHint(e)));
+    redirect("/login?error=" + encodeURIComponent(dbOrSessionErrorHint(e)));
   }
   redirect("/dashboard");
 }
@@ -232,4 +233,41 @@ export async function resendVerificationEmailAction(formData: FormData) {
 export async function logoutAction() {
   await destroySession();
   redirect("/");
+}
+
+const profileSchema = z.object({
+  name: z.string().min(2).max(120),
+  phone: z
+    .preprocess(
+      (v) => (v == null || String(v).trim() === "" ? undefined : String(v).trim()),
+      z.union([z.undefined(), z.string().max(40)]),
+    ),
+});
+
+export async function updateProfileAction(formData: FormData) {
+  const locale = await getLocale();
+  const t = ui(locale);
+  const me = await getCurrentUser();
+  if (!me) redirect("/login");
+  const parsed = profileSchema.safeParse({
+    name: String(formData.get("name") ?? "").trim(),
+    phone: formData.get("phone"),
+  });
+  if (!parsed.success) {
+    redirect("/profile?error=" + encodeURIComponent(t.profile.invalidForm));
+  }
+  try {
+    await prisma.user.update({
+      where: { id: me.id },
+      data: {
+        name: parsed.data.name,
+        phone: parsed.data.phone ?? null,
+      },
+    });
+  } catch (e) {
+    if (isRedirectError(e)) throw e;
+    console.error("updateProfileAction", flattenError(e), e);
+    redirect("/profile?error=" + encodeURIComponent(dbOrSessionErrorHint(e)));
+  }
+  redirect("/profile?saved=1");
 }

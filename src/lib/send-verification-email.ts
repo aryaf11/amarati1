@@ -163,13 +163,23 @@ export async function deliverVerificationEmail(
   const link = buildVerificationUrl(token);
   if (!link) return { ok: false, reason: "no_base_url" };
 
+  const isDev = process.env.NODE_ENV === "development";
   const apiKey = getConfiguredResendApiKey();
   if (apiKey) {
     const { subject, html } = verificationEmailContent(link, locale);
-    return postResend(apiKey, to, subject, html);
+    const result = await postResend(apiKey, to, subject, html);
+    if (result.ok) return result;
+    // فشل Resend: في وضع التطوير لا نوقف التدفق — نطبع الرابط في الطرفية ليكمل المطور.
+    if (isDev) {
+      console.warn(
+        `\n[amarati] فشل Resend (${result.reason}) — وضع التطوير، استخدم الرابط مباشرة:\n  To: ${to}\n  ${link}\n`
+      );
+      return { ok: true };
+    }
+    return result;
   }
 
-  if (process.env.NODE_ENV === "development") {
+  if (isDev) {
     console.warn(
       `\n[amarati] Email verification (لا يوجد RESEND_API_KEY صالح — وضع التطوير):\n  To: ${to}\n  ${link}\n`
     );

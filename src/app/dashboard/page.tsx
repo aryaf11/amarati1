@@ -9,7 +9,10 @@ import { getCurrentUser } from "@/lib/current-user";
 import { TopNav } from "@/components/TopNav";
 import { getLocale } from "@/lib/locale";
 import { ui } from "@/lib/ui-strings";
-import { Button, Card, Input } from "@/components/ui";
+import { Button, Card, Input, PageShell } from "@/components/ui";
+import { HomeIcon } from "@/components/LandingIcons";
+
+const accent = "#157083";
 
 export default async function DashboardPage({
   searchParams,
@@ -30,25 +33,28 @@ export default async function DashboardPage({
   return (
     <div className="flex min-h-full flex-col">
       <TopNav />
-      <main className="mx-auto w-full max-w-5xl flex-1 space-y-8 px-4 py-8">
+      <PageShell>
         <div>
-          <h1 className="text-2xl font-bold">{t.title}</h1>
-          <p className="text-slate-600 dark:text-slate-300">{t.subtitle}</p>
+          <h1 className="text-3xl font-bold" style={{ color: accent }}>
+            {t.title}
+          </h1>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{t.subtitle}</p>
         </div>
         {err ? (
-          <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-200">
+          <p className="rounded-2xl border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-200">
             {err}
           </p>
         ) : null}
         <div className="grid gap-6 lg:grid-cols-2">
           <Card title={t.createBuilding}>
-            <p className="mb-4 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+            <p className="mb-4 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
               {t.splHintBefore}
               <a
                 href={splUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-teal-700 underline dark:text-teal-400"
+                className="font-medium underline"
+                style={{ color: accent }}
               >
                 {t.splLink}
               </a>
@@ -138,7 +144,7 @@ export default async function DashboardPage({
             </form>
           </Card>
         </div>
-        <Card title={t.buildingsCard}>
+        <Card>
           {items.length === 0 ? (
             <p className="text-sm text-slate-600 dark:text-slate-300">{t.noBuildings}</p>
           ) : (
@@ -146,24 +152,35 @@ export default async function DashboardPage({
               {items.map((m) => (
                 <li
                   key={m.id}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50/60 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/40"
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-[#157083]/15 bg-white/70 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/60"
                 >
-                  <div>
-                    <p className="font-medium">{m.unit.building.name}</p>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">
-                      {t.unit} {m.unit.label} — {m.kind === "OWNER" ? t.owner : t.tenant}
-                      {m.isSupervisor ? ` — ${t.supervisor}` : ""}
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="inline-flex size-9 items-center justify-center rounded-xl"
+                      style={{ backgroundColor: "rgba(21,112,131,0.1)", color: accent }}
+                      aria-hidden
+                    >
+                      <HomeIcon />
+                    </span>
+                    <div>
+                      <p className="font-semibold" style={{ color: accent }}>
+                        {m.unit.building.name}
+                      </p>
+                      <p className="text-sm text-slate-600 dark:text-slate-300">
+                        {t.unit} {m.unit.label} — {m.kind === "OWNER" ? t.owner : t.tenant}
+                        {m.isSupervisor ? ` — ${t.supervisor}` : ""}
+                      </p>
+                    </div>
                   </div>
                   <Link href={`/building/${m.unit.building.id}`}>
-                    <Button className="!py-1 !text-xs">{t.open}</Button>
+                    <Button className="!px-4 !py-1.5 !text-xs">{t.open}</Button>
                   </Link>
                 </li>
               ))}
             </ul>
           )}
         </Card>
-      </main>
+      </PageShell>
     </div>
   );
 }

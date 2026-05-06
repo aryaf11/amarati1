@@ -51,3 +51,12 @@ __pycache__/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.vercel
+
+# local scratch / log captures
+ad.txt
+rm.txt
+stdout.txt
+stderr.txt
+.tmp_envvalue

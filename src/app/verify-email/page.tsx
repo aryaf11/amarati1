@@ -3,8 +3,10 @@ import { redirect } from "next/navigation";
 import { TopNav } from "@/components/TopNav";
 import { getLocale } from "@/lib/locale";
 import { ui } from "@/lib/ui-strings";
-import { Card } from "@/components/ui";
+import { Card, PageShell } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
+
+const accent = "#157083";
 
 export default async function VerifyEmailPage({
   searchParams,
@@ -19,16 +21,16 @@ export default async function VerifyEmailPage({
     return (
       <div className="flex min-h-full flex-col">
         <TopNav />
-        <main className="mx-auto w-full max-w-md flex-1 px-4 py-10">
+        <PageShell className="max-w-md">
           <Card title={t.invalidTitle}>
             <p className="text-sm text-slate-600 dark:text-slate-300">{t.invalidBody}</p>
             <p className="mt-3 text-sm">
-              <Link href="/login" className="text-teal-700 underline dark:text-teal-400">
+              <Link href="/login" className="font-medium underline" style={{ color: accent }}>
                 {t.goLogin}
               </Link>
             </p>
           </Card>
-        </main>
+        </PageShell>
       </div>
     );
   }
