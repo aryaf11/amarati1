@@ -4,6 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getMembership } from "@/lib/access";
 import { getCurrentUser } from "@/lib/current-user";
+import {
+  predictFailure,
+  recommendServices,
+  textToFeatures,
+} from "@/lib/maintenance-predictor";
 import { prisma } from "@/lib/prisma";
 
 export async function assignSupervisorAction(formData: FormData) {
@@ -122,5 +127,122 @@ export async function closeVoteAndApplySupervisorAction(formData: FormData) {
     }),
   ]);
   revalidatePath(`/building/${vote.buildingId}`);
+  redirect(vbase);
+}
+
+/** يبدأ تصويتاً لاختيار شركة صيانة لطلب صيانة مجتمعي (عبر ترشيحات النموذج التنبؤي). */
+export async function openMaintenanceCompanyVoteAction(formData: FormData) {
+  const user = await getCurrentUser();
+  const buildingId = String(formData.get("buildingId") ?? "");
+  const requestId = String(formData.get("requestId") ?? "");
+  if (!user) redirect("/login");
+  const m = await getMembership(user.id, buildingId);
+  const building = await prisma.building.findUnique({ where: { id: buildingId } });
+  const back = `/building/${buildingId}/maintenance`;
+  if (!m || !building) {
+    redirect(back + "?error=" + encodeURIComponent("لا عضوية أو مبنى غير موجود"));
+  }
+  const isCreator = building.creatorId === user.id;
+  if (!m.isSupervisor && !isCreator) {
+    redirect(back + "?error=" + encodeURIComponent("فقط المشرف أو منشئ المبنى يفتح تصويت شركة صيانة"));
+  }
+  const req = await prisma.maintenanceRequest.findUnique({
+    where: { id: requestId },
+    include: { vote: true },
+  });
+  if (!req || req.buildingId !== buildingId) {
+    redirect(back + "?error=" + encodeURIComponent("طلب غير صالح"));
+  }
+  if (req.scope !== "COMMUNITY") {
+    redirect(back + "?error=" + encodeURIComponent("التصويت متاح للأعطال المجتمعية فقط"));
+  }
+  if (req.vote) {
+    redirect(`/building/${buildingId}/votes`);
+  }
+  const features = textToFeatures(req.description, building.city);
+  const issue = predictFailure(features);
+  const recs = recommendServices(issue, 4);
+  if (!recs.length) {
+    redirect(back + "?error=" + encodeURIComponent("لا توصيات شركات متوفرة لهذا النوع"));
+  }
+  const ends = new Date(Date.now() + 1000 * 60 * 60 * 24 * 3);
+  await prisma.vote.create({
+    data: {
+      buildingId,
+      type: "MAINTENANCE_COMPANY",
+      title: `اختيار شركة صيانة: ${req.title}`,
+      description: req.description.slice(0, 500),
+      endsAt: ends,
+      maintenanceRequestId: req.id,
+      options: {
+        create: recs.map((r) => ({
+          label: `${r.company} — ⭐ ${r.rating.toFixed(1)}`,
+        })),
+      },
+    },
+  });
+  revalidatePath(`/building/${buildingId}/votes`);
+  revalidatePath(back);
+  redirect(`/building/${buildingId}/votes`);
+}
+
+/** يغلق تصويت شركة الصيانة ويسجّل الفائز في تاريخ الشقة. */
+export async function closeMaintenanceCompanyVoteAction(formData: FormData) {
+  const user = await getCurrentUser();
+  const voteId = String(formData.get("voteId") ?? "");
+  const vote = await prisma.vote.findUnique({
+    where: { id: voteId },
+    include: {
+      options: true,
+      ballots: true,
+      building: true,
+      maintenanceRequest: true,
+    },
+  });
+  const vbase = vote ? `/building/${vote.buildingId}/votes` : "/dashboard";
+  if (!user) redirect("/login");
+  if (!vote) {
+    redirect(vbase + "?error=" + encodeURIComponent("تصويت غير موجود"));
+  }
+  if (vote.type !== "MAINTENANCE_COMPANY") {
+    redirect(vbase + "?error=" + encodeURIComponent("نوع تصويت غير مطابق"));
+  }
+  const m = await getMembership(user.id, vote.buildingId);
+  if (!m?.isSupervisor && vote.building.creatorId !== user.id) {
+    redirect(vbase + "?error=" + encodeURIComponent("غير مخول"));
+  }
+  if (vote.status === "CLOSED") {
+    redirect(vbase + "?error=" + encodeURIComponent("مغلق مسبقاً"));
+  }
+  const counts = new Map<string, number>();
+  for (const o of vote.options) counts.set(o.id, 0);
+  for (const b of vote.ballots) {
+    counts.set(b.optionId, (counts.get(b.optionId) ?? 0) + 1);
+  }
+  let winner = vote.options[0]?.id;
+  let best = -1;
+  for (const [oid, c] of counts) {
+    if (c > best) {
+      best = c;
+      winner = oid;
+    }
+  }
+  const winnerLabel = vote.options.find((o) => o.id === winner)?.label ?? "—";
+  await prisma.vote.update({
+    where: { id: voteId },
+    data: { status: "CLOSED" },
+  });
+  if (vote.maintenanceRequestId) {
+    await prisma.maintenanceRequest.update({
+      where: { id: vote.maintenanceRequestId },
+      data: {
+        aiSuggestions:
+          (vote.maintenanceRequest?.aiSuggestions ?? "") +
+          `\n\n[نتيجة التصويت] ${winnerLabel}`,
+      },
+    });
+  }
+  revalidatePath(`/building/${vote.buildingId}/maintenance`);
+  revalidatePath(vbase);
   redirect(vbase);
 }

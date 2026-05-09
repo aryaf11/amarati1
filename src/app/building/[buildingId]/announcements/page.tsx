@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { postAnnouncementAction } from "@/actions/social";
-import { loadBuildingContext } from "@/components/BuildingNav";
+import { loadBuildingContext } from "@/lib/building-context";
 import { getCurrentUser } from "@/lib/current-user";
 import { getLocale } from "@/lib/locale";
 import { pickDateLocale, ui } from "@/lib/ui-strings";

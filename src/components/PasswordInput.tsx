@@ -38,7 +38,7 @@ export function PasswordInput({
         aria-pressed={show}
         tabIndex={-1}
       >
-        {show ? <EyeOffIcon /> : <EyeIcon />}
+        {show ? <EyeIcon /> : <EyeOffIcon />}
       </button>
     </div>
   );

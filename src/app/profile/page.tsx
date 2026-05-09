@@ -1,12 +1,15 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { logoutAction, updateProfileAction } from "@/actions/auth";
 import { TopNav } from "@/components/TopNav";
 import { ProfileSettings } from "@/components/ProfileSettings";
 import { SubmitButton } from "@/components/SubmitButton";
 import { Button, Card, Input, PageShell } from "@/components/ui";
-import { UserCircleIcon } from "@/components/LandingIcons";
+import { PassportIcon, UserCircleIcon } from "@/components/LandingIcons";
+import { listMyBuildings } from "@/lib/access";
 import { getCurrentUser } from "@/lib/current-user";
 import { getLocale } from "@/lib/locale";
+import { prisma } from "@/lib/prisma";
 import { isEmailVerificationRequired } from "@/lib/send-verification-email";
 import { ui, pickDateLocale } from "@/lib/ui-strings";
 
@@ -31,6 +34,37 @@ export default async function ProfilePage({
     month: "long",
     day: "numeric",
   });
+  const eventDateFmt = new Intl.DateTimeFormat(pickDateLocale(locale), {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+
+  const memberships = await listMyBuildings(user.id);
+  const unitIds = memberships.map((m) => m.unitId);
+  const recentEvents = unitIds.length
+    ? await prisma.apartmentHistoryEvent.findMany({
+        where: { unitId: { in: unitIds } },
+        orderBy: { createdAt: "desc" },
+      })
+    : [];
+
+  const eventsByUnit = new Map<
+    string,
+    { id: string; title: string; detail: string | null; createdAt: Date }[]
+  >();
+  for (const e of recentEvents) {
+    const list = eventsByUnit.get(e.unitId) ?? [];
+    if (list.length < 4) {
+      list.push({
+        id: e.id,
+        title: e.title,
+        detail: e.detail,
+        createdAt: e.createdAt,
+      });
+      eventsByUnit.set(e.unitId, list);
+    }
+  }
 
   return (
     <div className="flex min-h-full flex-col">
@@ -63,85 +97,170 @@ export default async function ProfilePage({
           </p>
         ) : null}
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          <Card title={t.accountTitle}>
-            <form action={updateProfileAction} className="space-y-3">
-              <div>
-                <label className="mb-1 block text-xs text-slate-500">{t.name}</label>
-                <Input name="name" defaultValue={user.name} required minLength={2} />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs text-slate-500">{t.email}</label>
-                <Input value={user.email} disabled readOnly dir="ltr" className="text-left opacity-70" />
-                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-                  {verified ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-teal-800 dark:bg-teal-950/50 dark:text-teal-200">
-                      ● {t.emailVerifiedYes}
+        <Card title={t.accountTitle}>
+          <form action={updateProfileAction} className="space-y-3">
+            <div>
+              <label className="mb-1 block text-xs text-slate-500">{t.name}</label>
+              <Input name="name" defaultValue={user.name} required minLength={2} />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs text-slate-500">{t.email}</label>
+              <Input value={user.email} disabled readOnly dir="ltr" className="text-left opacity-70" />
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                {verified ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-teal-800 dark:bg-teal-950/50 dark:text-teal-200">
+                    ● {t.emailVerifiedYes}
+                  </span>
+                ) : (
+                  <>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+                      ● {t.emailVerifiedNo}
                     </span>
-                  ) : (
-                    <>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
-                        ● {t.emailVerifiedNo}
-                      </span>
-                      <a
-                        href="/register/check-email"
-                        className="font-medium underline"
-                        style={{ color: accent }}
-                      >
-                        {t.resendVerification}
-                      </a>
-                    </>
-                  )}
-                </div>
+                    <a
+                      href="/register/check-email"
+                      className="font-medium underline"
+                      style={{ color: accent }}
+                    >
+                      {t.resendVerification}
+                    </a>
+                  </>
+                )}
               </div>
-              <div>
-                <label className="mb-1 block text-xs text-slate-500">{t.phone}</label>
-                <Input
-                  name="phone"
-                  defaultValue={user.phone ?? ""}
-                  dir="ltr"
-                  className="text-left"
-                />
-              </div>
-              <p className="text-xs text-slate-500 dark:text-slate-300">
-                {t.memberSince}{" "}
-                <span dir="ltr">{dateFmt.format(user.createdAt)}</span>
-              </p>
-              <SubmitButton className="w-full" pendingLabel={t.saving}>
-                {t.save}
-              </SubmitButton>
-            </form>
-          </Card>
-
-          <div className="space-y-6">
-            <Card title={t.settingsTitle}>
-              <p className="mb-4 text-xs text-slate-500 dark:text-slate-300">{t.settingsHint}</p>
-              <ProfileSettings
-                locale={locale}
-                t={{
-                  themeLabel: t.themeLabel,
-                  themeLight: t.themeLight,
-                  themeDark: t.themeDark,
-                  themeSystem: t.themeSystem,
-                  languageLabel: t.languageLabel,
-                  notificationsLabel: t.notificationsLabel,
-                  notificationsOn: t.notificationsOn,
-                  notificationsOff: t.notificationsOff,
-                  notificationsHint: t.notificationsHint,
-                }}
+            </div>
+            <div>
+              <label className="mb-1 block text-xs text-slate-500">{t.phone}</label>
+              <Input
+                name="phone"
+                defaultValue={user.phone ?? ""}
+                dir="ltr"
+                className="text-left"
               />
-            </Card>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-300">
+              {t.memberSince}{" "}
+              <span dir="ltr">{dateFmt.format(user.createdAt)}</span>
+            </p>
+            <SubmitButton className="w-full" pendingLabel={t.saving}>
+              {t.save}
+            </SubmitButton>
+          </form>
+        </Card>
 
-            <Card title={t.sessionTitle}>
-              <p className="mb-3 text-xs text-slate-500 dark:text-slate-300">{t.sessionHint}</p>
-              <form action={logoutAction}>
-                <Button type="submit" variant="ghost" className="w-full">
-                  {t.logout}
-                </Button>
-              </form>
-            </Card>
-          </div>
-        </div>
+        <Card title={t.passportTitle}>
+          <p className="mb-4 text-xs text-slate-500 dark:text-slate-300">
+            {t.passportHint}
+          </p>
+          {memberships.length === 0 ? (
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              {t.passportNoUnits}
+            </p>
+          ) : (
+            <ul className="space-y-4">
+              {memberships.map((m) => {
+                const events = eventsByUnit.get(m.unitId) ?? [];
+                return (
+                  <li
+                    key={m.id}
+                    className="rounded-2xl border p-4"
+                    style={{
+                      borderColor: "var(--card-border)",
+                      backgroundColor: "color-mix(in srgb, var(--card) 92%, transparent)",
+                    }}
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="flex items-start gap-3">
+                        <span
+                          className="mt-0.5 inline-flex size-10 shrink-0 items-center justify-center rounded-2xl"
+                          style={{
+                            backgroundColor: "var(--accent-soft)",
+                            color: accent,
+                          }}
+                          aria-hidden
+                        >
+                          <PassportIcon />
+                        </span>
+                        <div>
+                          <p className="font-semibold" style={{ color: accent }}>
+                            {m.unit.building.name}
+                          </p>
+                          <p className="text-xs text-muted">
+                            {ui(locale).buildingHome.unitPrefix} {m.unit.label}
+                            {m.unit.building.city ? ` · ${m.unit.building.city}` : ""}
+                          </p>
+                        </div>
+                      </div>
+                      <Link
+                        href={`/building/${m.unit.building.id}/passport`}
+                        className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold shadow-sm transition hover:shadow"
+                        style={{
+                          borderColor: "var(--accent)",
+                          color: accent,
+                          backgroundColor: "var(--card)",
+                        }}
+                      >
+                        {t.passportOpen}
+                      </Link>
+                    </div>
+                    {events.length === 0 ? (
+                      <p className="mt-3 text-xs text-muted">{t.passportNoEvents}</p>
+                    ) : (
+                      <ul className="mt-3 space-y-2 text-sm">
+                        {events.map((e) => (
+                          <li
+                            key={e.id}
+                            className="rounded-xl border p-2.5"
+                            style={{
+                              borderColor: "var(--card-border)",
+                              backgroundColor: "var(--card)",
+                            }}
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="font-medium">{e.title}</p>
+                              <span dir="ltr" className="text-[11px] text-muted">
+                                {eventDateFmt.format(e.createdAt)}
+                              </span>
+                            </div>
+                            {e.detail ? (
+                              <p className="mt-1 line-clamp-2 whitespace-pre-line text-xs text-muted">
+                                {e.detail}
+                              </p>
+                            ) : null}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </Card>
+
+        <Card title={t.notificationsCardTitle}>
+          <ProfileSettings
+            locale={locale}
+            t={{
+              themeLabel: t.themeLabel,
+              themeLight: t.themeLight,
+              themeDark: t.themeDark,
+              themeSystem: t.themeSystem,
+              languageLabel: t.languageLabel,
+              notificationsLabel: t.notificationsLabel,
+              notificationsOn: t.notificationsOn,
+              notificationsOff: t.notificationsOff,
+              notificationsHint: t.notificationsHint,
+            }}
+          />
+        </Card>
+
+        <Card title={t.sessionTitle}>
+          <p className="mb-3 text-xs text-slate-500 dark:text-slate-300">{t.sessionHint}</p>
+          <form action={logoutAction}>
+            <Button type="submit" variant="ghost" className="w-full">
+              {t.logout}
+            </Button>
+          </form>
+        </Card>
       </PageShell>
     </div>
   );

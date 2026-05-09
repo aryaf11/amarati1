@@ -15,7 +15,7 @@ const labels: Record<
     back: "إغلاق والعودة",
     you: "سؤالك",
     reply: "الرد",
-    ph: "اكتب سؤالك...",
+    ph: "اكتب سؤالك… مثال: «عندي تسريب ماء» أو «عطل كهربائي»",
     send: "إرسال",
   },
   en: {
@@ -23,26 +23,35 @@ const labels: Record<
     back: "Close and go back",
     you: "You",
     reply: "Reply",
-    ph: "Type your question...",
+    ph: 'Type your question… e.g. "I have a water leak" or "electrical issue"',
     send: "Send",
   },
 };
 
-export function ChatbotClient({ locale }: { locale: AppLocale }) {
+export function ChatbotClient({
+  locale,
+  embedded = false,
+}: {
+  locale: AppLocale;
+  embedded?: boolean;
+}) {
   const L = labels[locale];
   const [text, setText] = useState("");
   const [lines, setLines] = useState<{ q: string; a: string }[]>([]);
   const [p, start] = useTransition();
-  return (
-    <Card title={L.title}>
-      <div className="mb-4 flex justify-end">
-        <Link
-          href="/"
-          className="text-xs font-medium text-teal-700 underline underline-offset-2 hover:text-teal-900 dark:text-teal-400"
-        >
-          {L.back}
-        </Link>
-      </div>
+
+  const inner = (
+    <>
+      {!embedded ? (
+        <div className="mb-4 flex justify-end">
+          <Link
+            href="/"
+            className="text-xs font-medium text-teal-700 underline underline-offset-2 hover:text-teal-900 dark:text-teal-400"
+          >
+            {L.back}
+          </Link>
+        </div>
+      ) : null}
       <div className="mb-4 max-h-64 space-y-3 overflow-y-auto text-sm">
         {lines.map((l, i) => (
           <div key={i} className="rounded-lg bg-slate-50 p-2 dark:bg-slate-900/60">
@@ -75,6 +84,9 @@ export function ChatbotClient({ locale }: { locale: AppLocale }) {
           {L.send}
         </Button>
       </div>
-    </Card>
+    </>
   );
+
+  if (embedded) return inner;
+  return <Card title={L.title}>{inner}</Card>;
 }

@@ -1,7 +1,13 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { closeVoteAndApplySupervisorAction } from "@/actions/governance";
+import {
+  assignSupervisorAction,
+  closeMaintenanceCompanyVoteAction,
+  closeVoteAndApplySupervisorAction,
+  openSupervisorVoteAction,
+} from "@/actions/governance";
 import { castVoteAction } from "@/actions/votes";
-import { loadBuildingContext } from "@/components/BuildingNav";
+import { loadBuildingContext } from "@/lib/building-context";
 import { getCurrentUser } from "@/lib/current-user";
 import { getLocale } from "@/lib/locale";
 import { pickDateLocale, ui } from "@/lib/ui-strings";
@@ -24,12 +30,32 @@ export default async function VotesPage({
   if (!building || !membership) notFound();
   const locale = await getLocale();
   const v = ui(locale).votes;
+  const th = ui(locale).buildingHome;
   const df = pickDateLocale(locale);
-  const votes = await prisma.vote.findMany({
-    where: { buildingId },
-    orderBy: { createdAt: "desc" },
-    include: { options: true, ballots: true, maintenanceRequest: true },
-  });
+  const [votes, supervisors, members] = await Promise.all([
+    prisma.vote.findMany({
+      where: { buildingId },
+      orderBy: { createdAt: "desc" },
+      include: { options: true, ballots: true, maintenanceRequest: true },
+    }),
+    prisma.membership.findMany({
+      where: { unit: { buildingId }, isSupervisor: true },
+      include: { user: true, unit: true },
+    }),
+    prisma.membership.findMany({
+      where: { unit: { buildingId } },
+      include: { user: true, unit: true },
+    }),
+  ]);
+  const isCreator = building.creatorId === user.id;
+  const canManage = isCreator || membership.isSupervisor;
+
+  const supervisorVotes = votes.filter((x) => x.type === "SUPERVISOR");
+  const companyVotes = votes.filter((x) => x.type === "MAINTENANCE_COMPANY");
+  const otherVotes = votes.filter(
+    (x) => x.type !== "SUPERVISOR" && x.type !== "MAINTENANCE_COMPANY",
+  );
+
   return (
     <div className="space-y-6">
       {err ? (
@@ -37,63 +63,300 @@ export default async function VotesPage({
           {err}
         </p>
       ) : null}
-      <Card title={v.title}>
-        <ul className="space-y-6">
+
+      <Card title={th.currentSupervisor}>
+        {supervisors.length === 0 ? (
+          <p className="text-sm text-muted">{th.noSupervisor}</p>
+        ) : (
+          <ul className="space-y-1 text-sm">
+            {supervisors.map((s) => (
+              <li key={s.id}>
+                <strong>{s.user.name}</strong> ({th.unitPrefix} {s.unit.label})
+              </li>
+            ))}
+          </ul>
+        )}
+        {isCreator ? (
+          <div
+            className="mt-4 space-y-3 border-t pt-4"
+            style={{ borderColor: "var(--card-border)" }}
+          >
+            <p className="text-xs text-muted">{th.assignHint}</p>
+            <form action={assignSupervisorAction} className="flex flex-wrap gap-2">
+              <input type="hidden" name="buildingId" value={buildingId} />
+              <select
+                name="targetUserId"
+                className="rounded-xl border px-3 py-2 text-sm"
+                style={{
+                  backgroundColor: "var(--field-bg)",
+                  borderColor: "var(--field-border)",
+                  color: "var(--foreground)",
+                }}
+                required
+              >
+                <option value="">{th.chooseMember}</option>
+                {members.map((x) => (
+                  <option key={x.userId} value={x.userId}>
+                    {x.user.name} — {x.unit.label}
+                  </option>
+                ))}
+              </select>
+              <Button type="submit" className="!py-2 !text-xs">
+                {th.assignSubmit}
+              </Button>
+            </form>
+            <form
+              action={openSupervisorVoteAction}
+              className="flex flex-wrap items-center gap-2"
+            >
+              <input type="hidden" name="buildingId" value={buildingId} />
+              <Button type="submit" variant="ghost" className="!py-2 !text-xs">
+                {th.startVote}
+              </Button>
+              <span className="text-xs text-muted">{th.ownersRequired}</span>
+            </form>
+          </div>
+        ) : null}
+      </Card>
+
+      <Card title={v.kindsTitle}>
+        <p className="text-sm text-muted">{v.kindsHint}</p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div
+            className="rounded-2xl border p-4"
+            style={{
+              borderColor: "var(--card-border)",
+              backgroundColor: "color-mix(in srgb, var(--card) 90%, transparent)",
+            }}
+          >
+            <p className="text-sm font-semibold" style={{ color: "var(--accent)" }}>
+              {v.kindSupervisorTitle}
+            </p>
+            <p className="mt-1 text-xs text-muted">{v.kindSupervisorDesc}</p>
+            {isCreator ? (
+              <form action={openSupervisorVoteAction} className="mt-3">
+                <input type="hidden" name="buildingId" value={buildingId} />
+                <Button type="submit" variant="ghost" className="!py-1.5 !text-xs">
+                  {v.startSupervisor}
+                </Button>
+              </form>
+            ) : (
+              <p className="mt-3 text-xs text-muted">{v.creatorOnlyHint}</p>
+            )}
+          </div>
+
+          <div
+            className="rounded-2xl border p-4"
+            style={{
+              borderColor: "var(--card-border)",
+              backgroundColor: "color-mix(in srgb, var(--card) 90%, transparent)",
+            }}
+          >
+            <p className="text-sm font-semibold" style={{ color: "var(--accent)" }}>
+              {v.kindCompanyTitle}
+            </p>
+            <p className="mt-1 text-xs text-muted">{v.kindCompanyDesc}</p>
+            <Link
+              href={`/building/${buildingId}/maintenance`}
+              className="mt-3 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold shadow-sm transition hover:shadow"
+              style={{
+                borderColor: "var(--accent)",
+                color: "var(--accent)",
+                backgroundColor: "var(--card)",
+              }}
+            >
+              {v.openMaintenance}
+            </Link>
+          </div>
+        </div>
+      </Card>
+
+      <VoteList
+        title={v.titleSupervisor}
+        votes={supervisorVotes}
+        userId={user.id}
+        df={df}
+        v={v}
+        canCloseSupervisor={canManage}
+        canCloseCompany={false}
+      />
+
+      <VoteList
+        title={v.titleCompany}
+        votes={companyVotes}
+        userId={user.id}
+        df={df}
+        v={v}
+        canCloseSupervisor={false}
+        canCloseCompany={canManage}
+      />
+
+      {otherVotes.length > 0 ? (
+        <VoteList
+          title={v.titleOther}
+          votes={otherVotes}
+          userId={user.id}
+          df={df}
+          v={v}
+          canCloseSupervisor={false}
+          canCloseCompany={false}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+type VoteRow = {
+  id: string;
+  type: string;
+  title: string;
+  status: string;
+  endsAt: Date;
+  description: string | null;
+  options: { id: string; label: string }[];
+  ballots: { userId: string; optionId: string }[];
+};
+
+type VotesT = ReturnType<typeof ui>["votes"];
+
+function VoteList({
+  title,
+  votes,
+  userId,
+  df,
+  v,
+  canCloseSupervisor,
+  canCloseCompany,
+}: {
+  title: string;
+  votes: VoteRow[];
+  userId: string;
+  df: string;
+  v: VotesT;
+  canCloseSupervisor: boolean;
+  canCloseCompany: boolean;
+}) {
+  return (
+    <Card title={title}>
+      {votes.length === 0 ? (
+        <p className="text-sm text-muted">{v.none}</p>
+      ) : (
+        <ul className="space-y-5">
           {votes.map((vote) => {
-            const mine = vote.ballots.find((b) => b.userId === user.id);
+            const mine = vote.ballots.find((b) => b.userId === userId);
             const counts = new Map<string, number>();
             for (const o of vote.options) counts.set(o.id, 0);
             for (const b of vote.ballots) {
               counts.set(b.optionId, (counts.get(b.optionId) ?? 0) + 1);
             }
+            const total = vote.ballots.length;
+            const isOpen = vote.status === "OPEN" && vote.endsAt > new Date();
             const typeLabel =
-              vote.type === "SUPERVISOR" ? v.typeSupervisor : v.typeLegacyPoll;
+              vote.type === "SUPERVISOR"
+                ? v.typeSupervisor
+                : vote.type === "MAINTENANCE_COMPANY"
+                  ? v.typeCompany
+                  : v.typeLegacyPoll;
             return (
               <li
                 key={vote.id}
-                className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/40"
+                className="rounded-2xl border p-4 shadow-sm"
+                style={{
+                  backgroundColor: "color-mix(in srgb, var(--card) 88%, transparent)",
+                  borderColor: "var(--card-border)",
+                }}
               >
                 <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div>
-                    <p className="font-semibold">{vote.title}</p>
-                    <p className="text-xs text-slate-500">
-                      {typeLabel} —{" "}
-                      {vote.status === "OPEN" ? v.open : v.closed} — {v.ends}{" "}
-                      {vote.endsAt.toLocaleString(df)}
+                  <div className="flex-1">
+                    <p className="font-semibold" style={{ color: "var(--accent)" }}>
+                      {vote.title}
+                    </p>
+                    <p className="mt-1 text-xs text-muted">
+                      {typeLabel} · {vote.status === "OPEN" ? v.open : v.closed} ·{" "}
+                      {v.ends} {vote.endsAt.toLocaleString(df)}
                     </p>
                     {vote.description ? (
-                      <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{vote.description}</p>
+                      <p className="mt-2 text-sm">{vote.description}</p>
                     ) : null}
                   </div>
+                  <span
+                    className="rounded-full px-2 py-0.5 text-[11px] font-medium"
+                    style={{
+                      backgroundColor: isOpen
+                        ? "var(--accent-soft)"
+                        : "color-mix(in srgb, var(--muted) 18%, transparent)",
+                      color: isOpen ? "var(--accent)" : "var(--muted)",
+                    }}
+                  >
+                    {isOpen ? v.open : v.closed}
+                  </span>
                 </div>
                 <ul className="mt-3 space-y-2 text-sm">
-                  {vote.options.map((o) => (
-                    <li key={o.id} className="flex flex-wrap items-center justify-between gap-2">
-                      <span>
-                        {o.label}{" "}
-                        <span className="text-xs text-slate-500">
-                          ({counts.get(o.id) ?? 0} {v.votes})
-                        </span>
-                      </span>
-                      {vote.status === "OPEN" && vote.endsAt > new Date() ? (
-                        <form action={castVoteAction}>
-                          <input type="hidden" name="voteId" value={vote.id} />
-                          <input type="hidden" name="optionId" value={o.id} />
-                          <Button type="submit" className="!py-1 !text-xs">
-                            {mine?.optionId === o.id ? v.yourVote : v.vote}
-                          </Button>
-                        </form>
-                      ) : null}
-                    </li>
-                  ))}
+                  {vote.options.map((o) => {
+                    const c = counts.get(o.id) ?? 0;
+                    const pct = total > 0 ? Math.round((c / total) * 100) : 0;
+                    const isMine = mine?.optionId === o.id;
+                    return (
+                      <li
+                        key={o.id}
+                        className="rounded-xl border p-2.5"
+                        style={{
+                          borderColor: isMine ? "var(--accent)" : "var(--card-border)",
+                          backgroundColor: "var(--card)",
+                        }}
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <span className="font-medium">{o.label}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted">
+                              {c} {v.votes} · {pct}%
+                            </span>
+                            {isOpen ? (
+                              <form action={castVoteAction}>
+                                <input type="hidden" name="voteId" value={vote.id} />
+                                <input type="hidden" name="optionId" value={o.id} />
+                                <Button type="submit" className="!py-1 !text-xs">
+                                  {isMine ? v.yourVote : v.vote}
+                                </Button>
+                              </form>
+                            ) : null}
+                          </div>
+                        </div>
+                        <div
+                          className="mt-2 h-1.5 w-full overflow-hidden rounded-full"
+                          style={{ backgroundColor: "var(--accent-soft)" }}
+                          aria-hidden
+                        >
+                          <div
+                            className="h-full rounded-full transition-all"
+                            style={{
+                              width: `${pct}%`,
+                              backgroundColor: "var(--accent)",
+                            }}
+                          />
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
-                {(membership.isSupervisor || building.creatorId === user.id) && vote.status === "OPEN" ? (
-                  <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
-                    {vote.type === "SUPERVISOR" ? (
+                {isOpen && (canCloseSupervisor || canCloseCompany) ? (
+                  <div
+                    className="mt-4 flex flex-wrap gap-2 border-t pt-3"
+                    style={{ borderColor: "var(--card-border)" }}
+                  >
+                    {canCloseSupervisor && vote.type === "SUPERVISOR" ? (
                       <form action={closeVoteAndApplySupervisorAction}>
                         <input type="hidden" name="voteId" value={vote.id} />
                         <Button type="submit" variant="ghost" className="!py-1 !text-xs">
                           {v.closeSupervisor}
+                        </Button>
+                      </form>
+                    ) : null}
+                    {canCloseCompany && vote.type === "MAINTENANCE_COMPANY" ? (
+                      <form action={closeMaintenanceCompanyVoteAction}>
+                        <input type="hidden" name="voteId" value={vote.id} />
+                        <Button type="submit" variant="ghost" className="!py-1 !text-xs">
+                          {v.closeCompany}
                         </Button>
                       </form>
                     ) : null}
@@ -103,10 +366,8 @@ export default async function VotesPage({
             );
           })}
         </ul>
-        {votes.length === 0 ? (
-          <p className="text-sm text-slate-600 dark:text-slate-300">{v.none}</p>
-        ) : null}
-      </Card>
-    </div>
+      )}
+    </Card>
   );
 }
+

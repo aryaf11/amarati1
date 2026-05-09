@@ -1,4 +1,10 @@
 import { fetchExternalMaintenanceMl } from "./ml-inference";
+import {
+  issueLabel,
+  predictFailure,
+  recommendServices,
+  textToFeatures,
+} from "./maintenance-predictor";
 import { prisma } from "./prisma";
 
 const KEYWORDS: { k: string[]; labels: string[] }[] = [
@@ -18,6 +24,30 @@ function classify(description: string) {
   return Array.from(new Set(hits));
 }
 
+function localModelInsight(description: string, city: string) {
+  const features = textToFeatures(description, city);
+  const issue = predictFailure(features);
+  const label = issueLabel(issue, "ar");
+  if (issue === "No_Issue") {
+    return {
+      issue,
+      summary: `النموذج التنبؤي (Amarati RandomForest) لم يحدد عطلاً واضحاً من الوصف الحالي (التصنيف: ${label}).`,
+      suggestions: "لو وُجدت أعراض إضافية، يرجى توضيحها (ماء، كهرباء، جدران، صرف، سقف) للحصول على توصية فنّية أدق.",
+      tag: label,
+    };
+  }
+  const recs = recommendServices(issue, 3);
+  const recLines = recs
+    .map((r, i) => `${i + 1}. ${r.company} — ⭐ ${r.rating.toFixed(1)}`)
+    .join("\n");
+  return {
+    issue,
+    summary: `توقّع النموذج التنبؤي (Amarati RandomForest، مبني على دفتر Colab): ${label}.`,
+    suggestions: `فنّيون موصى بهم (مكة المكرمة):\n${recLines}`,
+    tag: label,
+  };
+}
+
 export async function analyzeMaintenance(options: {
   description: string;
   city: string;
@@ -28,19 +58,20 @@ export async function analyzeMaintenance(options: {
     city: options.city,
     buildingId: options.buildingId,
   });
+  const local = localModelInsight(options.description, options.city);
   let tags = classify(options.description);
+  if (local.tag) tags.push(local.tag);
   if (ext?.tags?.length) {
     tags = Array.from(new Set([...tags, ...ext.tags]));
   }
-  const localSummary = tags.length
-    ? `تم تصنيف المشكلة ضمن: ${tags.join("، ")}.`
-    : "لم يتم تحديد تصنيف دقيق؛ يُنصح بوصف أوضح مع صور إن وجدت.";
+  tags = Array.from(new Set(tags));
+
+  const localSummary = local.summary;
   const summary = ext?.summary?.trim()
     ? `${ext.summary.trim()}\n\n${localSummary}`
     : localSummary;
-  const localSuggestions = tags.length
-    ? `مجالات مقترحة للمتابعة مع مزوّدي الخدمة أو المشرف: ${tags.join("، ")}.`
-    : "راجع الوصف مع المشرف أو الجهات المحلية المناسبة حسب نوع العطل.";
+
+  const localSuggestions = local.suggestions;
   const suggestions = ext?.suggestions?.trim()
     ? `${ext.suggestions.trim()}\n\n${localSuggestions}`
     : localSuggestions;

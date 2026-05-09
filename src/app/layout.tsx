@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Cairo } from "next/font/google";
+import { BottomNav } from "@/components/BottomNav";
+import { listMyBuildings } from "@/lib/access";
+import { getCurrentUser } from "@/lib/current-user";
 import { getLocale } from "@/lib/locale";
 import { THEME_BOOTSTRAP_SCRIPT } from "@/lib/theme-bootstrap";
 import "./globals.css";
@@ -14,6 +17,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
 };
+
+export const preferredRegion = ["sin1"];
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
@@ -52,12 +57,22 @@ export default async function RootLayout({
 }>) {
   const locale = await getLocale();
   const dir = locale === "en" ? "ltr" : "rtl";
+  const user = await getCurrentUser();
+  const memberships = user ? await listMyBuildings(user.id) : [];
+  const fallbackBuildingId = memberships[0]?.unit.buildingId ?? null;
   return (
     <html lang={locale} dir={dir} className={`${cairo.variable} h-full`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }} />
       </head>
-      <body className="min-h-full font-sans antialiased">{children}</body>
+      <body
+        className={`min-h-full font-sans antialiased ${user ? "pb-24 sm:pb-28" : ""}`}
+      >
+        {children}
+        {user ? (
+          <BottomNav locale={locale} fallbackBuildingId={fallbackBuildingId} />
+        ) : null}
+      </body>
     </html>
   );
 }
