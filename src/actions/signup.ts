@@ -1,5 +1,7 @@
 "use server";
 
+/** تسجيل مستخدم + إنشاء مبنى أو الانضمام — يتصل بـ Prisma (`User`, `Building`, `Membership`). */
+
 import { randomBytes } from "node:crypto";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { redirect } from "next/navigation";
@@ -12,47 +14,27 @@ import {
   deliverVerificationEmail,
   isEmailVerificationRequired,
 } from "@/lib/send-verification-email";
-import { formatSaudiNationalAddressLine } from "@/lib/saudi-address";
 import { createSession } from "@/lib/session";
 import { buildingPublicCode } from "@/lib/tokens";
 import { ui } from "@/lib/ui-strings";
 
 const personalSchema = z.object({
   name: z.string().trim().min(2),
-  email: z.string().trim().toLowerCase().email(),
-  password: z.string().min(6),
-  phone: z.preprocess(
-    (v) => (v == null || String(v).trim() === "" ? undefined : String(v).trim()),
-    z.union([z.undefined(), z.string().min(3)]),
+  email: z.preprocess(
+    (v) => {
+      const s = String(v ?? "").trim().toLowerCase();
+      return s === "" ? undefined : s;
+    },
+    z.union([z.undefined(), z.string().email()]),
   ),
+  password: z.string().min(6),
+  phone: z.string().trim().min(8).max(24),
 });
-
-const saudiPostal = z.string().trim().regex(/^\d{5}$/);
 
 const buildingSchema = z.object({
   buildingName: z.string().trim().min(2),
-  region: z.string().trim().min(2),
   city: z.string().trim().min(2),
-  district: z.string().trim().min(2),
-  streetName: z.string().trim().min(2),
-  buildingNumber: z.string().trim().min(1),
-  additionalNumber: z.preprocess(
-    (v) => (v == null || String(v).trim() === "" ? undefined : String(v).trim()),
-    z.union([z.undefined(), z.string().min(1)]),
-  ),
-  postalCode: saudiPostal,
-  shortAddressCode: z.preprocess(
-    (v) => (v == null || String(v).trim() === "" ? undefined : String(v).trim().toUpperCase()),
-    z.union([z.undefined(), z.string().regex(/^[A-Z0-9]{8}$/)]),
-  ),
-  latitude: z.preprocess(
-    (v) => (v == null || String(v).trim() === "" ? undefined : Number(String(v).trim())),
-    z.union([z.undefined(), z.number()]),
-  ),
-  longitude: z.preprocess(
-    (v) => (v == null || String(v).trim() === "" ? undefined : Number(String(v).trim())),
-    z.union([z.undefined(), z.number()]),
-  ),
+  address: z.string().trim().min(3),
   unitLabel: z.string().trim().min(1),
 });
 
@@ -83,31 +65,44 @@ async function createUserWithVerification(
 ) {
   const locale = await getLocale();
   const t = ui(locale);
-  const exists = await prisma.user.findUnique({ where: { email: data.email } });
-  if (exists) errorRedirect(t.register.emailTaken);
+  const byPhone = await prisma.user.findUnique({ where: { phone: data.phone } });
+  if (byPhone) errorRedirect(t.register.phoneTaken);
+  if (data.email) {
+    const byEmail = await prisma.user.findUnique({ where: { email: data.email } });
+    if (byEmail) errorRedirect(t.register.emailTaken);
+  }
   const passwordHash = await hashPassword(data.password);
   const gate = isEmailVerificationRequired();
-  const verifyToken = gate ? randomBytes(24).toString("base64url") : null;
+  const verifyToken = gate && data.email ? randomBytes(24).toString("base64url") : null;
+
+  /** بلا بريد لا يوجد تحقّق بريد؛ نُحمِّل نقطة الدخول عبر الجوال أو نُعلِّم البريد مؤكَّداً. */
+  const emailVerifiedAt = !gate
+    ? new Date()
+    : data.email
+      ? null
+      : new Date();
+
   const user = await prisma.user.create({
     data: {
-      email: data.email,
+      email: data.email ?? null,
       passwordHash,
       name: data.name,
-      phone: data.phone ?? null,
+      phone: data.phone,
       accountKind: "RESIDENT",
-      emailVerifiedAt: gate ? null : new Date(),
+      emailVerifiedAt,
       emailVerifyToken: verifyToken,
-      emailVerifyExpires: gate ? new Date(Date.now() + 86400000) : null,
+      emailVerifyExpires:
+        gate && data.email ? new Date(Date.now() + 86400000) : null,
     },
   });
-  if (gate && verifyToken) {
+  if (gate && data.email && verifyToken) {
     const sent = await deliverVerificationEmail(data.email, verifyToken, locale);
     if (!sent.ok) {
       await prisma.user.delete({ where: { id: user.id } });
       errorRedirect(t.register.verifySendFailed);
     }
   }
-  return { user, gate };
+  return { user, gate: Boolean(gate && data.email) };
 }
 
 export async function signupAndCreateBuildingAction(formData: FormData) {
@@ -117,60 +112,19 @@ export async function signupAndCreateBuildingAction(formData: FormData) {
   if (!personal.success) backCreateError(t.register.invalidForm);
   const building = buildingSchema.safeParse({
     buildingName: formData.get("buildingName"),
-    region: formData.get("region"),
     city: formData.get("city"),
-    district: formData.get("district"),
-    streetName: formData.get("streetName"),
-    buildingNumber: formData.get("buildingNumber"),
-    additionalNumber: formData.get("additionalNumber"),
-    postalCode: formData.get("postalCode"),
-    shortAddressCode: formData.get("shortAddressCode"),
-    latitude: formData.get("latitude"),
-    longitude: formData.get("longitude"),
+    address: formData.get("address"),
     unitLabel: formData.get("unitLabel"),
   });
   if (!building.success) backCreateError(t.signup.addressInvalid);
-  const { latitude, longitude } = building.data;
-  if (
-    (latitude !== undefined && Number.isNaN(latitude)) ||
-    (longitude !== undefined && Number.isNaN(longitude))
-  ) {
-    backCreateError(t.signup.coordsInvalid);
-  }
-  if (
-    (latitude !== undefined && longitude === undefined) ||
-    (longitude !== undefined && latitude === undefined)
-  ) {
-    backCreateError(t.signup.coordsBoth);
-  }
-
   try {
     const { user, gate } = await createUserWithVerification(personal.data, backCreateError);
-    const addressLine = formatSaudiNationalAddressLine({
-      region: building.data.region,
-      city: building.data.city,
-      district: building.data.district,
-      streetName: building.data.streetName,
-      buildingNumber: building.data.buildingNumber,
-      additionalNumber: building.data.additionalNumber,
-      postalCode: building.data.postalCode,
-      shortAddressCode: building.data.shortAddressCode,
-    });
     const inviteCode = buildingPublicCode();
     const created = await prisma.building.create({
       data: {
         name: building.data.buildingName,
-        address: addressLine,
+        address: building.data.address,
         city: building.data.city,
-        region: building.data.region,
-        district: building.data.district,
-        streetName: building.data.streetName,
-        buildingNumber: building.data.buildingNumber,
-        additionalNumber: building.data.additionalNumber,
-        postalCode: building.data.postalCode,
-        shortAddressCode: building.data.shortAddressCode,
-        latitude,
-        longitude,
         inviteCode,
         creatorId: user.id,
         units: { create: { label: building.data.unitLabel } },

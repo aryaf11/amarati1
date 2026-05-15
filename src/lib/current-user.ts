@@ -7,9 +7,14 @@ import { readSessionUserId } from "./session";
  * `getCurrentUser` will share the same result and avoid duplicate DB hits.
  */
 export const getCurrentUser = cache(async () => {
-  const id = await readSessionUserId();
-  if (!id) return null;
-  return prisma.user.findUnique({
-    where: { id },
-  });
+  try {
+    const id = await readSessionUserId();
+    if (!id) return null;
+    return await prisma.user.findUnique({
+      where: { id },
+    });
+  } catch {
+    /** قاعدة البيانات غير متاحة أو جلسة تالفة — لا تُفجّر كل الصفحة */
+    return null;
+  }
 });

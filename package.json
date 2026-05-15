@@ -8,6 +8,8 @@
   "scripts": {
     "postinstall": "prisma generate",
     "dev": "next dev",
+    "ml:serve": "python scripts/maintenance_ml_server.py",
+    "dev:ml": "powershell -ExecutionPolicy Bypass -File ./scripts/run-dev-with-ml.ps1",
     "dev:docker": "docker compose up -d && prisma migrate deploy && next dev",
     "build": "prisma generate && next build",
     "build:netlify": "node scripts/netlify-build.cjs",

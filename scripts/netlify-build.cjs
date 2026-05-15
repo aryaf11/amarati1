@@ -19,6 +19,12 @@ function normalizeConnectionString(raw) {
   return s;
 }
 
+const useFirebase =
+  Boolean(process.env.FIREBASE_SERVICE_ACCOUNT_JSON?.trim()) ||
+  (Boolean(process.env.FIREBASE_PROJECT_ID?.trim()) &&
+    Boolean(process.env.FIREBASE_CLIENT_EMAIL?.trim()) &&
+    Boolean(process.env.FIREBASE_PRIVATE_KEY?.trim()));
+
 const dbPooled = normalizeConnectionString(process.env.DATABASE_URL);
 const dbDirect = normalizeConnectionString(process.env.DIRECT_URL);
 
@@ -27,6 +33,12 @@ const onNetlify =
 const buildWithoutDb =
   normalizeConnectionString(process.env.NETLIFY_BUILD_NO_DATABASE)?.toLowerCase() === "true" ||
   normalizeConnectionString(process.env.AMARATI_NETLIFY_BUILD_NO_DATABASE)?.toLowerCase() === "true";
+
+if (useFirebase) {
+  console.log("[Netlify build] Firebase mode — skipping prisma migrate deploy");
+  run("npx next build");
+  process.exit(0);
+}
 
 if (!dbPooled) {
   if (onNetlify && buildWithoutDb) {

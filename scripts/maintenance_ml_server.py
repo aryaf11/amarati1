@@ -224,27 +224,45 @@ def predict():
     issue = str(model.predict(X)[0])
     issue_ar = ISSUE_AR.get(issue, issue)
 
-    recs = recommend_services(issue)
+    recs = recommend_services(issue, limit=4)
     lines = [
-        f"{r.company} — تقييم {r.rating:.1f} (مكة المكرمة تقريباً)"
-        for r in recs.itertuples(index=False)
+        f"{i + 1}. {r.company} — ⭐ {r.rating:.1f}"
+        for i, r in enumerate(recs.itertuples(index=False))
     ]
-    suggestions = "\n".join(lines) if lines else "لا توجد توصية مطابقة في القائمة المحلية."
+    suggestions = (
+        "فنّيون موصى بهم (مكة المكرمة):\n" + "\n".join(lines)
+        if lines
+        else "لا توجد توصية مطابقة في القائمة المحلية."
+    )
 
+    horizon_days = {
+        "Water_Leakage": 21,
+        "Electrical_Issue": 14,
+        "Roof_Leakage": 30,
+        "Wall_Crack": 60,
+        "Drainage_Blockage": 10,
+        "No_Issue": 90,
+    }.get(issue, 90)
     summary = (
-        f"نتيجة النموذج التنبؤي (RandomForest كما في مشروع Colab): {issue_ar}.\n"
-        f"المؤشرات مُستنتجة تقريبياً من نص البلاغ والمدينة ({city or 'غير محدد'}). "
-        "للدقة الأعلى صِل مؤشرات حقيقية من المبنى لاحقاً."
+        f"تقدير زمني: يُفضّل المتابعة خلال نحو {horizon_days} يوماً كحد أقصى مقترح.\n\n"
+        f"نتيجة النموذج التنبؤي (RandomForest — مشروع Colab): {issue_ar}.\n"
+        f"المؤشرات مُستنتجة من نص البلاغ والمدينة ({city or 'غير محدد'})."
     )
     tags = [issue_ar, issue]
     if city:
         tags.append(city[:40])
+
+    companies = [
+        {"company": str(r.company), "rating": float(r.rating)}
+        for r in recs.itertuples(index=False)
+    ]
 
     return jsonify(
         {
             "summary": summary,
             "suggestions": suggestions,
             "tags": tags,
+            "companies": companies,
             "meta": {
                 "predicted_class": issue,
                 "features": {k: float(X[0][i]) for i, k in enumerate(FEATURE_ORDER)},

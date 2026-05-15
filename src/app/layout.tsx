@@ -39,14 +39,14 @@ export async function generateMetadata(): Promise<Metadata> {
       ...shared,
       title: "Amarati — Smart building community",
       description:
-        "For owners and tenants: national address, maintenance, voting, payments, and building announcements.",
+        "For owners and tenants: national address, maintenance with AI-assisted guidance, voting, and building announcements.",
     };
   }
   return {
     ...shared,
     title: "عَمارتي — تواصل سكان العمارة",
     description:
-      "منصة للملاك والمستأجرين: تسجيل المبنى بالعنوان الوطني السعودي، صيانة، تصويت، مدفوعات، وإعلانات داخل المبنى.",
+      "منصة للملاك والمستأجرين: تسجيل المبنى بالعنوان الوطني السعودي، صيانة مدعومة بالذكاء الاصطناعي، تصويت، وإعلانات داخل المبنى.",
   };
 }
 
@@ -58,7 +58,14 @@ export default async function RootLayout({
   const locale = await getLocale();
   const dir = locale === "en" ? "ltr" : "rtl";
   const user = await getCurrentUser();
-  const memberships = user ? await listMyBuildings(user.id) : [];
+  let memberships: Awaited<ReturnType<typeof listMyBuildings>> = [];
+  if (user) {
+    try {
+      memberships = await listMyBuildings(user.id);
+    } catch {
+      memberships = [];
+    }
+  }
   const fallbackBuildingId = memberships[0]?.unit.buildingId ?? null;
   return (
     <html lang={locale} dir={dir} className={`${cairo.variable} h-full`} suppressHydrationWarning>

@@ -8,7 +8,6 @@ import {
   BellIcon,
   BellOffIcon,
   GlobeIcon,
-  MonitorIcon,
   MoonIcon,
   SunIcon,
 } from "@/components/LandingIcons";
@@ -16,7 +15,7 @@ import {
 const THEME_KEY = "amarati-theme";
 const NOTIFY_KEY = "amarati-notifications";
 
-type ThemeMode = "light" | "dark" | "system";
+type ThemeMode = "light" | "dark";
 
 export function NavToolbar({
   locale,
@@ -27,33 +26,22 @@ export function NavToolbar({
 }) {
   const router = useRouter();
   const t = navT(locale);
-  const [theme, setTheme] = useState<ThemeMode>("system");
+  const [theme, setTheme] = useState<ThemeMode>("light");
   const [notifyOn, setNotifyOn] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem(THEME_KEY);
     if (stored === "dark") setTheme("dark");
-    else if (stored === "light") setTheme("light");
-    else setTheme("system");
+    else setTheme("light");
     setNotifyOn(localStorage.getItem(NOTIFY_KEY) === "1");
   }, []);
 
   function cycleTheme() {
     const root = document.documentElement;
-    let next: ThemeMode;
-    if (theme === "light") next = "dark";
-    else if (theme === "dark") next = "system";
-    else next = "light";
-
-    if (next === "system") {
-      localStorage.removeItem(THEME_KEY);
-      if (window.matchMedia("(prefers-color-scheme: dark)").matches) root.classList.add("dark");
-      else root.classList.remove("dark");
-    } else {
-      localStorage.setItem(THEME_KEY, next);
-      if (next === "dark") root.classList.add("dark");
-      else root.classList.remove("dark");
-    }
+    const next: ThemeMode = theme === "light" ? "dark" : "light";
+    localStorage.setItem(THEME_KEY, next);
+    if (next === "dark") root.classList.add("dark");
+    else root.classList.remove("dark");
     setTheme(next);
   }
 
@@ -78,10 +66,8 @@ export function NavToolbar({
     }
   }
 
-  const themeIcon =
-    theme === "dark" ? <MoonIcon /> : theme === "light" ? <SunIcon /> : <MonitorIcon />;
-  const themeLabel =
-    theme === "dark" ? t.themeDark : theme === "light" ? t.themeLight : t.themeSystem;
+  const themeIcon = theme === "dark" ? <MoonIcon /> : <SunIcon />;
+  const themeLabel = theme === "dark" ? t.themeDark : t.themeLight;
 
   const iconBtn =
     "inline-flex items-center justify-center rounded-full border p-2 shadow-sm backdrop-blur transition hover:shadow";

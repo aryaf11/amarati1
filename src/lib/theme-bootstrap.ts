@@ -1,2 +1,2 @@
-/** سطر واحد يُنفَّذ في أول HTML لضبط فئة dark من localStorage قبل الرسم */
-export const THEME_BOOTSTRAP_SCRIPT = `(function(){try{var k='amarati-theme';var t=localStorage.getItem(k);var d=document.documentElement;var mq=window.matchMedia('(prefers-color-scheme: dark)');if(t==='dark'){d.classList.add('dark');}else if(t==='light'){d.classList.remove('dark');}else if(mq.matches){d.classList.add('dark');}else{d.classList.remove('dark');}}catch(e){}})();`;
+/** يُنفَّذ في أول HTML: يقرأ `amarati-theme` من localStorage — فاتح أو داكن فقط (لا وضع «نظام»). */
+export const THEME_BOOTSTRAP_SCRIPT = `(function(){try{var k='amarati-theme';var t=localStorage.getItem(k);var d=document.documentElement;if(t==='dark'){d.classList.add('dark');}else{d.classList.remove('dark');}}catch(e){}})();`;

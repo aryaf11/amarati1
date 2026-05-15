@@ -1,17 +1,11 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import { authSecretKeyBytes } from "@/lib/server-env-bootstrap";
 
 const COOKIE = "amarati_session";
 
 function secretKey() {
-  let s = process.env.AUTH_SECRET?.trim();
-  if (!s || s.length < 16) {
-    if (process.env.NODE_ENV === "production") {
-      throw new Error("AUTH_SECRET must be set (min 16 chars)");
-    }
-    s = "amarati-local-dev-auth-secret-min-16chars!";
-  }
-  return new TextEncoder().encode(s);
+  return authSecretKeyBytes();
 }
 
 export async function createSession(userId: string) {
@@ -35,14 +29,19 @@ export async function destroySession() {
 }
 
 export async function readSessionUserId(): Promise<string | null> {
-  const jar = await cookies();
-  const token = jar.get(COOKIE)?.value;
-  if (!token) return null;
   try {
-    const { payload } = await jwtVerify(token, secretKey());
-    const sub = payload.sub;
-    return typeof sub === "string" ? sub : null;
+    const jar = await cookies();
+    const token = jar.get(COOKIE)?.value;
+    if (!token) return null;
+    try {
+      const { payload } = await jwtVerify(token, secretKey());
+      const sub = payload.sub;
+      return typeof sub === "string" ? sub : null;
+    } catch {
+      return null;
+    }
   } catch {
+    /** مثال: AUTH_SECRET غير مضبوط في Production — لا يُسقط الصفحة بالكامل */
     return null;
   }
 }

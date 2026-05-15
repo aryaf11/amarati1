@@ -28,31 +28,10 @@ export default async function SignupChoicePage() {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Link
-            href="/signup/create"
-            className={choiceClass}
-            style={{
-              borderColor: "var(--accent)",
-              backgroundColor: "color-mix(in srgb, var(--card) 88%, transparent)",
-            }}
-          >
-            <span
-              className="inline-flex size-12 items-center justify-center rounded-2xl"
-              style={{ backgroundColor: "var(--accent-soft)", color: "var(--accent)" }}
-              aria-hidden
-            >
-              <BuildingIcon className="size-6" />
-            </span>
-            <h2 className="text-lg font-semibold text-accent">
-              {t.choiceCreateTitle}
-            </h2>
-            <p className="text-sm text-muted">{t.choiceCreateDesc}</p>
-          </Link>
-
-          <Link
             href="/signup/join"
             className={choiceClass}
             style={{
-              borderColor: "var(--card-border)",
+              borderColor: "var(--accent)",
               backgroundColor: "color-mix(in srgb, var(--card) 88%, transparent)",
             }}
           >
@@ -67,6 +46,27 @@ export default async function SignupChoicePage() {
               {t.choiceJoinTitle}
             </h2>
             <p className="text-sm text-muted">{t.choiceJoinDesc}</p>
+          </Link>
+
+          <Link
+            href="/signup/create"
+            className={choiceClass}
+            style={{
+              borderColor: "var(--card-border)",
+              backgroundColor: "color-mix(in srgb, var(--card) 88%, transparent)",
+            }}
+          >
+            <span
+              className="inline-flex size-12 items-center justify-center rounded-2xl"
+              style={{ backgroundColor: "var(--accent-soft)", color: "var(--accent)" }}
+              aria-hidden
+            >
+              <BuildingIcon className="size-6" />
+            </span>
+            <h2 className="text-lg font-semibold text-accent">
+              {t.choiceCreateTitle}
+            </h2>
+            <p className="text-sm text-muted">{t.choiceCreateDesc}</p>
           </Link>
         </div>
 

@@ -2,13 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  CreditCardIcon,
-  HomeIcon,
-  UserCircleIcon,
-  VoteIcon,
-  WrenchIcon,
-} from "@/components/LandingIcons";
+import { HomeIcon, UserCircleIcon, VoteIcon, WrenchIcon } from "@/components/LandingIcons";
 import type { AppLocale } from "@/lib/locale";
 import { navT } from "@/lib/nav-dict";
 
@@ -27,17 +21,15 @@ export function BottomNav({
   const buildingId = pathBuildingId ?? fallbackBuildingId;
 
   const hasBuilding = Boolean(buildingId);
-  const homeHref = buildingId ? `/building/${buildingId}` : "/dashboard";
+  const homeHref = buildingId
+    ? `/dashboard?open=${encodeURIComponent(buildingId)}`
+    : "/dashboard";
   const maintenanceHref = buildingId ? `/building/${buildingId}/maintenance` : "/dashboard";
-  const paymentsHref = buildingId ? `/building/${buildingId}/payments` : "/dashboard";
   const votesHref = buildingId ? `/building/${buildingId}/votes` : "/dashboard";
 
   const onProfile = pathname.startsWith("/profile");
-  const onHome =
-    pathname === "/dashboard" ||
-    /^\/building\/[^/]+\/?$/.test(pathname);
+  const onHome = pathname === "/dashboard";
   const onMaintenance = /^\/building\/[^/]+\/maintenance/.test(pathname);
-  const onPayments = /^\/building\/[^/]+\/payments/.test(pathname);
   const onVotes = /^\/building\/[^/]+\/votes/.test(pathname);
 
   const items: {
@@ -62,14 +54,6 @@ export function BottomNav({
       label: t.maintenance,
       icon: <WrenchIcon className="size-6" />,
       active: onMaintenance,
-      needsBuilding: true,
-    },
-    {
-      key: "payments",
-      href: paymentsHref,
-      label: t.payments,
-      icon: <CreditCardIcon className="size-6" />,
-      active: onPayments,
       needsBuilding: true,
     },
     {
@@ -100,7 +84,7 @@ export function BottomNav({
         paddingBottom: "env(safe-area-inset-bottom)",
       }}
     >
-      <ul className="mx-auto grid max-w-3xl grid-cols-5">
+      <ul className="mx-auto grid max-w-3xl grid-cols-4">
         {items.map((it) => {
           const dimmed = it.needsBuilding && !hasBuilding;
           const inner = (

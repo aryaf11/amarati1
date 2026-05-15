@@ -1,5 +1,9 @@
 "use server";
 
+/**
+ * تصويتات المبنى (مشرف، شركة صيانة) — تعديلات على جداول Prisma: Vote, VoteOption, VoteBallot, Membership.
+ */
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getMembership } from "@/lib/access";
@@ -10,6 +14,43 @@ import {
   textToFeatures,
 } from "@/lib/maintenance-predictor";
 import { prisma } from "@/lib/prisma";
+
+type CompanyRec = { company: string; rating: number };
+
+/**
+ * بعد إنشاء طلب صيانة مجتمعي (Prisma) يُنشأ تصويت شركات تلقائياً إن وُجدت ترشيحات.
+ * الجداول: `Vote` + `VoteOption`، مرتبطة بـ `MaintenanceRequest` عبر `maintenanceRequestId`.
+ */
+export async function ensureCommunityMaintenanceCompanyVote(
+  buildingId: string,
+  requestId: string,
+  companies: CompanyRec[],
+) {
+  if (!companies.length) return;
+  const req = await prisma.maintenanceRequest.findUnique({
+    where: { id: requestId },
+    include: { vote: true },
+  });
+  if (!req || req.buildingId !== buildingId || req.scope !== "COMMUNITY" || req.vote) {
+    return;
+  }
+  const ends = new Date(Date.now() + 1000 * 60 * 60 * 24 * 3);
+  await prisma.vote.create({
+    data: {
+      buildingId,
+      type: "MAINTENANCE_COMPANY",
+      title: `اختيار شركة صيانة: ${req.title}`,
+      description: req.description.slice(0, 500),
+      endsAt: ends,
+      maintenanceRequestId: req.id,
+      options: {
+        create: companies.map((r) => ({
+          label: `${r.company} — ⭐ ${r.rating.toFixed(1)}`,
+        })),
+      },
+    },
+  });
+}
 
 export async function assignSupervisorAction(formData: FormData) {
   const user = await getCurrentUser();
@@ -159,9 +200,29 @@ export async function openMaintenanceCompanyVoteAction(formData: FormData) {
   if (req.vote) {
     redirect(`/building/${buildingId}/votes`);
   }
-  const features = textToFeatures(req.description, building.city);
-  const issue = predictFailure(features);
-  const recs = recommendServices(issue, 4);
+  let recs = [] as ReturnType<typeof recommendServices>;
+  if (req.aiCompaniesJson) {
+    try {
+      const parsed = JSON.parse(req.aiCompaniesJson) as CompanyRec[];
+      if (Array.isArray(parsed) && parsed.length) {
+        const issue = predictFailure(textToFeatures(req.description, building.city));
+        recs = parsed.map((p) => ({
+          service_type: issue,
+          company: p.company,
+          rating: p.rating,
+          latitude: 0,
+          longitude: 0,
+        }));
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  if (!recs.length) {
+    const features = textToFeatures(req.description, building.city);
+    const issue = predictFailure(features);
+    recs = recommendServices(issue, 4);
+  }
   if (!recs.length) {
     redirect(back + "?error=" + encodeURIComponent("لا توصيات شركات متوفرة لهذا النوع"));
   }

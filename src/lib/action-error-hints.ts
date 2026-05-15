@@ -49,11 +49,20 @@ export function dbOrSessionErrorHint(e: unknown): string {
   const blob = flattenError(e);
 
   if (/AUTH_SECRET|must be set \(min 16/i.test(blob)) {
-    return "متغير AUTH_SECRET غير مضبوط أو أقصر من 16 محرفاً. أضفه في متغيرات البيئة: على **Vercel** (Settings → Environment Variables) لبيئة **Production**؛ على **Netlify** فعّله لـ **Builds** و**Functions** و**Post processing**.";
+    return "متغير سر الجلسة غير مضبوط أو أقصر من 16 محرفاً. أضف **AUTH_SECRET** أو **SESSION_SECRET** أو **NEXTAUTH_SECRET** (واحداً بالقدر الكافي) في متغيرات البيئة: على **Vercel** (Settings → Environment Variables) لبيئة **Production**؛ على **Netlify** فعّله لـ **Builds** و**Functions** و**Post processing**.";
+  }
+  if (/Firebase:|FIREBASE_|firestore|Firestore|INVALID_LOGIN_CREDENTIALS|EMAIL_EXISTS/i.test(blob)) {
+    return "مشكلة في إعداد Firebase: تحقق من FIREBASE_PROJECT_ID وFIREBASE_CLIENT_EMAIL وFIREBASE_PRIVATE_KEY (أو FIREBASE_SERVICE_ACCOUNT_JSON) وFIREBASE_API_KEY في متغيرات البيئة (Netlify: Builds + Functions). فعّل Firestore وAuthentication (Email/Password) في لوحة Firebase.";
+  }
+  /** قبل «لا يمكن الوصول»: لا تستخدم عبارة عامة «Does not exist» — قد تشير لجدول غير مهاجر وليس لانقطاع الشبكة */
+  if (
+    /P2021|P2022|The table .* does not exist|relation .* does not exist|Unknown table/i.test(blob)
+  ) {
+    return "قاعدة الإنتاج لا تحتوي الجداول المطلوبة (الهجرات غير مطبّقة). من جهاز يصل لنفس قاعدة الإنتاج شغّل: **npx prisma migrate deploy** ثم أعد المحاولة. تأكد أن **DATABASE_URL** في الأمر يطابق متغير **Production** على Vercel.";
   }
   if (
     /P1001|P1000|P1013/i.test(blob) ||
-    /Can't reach database|Does not exist|ECONNREFUSED|ETIMEDOUT|ENOTFOUND|getaddrinfo/i.test(blob)
+    /Can't reach database|ECONNREFUSED|ETIMEDOUT|ENOTFOUND|getaddrinfo/i.test(blob)
   ) {
     return "لا يمكن الوصول لقاعدة البيانات. تحقق من DATABASE_URL (سلسلة PostgreSQL كاملة؛ للسحابة غالباً ?sslmode=require). على **Vercel** فعّل المتغير لبيئة **Production** (ليس Development فقط). على **Netlify** فعّله لـ **Functions** إن كان الخادم يقرأه عند التشغيل وليس أثناء البناء فقط.";
   }
@@ -82,14 +91,21 @@ export function dbOrSessionErrorHint(e: unknown): string {
     return "تعارض في جلسة الخادم. حدّث Next.js أو راجع إعدادات التخزين المؤقت للصفحات على منصة الاستضافة.";
   }
 
+  const vercelEnvTip =
+    process.env.VERCEL === "1"
+      ? " تلميح: إذا جرّبت رابط **Preview** (نشر تجريبي) بينما المتغيرات مضبوطة لـ **Production** فقط، انسخ نفس المتغيرات لبيئة **Preview** أو افتح نطاق الإنتاج الرئيسي."
+      : "";
+
   const tail =
     process.env.NODE_ENV !== "production" && blob.length > 0
       ? ` (تفاصيل التطوير: ${blob.slice(0, 200)})`
       : "";
-  return (
-    "تعذّر الاتصال بقاعدة البيانات أو إكمال الجلسة. ضع **DATABASE_URL** و**AUTH_SECRET** (16+ محرف) في متغيرات البيئة: على **Vercel** لبيئة **Production** ثم أعد النشر؛ على **Netlify** فعّلهما لـ **Builds** و**Functions** معاً. " +
-    "أعد نشر الموقع بعد آخر `git push` إذا عدّلت `binaryTargets` في Prisma. " +
-    "للتشخيص: **Vercel** → Deployments → Logs / Runtime Logs؛ **Netlify** → Functions/Edge — وابحث عن `registerAction` أو `loginAction` لنص الخطأ الإنجليزي." +
+    return (
+    "تعذّر إتمام تسجيل الدخول (الخادم أو قاعدة البيانات أو الجلسة). هذه رسالة عامة وليست دليلاً أن المتغيرات ناقصة. إن زودت المشروع بالفعل بـ DATABASE_URL وAUTH_SECRET على **Production**: راجع **Runtime Logs** أثناء الضغط على «دخول»؛ غالباً السبب هجرات غير مطبّقة على الإنتاج أو رابط قاعدة غير صحيح أو انقطاع شبكة/SSL. " +
+    "خطوات سريعة: (1) **Redeploy** لآخر كود بعد الـ push (2) من جهاز عندك مع نفس DATABASE_URL للإنتاج: **npx prisma migrate deploy** (3) تأكد أن المتغيرات مفعّلة لبيئة **Production** وليس Preview فقط. " +
+    "على **Netlify** فعّل المتغيرات لـ **Builds** و**Functions** معاً. " +
+    "التشخيص الدقيق: **Vercel** → آخر Deployment → **Logs** / **Runtime Logs** وابحث عن **loginAction** لقراءة الخطأ الإنجليزي الفعلي." +
+    vercelEnvTip +
     tail
   );
 }

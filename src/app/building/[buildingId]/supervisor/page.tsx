@@ -36,11 +36,6 @@ export default async function SupervisorPage({
     orderBy: { month: "desc" },
     take: 6,
   });
-  const alerts = await prisma.predictiveMaintenanceAlert.findMany({
-    where: { buildingId },
-    orderBy: { createdAt: "desc" },
-    take: 10,
-  });
   const reportRows = await prisma.maintenanceRequest.findMany({
     where: { buildingId },
     orderBy: { createdAt: "desc" },
@@ -77,17 +72,6 @@ export default async function SupervisorPage({
         {scores.length === 0 ? (
           <p className="text-sm text-slate-600 dark:text-slate-300">{s.scoreEmpty}</p>
         ) : null}
-      </Card>
-      <Card title={s.alertsTitle}>
-        <ul className="space-y-2 text-sm">
-          {alerts.map((a) => (
-            <li key={a.id} className="rounded-lg border border-slate-100 p-2 dark:border-slate-800">
-              <p className="font-medium">{a.title}</p>
-              <p className="text-xs text-slate-500">{a.severity}</p>
-              <p className="mt-1">{a.detail}</p>
-            </li>
-          ))}
-        </ul>
       </Card>
       <Card title={s.reportTitle}>
         <p className="mb-2 text-xs text-slate-500 dark:text-slate-400">{s.reportHint}</p>

@@ -1,6 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { openMaintenanceCompanyVoteAction } from "@/actions/governance";
-import { createMaintenanceAction } from "@/actions/maintenance";
+import { createMaintenanceAction, selectMaintenanceVendorAction } from "@/actions/maintenance";
 import { loadBuildingContext } from "@/lib/building-context";
 import { getCurrentUser } from "@/lib/current-user";
 import { getLocale } from "@/lib/locale";
@@ -12,6 +11,19 @@ import {
 import { ui } from "@/lib/ui-strings";
 import { prisma } from "@/lib/prisma";
 import { Button, Card, Input, TextArea } from "@/components/ui";
+
+function companiesFromRequest(json: string | null, description: string, city: string) {
+  if (json) {
+    try {
+      const p = JSON.parse(json) as { company: string; rating: number }[];
+      if (Array.isArray(p) && p.length) return p;
+    } catch {
+      /* ignore */
+    }
+  }
+  const issue = predictFailure(textToFeatures(description, city));
+  return recommendServices(issue, 4).map(({ company, rating }) => ({ company, rating }));
+}
 
 export default async function MaintenancePage({
   params,
@@ -34,7 +46,6 @@ export default async function MaintenancePage({
     orderBy: { createdAt: "desc" },
     include: { unit: true, vote: true },
   });
-  const canManage = membership.isSupervisor || building.creatorId === user.id;
   return (
     <div className="space-y-6">
       {err ? (
@@ -43,9 +54,6 @@ export default async function MaintenancePage({
         </p>
       ) : null}
       <Card title={m.newRequest}>
-        <p className="mb-3 rounded-lg border px-3 py-2 text-xs text-muted" style={{ borderColor: "var(--card-border)", backgroundColor: "var(--accent-soft)" }}>
-          {m.aiHint}
-        </p>
         <form action={createMaintenanceAction} className="space-y-3">
           <input type="hidden" name="buildingId" value={buildingId} />
           <div>
@@ -83,9 +91,12 @@ export default async function MaintenancePage({
           <ul className="space-y-4">
             {rows.map((r) => {
               const isCommunity = r.scope === "COMMUNITY";
-              const features = textToFeatures(r.description, building.city);
-              const issue = predictFailure(features);
-              const recs = isCommunity ? recommendServices(issue, 3) : [];
+              const recs = companiesFromRequest(r.aiCompaniesJson, r.description, building.city);
+              const showPersonalPick =
+                !isCommunity &&
+                r.createdById === user.id &&
+                !r.selectedVendor &&
+                recs.length > 0;
               return (
                 <li
                   key={r.id}
@@ -140,7 +151,7 @@ export default async function MaintenancePage({
                       ) : null}
                     </div>
                   ) : null}
-                  {isCommunity && recs.length > 0 ? (
+                  {recs.length > 0 ? (
                     <div className="mt-3">
                       <p className="text-xs font-semibold" style={{ color: "var(--accent)" }}>
                         {m.aiCompanies}
@@ -160,22 +171,42 @@ export default async function MaintenancePage({
                           </li>
                         ))}
                       </ul>
-                      {canManage ? (
-                        r.vote ? (
-                          <p className="mt-3 text-xs font-medium" style={{ color: "var(--accent)" }}>
-                            {m.companyVoteOpen}
-                          </p>
-                        ) : (
-                          <form action={openMaintenanceCompanyVoteAction} className="mt-3">
-                            <input type="hidden" name="buildingId" value={buildingId} />
-                            <input type="hidden" name="requestId" value={r.id} />
-                            <Button type="submit" variant="ghost" className="!py-1.5 !text-xs">
-                              {m.startCompanyVote}
-                            </Button>
-                          </form>
-                        )
+                      {isCommunity && r.vote ? (
+                        <p className="mt-3 text-xs font-medium" style={{ color: "var(--accent)" }}>
+                          {m.companyVoteOpen}
+                        </p>
+                      ) : null}
+                      {isCommunity && !r.vote ? (
+                        <p className="mt-3 text-xs text-muted">{m.communityVotePending}</p>
                       ) : null}
                     </div>
+                  ) : null}
+                  {r.selectedVendor ? (
+                    <p className="mt-3 text-xs font-medium" style={{ color: "var(--accent)" }}>
+                      {m.selectedVendorLabel}: {r.selectedVendor}
+                    </p>
+                  ) : null}
+                  {showPersonalPick ? (
+                    <form action={selectMaintenanceVendorAction} className="mt-3 space-y-2">
+                      <input type="hidden" name="buildingId" value={buildingId} />
+                      <input type="hidden" name="requestId" value={r.id} />
+                      <p className="text-xs font-semibold text-muted">{m.pickVendor}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {recs.map((c) => (
+                          <label
+                            key={c.company}
+                            className="inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-xs"
+                            style={{ borderColor: "var(--card-border)" }}
+                          >
+                            <input type="radio" name="vendor" value={c.company} required />
+                            {c.company}
+                          </label>
+                        ))}
+                      </div>
+                      <Button type="submit" variant="ghost" className="!py-1.5 !text-xs">
+                        {m.confirmVendor}
+                      </Button>
+                    </form>
                   ) : null}
                 </li>
               );

@@ -31,9 +31,12 @@ const labels: Record<
 export function ChatbotClient({
   locale,
   embedded = false,
+  backHref = "/",
 }: {
   locale: AppLocale;
   embedded?: boolean;
+  /** رجوع من صفحة المساعد داخل المبنى إلى نظرة عامة المبنى */
+  backHref?: string;
 }) {
   const L = labels[locale];
   const [text, setText] = useState("");
@@ -45,7 +48,7 @@ export function ChatbotClient({
       {!embedded ? (
         <div className="mb-4 flex justify-end">
           <Link
-            href="/"
+            href={backHref}
             className="text-xs font-medium text-teal-700 underline underline-offset-2 hover:text-teal-900 dark:text-teal-400"
           >
             {L.back}

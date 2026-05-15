@@ -1,29 +1,18 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { AppLocale } from "@/lib/locale";
-import {
-  BellIcon,
-  BellOffIcon,
-  GlobeIcon,
-  MonitorIcon,
-  MoonIcon,
-  SunIcon,
-} from "@/components/LandingIcons";
+import { BellIcon, BellOffIcon, MoonIcon, SunIcon } from "@/components/LandingIcons";
 
 const THEME_KEY = "amarati-theme";
 const NOTIFY_KEY = "amarati-notifications";
-const accent = "var(--accent)";
 
-type ThemeMode = "light" | "dark" | "system";
+type ThemeMode = "light" | "dark";
 
 type Labels = {
   themeLabel: string;
   themeLight: string;
   themeDark: string;
-  themeSystem: string;
-  languageLabel: string;
   notificationsLabel: string;
   notificationsOn: string;
   notificationsOff: string;
@@ -31,42 +20,29 @@ type Labels = {
 };
 
 export function ProfileSettings({
-  locale,
+  locale: _locale,
   t,
 }: {
   locale: AppLocale;
   t: Labels;
 }) {
-  const router = useRouter();
-  const [theme, setTheme] = useState<ThemeMode>("system");
+  void _locale;
+  const [theme, setTheme] = useState<ThemeMode>("light");
   const [notifyOn, setNotifyOn] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem(THEME_KEY);
     if (stored === "dark") setTheme("dark");
-    else if (stored === "light") setTheme("light");
-    else setTheme("system");
+    else setTheme("light");
     setNotifyOn(localStorage.getItem(NOTIFY_KEY) === "1");
   }, []);
 
   function applyTheme(next: ThemeMode) {
     const root = document.documentElement;
-    if (next === "system") {
-      localStorage.removeItem(THEME_KEY);
-      if (window.matchMedia("(prefers-color-scheme: dark)").matches) root.classList.add("dark");
-      else root.classList.remove("dark");
-    } else {
-      localStorage.setItem(THEME_KEY, next);
-      if (next === "dark") root.classList.add("dark");
-      else root.classList.remove("dark");
-    }
+    localStorage.setItem(THEME_KEY, next);
+    if (next === "dark") root.classList.add("dark");
+    else root.classList.remove("dark");
     setTheme(next);
-  }
-
-  function changeLocale() {
-    const next: AppLocale = locale === "ar" ? "en" : "ar";
-    document.cookie = `locale=${next};path=/;max-age=31536000;SameSite=Lax`;
-    router.refresh();
   }
 
   async function toggleNotifications() {
@@ -84,77 +60,75 @@ export function ProfileSettings({
     }
   }
 
-  const themeOptions: { id: ThemeMode; icon: React.ReactNode; label: string }[] = [
-    { id: "light", icon: <SunIcon />, label: t.themeLight },
-    { id: "dark", icon: <MoonIcon />, label: t.themeDark },
-    { id: "system", icon: <MonitorIcon />, label: t.themeSystem },
-  ];
-
-  const activeBtn =
-    "inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold shadow-md";
-  const inactiveBtn =
-    "inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-medium shadow-sm transition";
-  const activeStyle = {
-    backgroundColor: "var(--accent)",
-    color: "var(--accent-foreground)",
-  } as const;
-  const inactiveStyle = {
+  const iconRound =
+    "inline-flex size-11 items-center justify-center rounded-full border shadow-sm backdrop-blur transition hover:shadow";
+  const iconInactive = {
     backgroundColor: "var(--card)",
     borderColor: "var(--card-border)",
     color: "var(--accent)",
   } as const;
+  const iconActive = {
+    backgroundColor: "var(--accent)",
+    color: "var(--accent-foreground)",
+    borderColor: "var(--accent)",
+  } as const;
+
+  const notifyInactive =
+    "inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-medium shadow-sm transition";
+  const notifyActive =
+    "inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold shadow-md";
 
   return (
     <div className="space-y-6">
       <div>
-        <p className="mb-2 text-xs font-semibold" style={{ color: accent }}>
-          {t.themeLabel}
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {themeOptions.map((opt) => {
-            const active = theme === opt.id;
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                onClick={() => applyTheme(opt.id)}
-                aria-pressed={active}
-                className={active ? activeBtn : inactiveBtn}
-                style={active ? activeStyle : inactiveStyle}
-              >
-                <span aria-hidden>{opt.icon}</span>
-                {opt.label}
-              </button>
-            );
-          })}
+        <p className="mb-3 text-xs font-semibold tracking-wide text-muted">{t.themeLabel}</p>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => applyTheme("light")}
+            aria-pressed={theme === "light"}
+            aria-label={t.themeLight}
+            title={t.themeLight}
+            className={iconRound}
+            style={theme === "light" ? iconActive : iconInactive}
+          >
+            <SunIcon className="size-5 shrink-0" />
+          </button>
+          <button
+            type="button"
+            onClick={() => applyTheme("dark")}
+            aria-pressed={theme === "dark"}
+            aria-label={t.themeDark}
+            title={t.themeDark}
+            className={iconRound}
+            style={theme === "dark" ? iconActive : iconInactive}
+          >
+            <MoonIcon className="size-5 shrink-0" />
+          </button>
         </div>
       </div>
 
       <div>
-        <p className="mb-2 text-xs font-semibold" style={{ color: accent }}>
-          {t.languageLabel}
-        </p>
-        <button
-          type="button"
-          onClick={changeLocale}
-          className={inactiveBtn}
-          style={inactiveStyle}
-        >
-          <GlobeIcon />
-          <span>{locale === "ar" ? "English" : "عربي"}</span>
-        </button>
-      </div>
-
-      <div>
-        <p className="mb-2 text-xs font-semibold" style={{ color: accent }}>
+        <p className="mb-2 text-xs font-semibold" style={{ color: "var(--accent)" }}>
           {t.notificationsLabel}
         </p>
         <button
           type="button"
           onClick={toggleNotifications}
           aria-pressed={notifyOn}
-          className={notifyOn ? activeBtn : inactiveBtn}
-          style={notifyOn ? activeStyle : inactiveStyle}
+          className={notifyOn ? notifyActive : notifyInactive}
+          style={
+            notifyOn
+              ? {
+                  backgroundColor: "var(--accent)",
+                  color: "var(--accent-foreground)",
+                }
+              : {
+                  backgroundColor: "var(--card)",
+                  borderColor: "var(--card-border)",
+                  color: "var(--accent)",
+                }
+          }
         >
           {notifyOn ? <BellIcon /> : <BellOffIcon />}
           <span>{notifyOn ? t.notificationsOn : t.notificationsOff}</span>

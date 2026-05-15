@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { postChatAction } from "@/actions/social";
 import { loadBuildingContext } from "@/lib/building-context";
@@ -38,14 +37,6 @@ export default async function ChatPage({
         </p>
       ) : null}
       <Card title={c.title}>
-        <div className="mb-3 flex justify-end">
-          <Link
-            href={`/building/${buildingId}`}
-            className="text-xs font-medium text-teal-700 underline underline-offset-2 hover:text-teal-900 dark:text-teal-400"
-          >
-            {c.back}
-          </Link>
-        </div>
         <p className="mb-3 text-xs text-slate-500">{c.hint}</p>
         <div className="max-h-80 space-y-2 overflow-y-auto rounded-xl border border-slate-100 p-3 text-sm dark:border-slate-800">
           {rows.map((m) => (

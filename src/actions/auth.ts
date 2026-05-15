@@ -1,6 +1,10 @@
 "use server";
 
-import { randomBytes } from "node:crypto";
+/**
+ * تسجيل الدخول/الخروج وتحديث الملف الشخصي والتحقق بالجوال.
+ * الربط مع PostgreSQL: جميع دوال `prisma.user.*` وفق `schema.prisma` → model User.
+ */
+import { randomBytes, randomInt } from "node:crypto";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -12,6 +16,16 @@ import { prisma } from "@/lib/prisma";
 import { deliverVerificationEmail, isEmailVerificationRequired } from "@/lib/send-verification-email";
 import { createSession, destroySession } from "@/lib/session";
 import { ui } from "@/lib/ui-strings";
+import { userMeetsVerificationRequirement } from "@/lib/verification-gate";
+
+async function findUserByIdentifier(identifier: string) {
+  const trimmed = identifier.trim();
+  if (trimmed.includes("@")) {
+    return prisma.user.findUnique({ where: { email: trimmed.toLowerCase() } });
+  }
+  const phone = trimmed.replace(/\s+/g, "");
+  return prisma.user.findUnique({ where: { phone } });
+}
 
 function verificationDeliveryUserMessage(
   t: ReturnType<typeof ui>,
@@ -45,51 +59,71 @@ function verificationDeliveryUserMessage(
 }
 
 const registerSchema = z.object({
-  email: z.string().email(),
+  email: z.preprocess(
+    (v) => {
+      const s = String(v ?? "").trim().toLowerCase();
+      return s === "" ? undefined : s;
+    },
+    z.union([z.undefined(), z.string().email()]),
+  ),
   password: z.string().min(6),
   name: z.string().min(2),
-  phone: z.string().optional(),
+  phone: z.string().trim().min(8).max(24),
 });
 
 export async function registerAction(formData: FormData) {
   const locale = await getLocale();
   const t = ui(locale);
-  const emailRaw = String(formData.get("email") ?? "").trim();
   const nameRaw = String(formData.get("name") ?? "").trim();
   const passwordRaw = String(formData.get("password") ?? "");
   const phoneRaw = String(formData.get("phone") ?? "").trim();
   const parsed = registerSchema.safeParse({
-    email: emailRaw,
+    email: formData.get("email"),
     password: passwordRaw,
     name: nameRaw,
-    phone: phoneRaw || undefined,
+    phone: phoneRaw,
   });
   if (!parsed.success) {
     redirect("/login?error=" + encodeURIComponent(t.register.invalidForm));
   }
-  const exists = await prisma.user.findUnique({
-    where: { email: parsed.data.email },
+  const dupPhone = await prisma.user.findUnique({
+    where: { phone: parsed.data.phone },
   });
-  if (exists) {
-    redirect("/login?error=" + encodeURIComponent(t.register.emailTaken));
+  if (dupPhone) {
+    redirect("/login?error=" + encodeURIComponent(t.register.phoneTaken));
+  }
+  if (parsed.data.email) {
+    const dupEmail = await prisma.user.findUnique({
+      where: { email: parsed.data.email },
+    });
+    if (dupEmail) {
+      redirect("/login?error=" + encodeURIComponent(t.register.emailTaken));
+    }
   }
   const passwordHash = await hashPassword(parsed.data.password);
   const gate = isEmailVerificationRequired();
-  const verifyToken = gate ? randomBytes(24).toString("base64url") : null;
+  const verifyToken =
+    gate && parsed.data.email ? randomBytes(24).toString("base64url") : null;
+  const emailVerifiedAt = !gate
+    ? new Date()
+    : parsed.data.email
+      ? null
+      : new Date();
   try {
     const user = await prisma.user.create({
       data: {
-        email: parsed.data.email,
+        email: parsed.data.email ?? null,
         passwordHash,
         name: parsed.data.name,
-        phone: parsed.data.phone?.trim() ? parsed.data.phone.trim() : null,
+        phone: parsed.data.phone,
         accountKind: "RESIDENT",
-        emailVerifiedAt: gate ? null : new Date(),
+        emailVerifiedAt,
         emailVerifyToken: verifyToken,
-        emailVerifyExpires: gate ? new Date(Date.now() + 86400000) : null,
+        emailVerifyExpires:
+          gate && parsed.data.email ? new Date(Date.now() + 86400000) : null,
       },
     });
-    if (gate && verifyToken) {
+    if (gate && parsed.data.email && verifyToken) {
       const sent = await deliverVerificationEmail(parsed.data.email, verifyToken, locale);
       if (!sent.ok) {
         await prisma.user.delete({ where: { id: user.id } });
@@ -104,13 +138,13 @@ export async function registerAction(formData: FormData) {
   } catch (e) {
     if (isRedirectError(e)) throw e;
     console.error("registerAction", flattenError(e), e);
-    redirect("/login?error=" + encodeURIComponent(dbOrSessionErrorHint(e)));
+    redirect("/login?error=" + encodeURIComponent(dbOrSessionErrorHint(e).trim()));
   }
   redirect("/dashboard");
 }
 
 const loginSchema = z.object({
-  email: z.string().email(),
+  identifier: z.string().min(3),
   password: z.string().min(1),
 });
 
@@ -118,16 +152,14 @@ export async function loginAction(formData: FormData) {
   const locale = await getLocale();
   const t = ui(locale);
   const parsed = loginSchema.safeParse({
-    email: String(formData.get("email") ?? "").trim(),
+    identifier: String(formData.get("identifier") ?? formData.get("email") ?? "").trim(),
     password: String(formData.get("password") ?? ""),
   });
   if (!parsed.success) {
     redirect("/login?error=" + encodeURIComponent(t.login.invalidForm));
   }
   try {
-    const user = await prisma.user.findUnique({
-      where: { email: parsed.data.email },
-    });
+    const user = await findUserByIdentifier(parsed.data.identifier);
 
     if (!user) {
       redirect("/login?error=" + encodeURIComponent(t.login.noAccountFull) + "&noAccount=1");
@@ -135,7 +167,7 @@ export async function loginAction(formData: FormData) {
     if (!(await verifyPassword(parsed.data.password, user.passwordHash))) {
       redirect("/login?error=" + encodeURIComponent(t.login.invalidCredentials));
     }
-    if (isEmailVerificationRequired() && !user.emailVerifiedAt) {
+    if (isEmailVerificationRequired() && !userMeetsVerificationRequirement(user)) {
       redirect("/login?error=" + encodeURIComponent(t.login.verifyEmailFirst));
     }
 
@@ -148,7 +180,7 @@ export async function loginAction(formData: FormData) {
   } catch (e) {
     if (isRedirectError(e)) throw e;
     console.error("loginAction", flattenError(e), e);
-    redirect("/login?error=" + encodeURIComponent(dbOrSessionErrorHint(e)));
+    redirect("/login?error=" + encodeURIComponent(dbOrSessionErrorHint(e).trim()));
   }
 }
 
@@ -202,11 +234,14 @@ export async function logoutAction() {
 
 const profileSchema = z.object({
   name: z.string().min(2).max(120),
-  phone: z
-    .preprocess(
-      (v) => (v == null || String(v).trim() === "" ? undefined : String(v).trim()),
-      z.union([z.undefined(), z.string().max(40)]),
-    ),
+  phone: z.string().trim().min(8).max(40),
+  newEmail: z.preprocess(
+    (v) => {
+      const s = String(v ?? "").trim().toLowerCase();
+      return s === "" ? undefined : s;
+    },
+    z.union([z.undefined(), z.string().email()]),
+  ),
 });
 
 export async function updateProfileAction(formData: FormData) {
@@ -217,22 +252,100 @@ export async function updateProfileAction(formData: FormData) {
   const parsed = profileSchema.safeParse({
     name: String(formData.get("name") ?? "").trim(),
     phone: formData.get("phone"),
+    newEmail: formData.get("newEmail"),
   });
   if (!parsed.success) {
     redirect("/profile?error=" + encodeURIComponent(t.profile.invalidForm));
   }
   try {
+    const data: { name: string; phone: string; email?: string | null } = {
+      name: parsed.data.name,
+      phone: parsed.data.phone,
+    };
+    if (!me.email && parsed.data.newEmail) {
+      const taken = await prisma.user.findUnique({
+        where: { email: parsed.data.newEmail },
+      });
+      if (taken && taken.id !== me.id) {
+        redirect("/profile?error=" + encodeURIComponent(t.register.emailTaken));
+      }
+      data.email = parsed.data.newEmail;
+    }
     await prisma.user.update({
       where: { id: me.id },
-      data: {
-        name: parsed.data.name,
-        phone: parsed.data.phone ?? null,
-      },
+      data,
     });
   } catch (e) {
     if (isRedirectError(e)) throw e;
     console.error("updateProfileAction", flattenError(e), e);
-    redirect("/profile?error=" + encodeURIComponent(dbOrSessionErrorHint(e)));
+    redirect("/profile?error=" + encodeURIComponent(dbOrSessionErrorHint(e).trim()));
   }
   redirect("/profile?saved=1");
+}
+
+const verifyOtpSchema = z.object({
+  identifier: z.string().min(3),
+  code: z.string().regex(/^\d{6}$/),
+});
+
+/** التحقق بالجوال: يقرأ/يكتب حقول phoneOtp* و phoneVerifiedAt في جدول User (Prisma). */
+export async function verifyPhoneOtpAction(formData: FormData) {
+  const locale = await getLocale();
+  const tv = ui(locale).verifyPhone;
+  const idRaw = String(formData.get("identifier") ?? formData.get("email") ?? "").trim();
+  const parsed = verifyOtpSchema.safeParse({
+    identifier: idRaw,
+    code: String(formData.get("code") ?? "").trim(),
+  });
+  if (!parsed.success) {
+    redirect("/register/verify-phone?error=" + encodeURIComponent(tv.invalid));
+  }
+  const user = await findUserByIdentifier(parsed.data.identifier);
+  if (!user) {
+    redirect("/register/verify-phone?error=" + encodeURIComponent(tv.badCode));
+  }
+  const dev = process.env.VERIFICATION_DEV_OTP?.trim();
+  const ok =
+    (dev && parsed.data.code === dev) ||
+    (user.phoneOtpCode === parsed.data.code &&
+      user.phoneOtpExpires &&
+      user.phoneOtpExpires.getTime() > Date.now());
+  if (!ok) {
+    const idParam =
+      "identifier=" + encodeURIComponent(parsed.data.identifier);
+    redirect(`/register/verify-phone?error=${encodeURIComponent(tv.badCode)}&${idParam}`);
+  }
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      phoneVerifiedAt: new Date(),
+      phoneOtpCode: null,
+      phoneOtpExpires: null,
+    },
+  });
+  redirect("/login");
+}
+
+/** يولّد OTP ويخزّنه في User — لاحقاً يُرسل عبر SMS (Twilio) من نفس المسار أو خدمة خارجية. */
+export async function sendPhoneOtpAction() {
+  const locale = await getLocale();
+  const t = ui(locale).profile;
+  const me = await getCurrentUser();
+  if (!me) redirect("/login?next=/profile");
+  if (!me.phone?.trim()) {
+    redirect("/profile?error=" + encodeURIComponent(t.needPhoneForOtp));
+  }
+  const code = String(randomInt(100000, 999999));
+  await prisma.user.update({
+    where: { id: me.id },
+    data: {
+      phoneOtpCode: code,
+      phoneOtpExpires: new Date(Date.now() + 10 * 60 * 1000),
+    },
+  });
+  console.info(`[Amarati] Phone OTP for ${me.phone} (dev log): ${code}`);
+  const idQ = me.email
+    ? "email=" + encodeURIComponent(me.email)
+    : "identifier=" + encodeURIComponent(me.phone);
+  redirect(`/register/verify-phone?${idQ}`);
 }

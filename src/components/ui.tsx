@@ -106,7 +106,7 @@ export function PageShell({
 }) {
   return (
     <main
-      className={`mx-auto w-full max-w-5xl flex-1 space-y-6 px-4 py-8 sm:px-6 ${className}`}
+      className={`mx-auto w-full max-w-5xl flex-1 space-y-6 px-4 py-8 pb-[max(2rem,env(safe-area-inset-bottom,0px))] [padding-inline-start:max(1rem,env(safe-area-inset-left,0px))] [padding-inline-end:max(1rem,env(safe-area-inset-right,0px))] sm:px-6 ${className}`}
     >
       {children}
     </main>

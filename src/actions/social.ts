@@ -1,5 +1,7 @@
 "use server";
 
+/** إعلانات ومحادثة المبنى — `prisma.announcement` / `prisma.chatMessage` (انظر schema.prisma). */
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getMembership } from "@/lib/access";
@@ -39,33 +41,39 @@ export async function postChatAction(formData: FormData) {
   redirect(`/building/${buildingId}/chat`);
 }
 
-export async function mockPayAction(formData: FormData) {
+export async function deleteAnnouncementAction(formData: FormData) {
   const user = await getCurrentUser();
   const buildingId = String(formData.get("buildingId") ?? "");
+  const announcementId = String(formData.get("announcementId") ?? "");
   if (!user) redirect("/login");
-  const amount = Number(formData.get("amount") ?? "0");
-  const description = String(formData.get("description") ?? "دفعة");
-  const maintenanceRequestId = String(
-    formData.get("maintenanceRequestId") ?? ""
-  );
   const m = await getMembership(user.id, buildingId);
   if (!m) {
-    redirect(`/building/${buildingId}/payments?error=` + encodeURIComponent("لا عضوية"));
+    redirect(
+      `/building/${buildingId}/announcements?error=` +
+        encodeURIComponent("لا عضوية"),
+    );
   }
-  if (!amount || amount <= 0) {
-    redirect(`/building/${buildingId}/payments?error=` + encodeURIComponent("مبلغ غير صالح"));
-  }
-  await prisma.payment.create({
-    data: {
-      userId: user.id,
-      buildingId,
-      maintenanceRequestId: maintenanceRequestId || undefined,
-      amountCents: Math.round(amount * 100),
-      description,
-      status: "PAID",
-      paidAt: new Date(),
-    },
+  const row = await prisma.announcement.findFirst({
+    where: { id: announcementId, buildingId },
+    include: { building: true },
   });
-  revalidatePath(`/building/${buildingId}/payments`);
-  redirect(`/building/${buildingId}/payments`);
+  if (!row) {
+    redirect(
+      `/building/${buildingId}/announcements?error=` +
+        encodeURIComponent("الإعلان غير موجود"),
+    );
+  }
+  const mayDelete =
+    row.userId === user.id ||
+    row.building.creatorId === user.id ||
+    m.isSupervisor;
+  if (!mayDelete) {
+    redirect(
+      `/building/${buildingId}/announcements?error=` +
+        encodeURIComponent("ليست لديك صلاحية حذف هذا الإعلان"),
+    );
+  }
+  await prisma.announcement.delete({ where: { id: announcementId } });
+  revalidatePath(`/building/${buildingId}/announcements`);
+  redirect(`/building/${buildingId}/announcements`);
 }

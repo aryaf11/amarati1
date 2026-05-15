@@ -361,6 +361,24 @@ export function ChevronLeftIcon({ className }: { className?: string }) {
   );
 }
 
+export function SparklesIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M12 3v2M12 19v2M5 5l1.5 1.5M17.5 17.5 19 19M3 12h2M19 12h2M5 19l1.5-1.5M17.5 6.5 19 5"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+      <path
+        d="M12 8.5 13.2 11l2.8.4-2 2 .5 2.8L12 15l-2.5 1.2.5-2.8-2-2 2.8-.4L12 8.5Z"
+        fill="currentColor"
+        opacity="0.35"
+      />
+    </svg>
+  );
+}
+
 export function AlertTriangleIcon({ className }: { className?: string }) {
   return (
     <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>

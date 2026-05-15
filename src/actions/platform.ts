@@ -1,8 +1,12 @@
 "use server";
 
+/**
+ * إجراءات «لوحة المشرف» — تستدعي `supervisorMonthlyScore` في lib/ai-maintenance.ts
+ * الذي يكتب في جدول Prisma `BuildingHealthScore` (لا تنبيهات تنبؤية منفصلة).
+ */
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { addPredictiveAlerts, supervisorMonthlyScore } from "@/lib/ai-maintenance";
+import { supervisorMonthlyScore } from "@/lib/ai-maintenance";
 import { getCurrentUser } from "@/lib/current-user";
 import { getMembership } from "@/lib/access";
 
@@ -15,7 +19,7 @@ export async function supervisorRefreshInsightsAction(formData: FormData) {
     redirect(`/building/${buildingId}/supervisor?error=` + encodeURIComponent("للمشرف فقط"));
   }
   await supervisorMonthlyScore(buildingId);
-  await addPredictiveAlerts(buildingId);
   revalidatePath(`/building/${buildingId}/supervisor`);
+  revalidatePath(`/building/${buildingId}`);
   redirect(`/building/${buildingId}/supervisor`);
 }

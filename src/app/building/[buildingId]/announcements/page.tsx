@@ -1,5 +1,8 @@
 import { notFound, redirect } from "next/navigation";
-import { postAnnouncementAction } from "@/actions/social";
+import {
+  deleteAnnouncementAction,
+  postAnnouncementAction,
+} from "@/actions/social";
 import { loadBuildingContext } from "@/lib/building-context";
 import { getCurrentUser } from "@/lib/current-user";
 import { getLocale } from "@/lib/locale";
@@ -48,15 +51,34 @@ export default async function AnnouncementsPage({
       </Card>
       <Card title={a.recent}>
         <ul className="space-y-4">
-          {rows.map((row) => (
+          {rows.map((row) => {
+            const canDelete =
+              row.userId === user.id ||
+              building.creatorId === user.id ||
+              membership.isSupervisor;
+            return (
             <li key={row.id} className="rounded-xl border border-slate-100 p-3 text-sm dark:border-slate-800">
-              <p className="font-semibold">{row.title}</p>
-              <p className="text-xs text-slate-500">
-                {row.user.name} — {row.createdAt.toLocaleString(df)}
-              </p>
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold">{row.title}</p>
+                  <p className="text-xs text-slate-500">
+                    {row.user.name} — {row.createdAt.toLocaleString(df)}
+                  </p>
+                </div>
+                {canDelete ? (
+                  <form action={deleteAnnouncementAction}>
+                    <input type="hidden" name="buildingId" value={buildingId} />
+                    <input type="hidden" name="announcementId" value={row.id} />
+                    <Button type="submit" variant="ghost" className="!py-1.5 !text-xs shrink-0">
+                      {a.delete}
+                    </Button>
+                  </form>
+                ) : null}
+              </div>
               <p className="mt-2 whitespace-pre-line">{row.body}</p>
             </li>
-          ))}
+          );
+          })}
         </ul>
       </Card>
     </div>

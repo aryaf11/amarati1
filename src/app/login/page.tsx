@@ -57,7 +57,9 @@ export default async function LoginPage({
         </div>
 
         <Card title={t.title}>
-          <p className="mb-4 text-xs leading-relaxed text-muted">{t.subtitle}</p>
+          {t.subtitle.trim() ? (
+            <p className="mb-4 text-xs leading-relaxed text-muted">{t.subtitle}</p>
+          ) : null}
           {ok && verifyOn ? (
             <p className="mb-3 rounded-xl border px-3 py-2 text-sm border-accent-soft bg-accent-soft text-accent-strong">
               {t.emailVerified}
@@ -81,8 +83,15 @@ export default async function LoginPage({
           <form action={loginAction} className="space-y-3">
             <input type="hidden" name="next" value={sp.next ?? ""} />
             <div>
-              <label className="mb-1 block text-xs text-muted">{t.email}</label>
-              <Input name="email" type="email" required dir="ltr" className="text-left" autoComplete="email" />
+              <label className="mb-1 block text-xs text-muted">{t.identifier}</label>
+              <Input
+                name="identifier"
+                type="text"
+                required
+                dir="ltr"
+                className="text-left"
+                autoComplete="username"
+              />
             </div>
             <div>
               <label className="mb-1 block text-xs text-muted">{t.password}</label>

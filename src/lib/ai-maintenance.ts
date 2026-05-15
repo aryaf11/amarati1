@@ -1,4 +1,10 @@
+/**
+ * تحليل صيانة + سكور المبنى الشهري.
+ * الربط مع قاعدة البيانات: `supervisorMonthlyScore` → جدول BuildingHealthScore (Prisma upsert).
+ * الربط مع خدمة خارجية اختيارية: `fetchExternalMaintenanceMl` (MAINTENANCE_ML_API_URL في البيئة).
+ */
 import { fetchExternalMaintenanceMl } from "./ml-inference";
+import type { FailureClass } from "./maintenance-predictor";
 import {
   issueLabel,
   predictFailure,
@@ -24,35 +30,84 @@ function classify(description: string) {
   return Array.from(new Set(hits));
 }
 
+/** نافذة زمنية تقريبية + حد أقصى للأيام — لعرضها مع نتيجة النموذج (ليس تنبيهاً منفصلاً). */
+function maintenanceHorizon(issue: FailureClass): { ar: string; maxDays: number } {
+  switch (issue) {
+    case "Water_Leakage":
+      return {
+        ar: "يُفضّل معالجة تسريب/رطوبة خلال أسبوع إلى ثلاثة أسابيع حسب الشدة.",
+        maxDays: 21,
+      };
+    case "Electrical_Issue":
+      return {
+        ar: "مراجعة كهربائية خلال أيام قليلة إلى أسبوعين لتقليل مخاطر التماس.",
+        maxDays: 14,
+      };
+    case "Roof_Leakage":
+      return {
+        ar: "بعد الأمطار أو بقع السقف: جدولة عزل/فحص خلال أسبوعين إلى شهر.",
+        maxDays: 30,
+      };
+    case "Wall_Crack":
+      return {
+        ar: "متابعة وتقييم هندسي خلال شهر إلى شهرين حسب اتساع الشق.",
+        maxDays: 60,
+      };
+    case "Drainage_Blockage":
+      return { ar: "معالجة انسداد الصرف خلال أيام إلى أسبوع.", maxDays: 10 };
+    default:
+      return {
+        ar: "راجع الحالة أسبوعياً وحدّد موعداً مناسباً للكشف حسب التطوّر.",
+        maxDays: 90,
+      };
+  }
+}
+
 function localModelInsight(description: string, city: string) {
   const features = textToFeatures(description, city);
   const issue = predictFailure(features);
   const label = issueLabel(issue, "ar");
-  if (issue === "No_Issue") {
-    return {
-      issue,
-      summary: `النموذج التنبؤي (Amarati RandomForest) لم يحدد عطلاً واضحاً من الوصف الحالي (التصنيف: ${label}).`,
-      suggestions: "لو وُجدت أعراض إضافية، يرجى توضيحها (ماء، كهرباء، جدران، صرف، سقف) للحصول على توصية فنّية أدق.",
-      tag: label,
-    };
-  }
-  const recs = recommendServices(issue, 3);
+  const horizon = maintenanceHorizon(issue);
+  const horizonBlock = `تقدير زمني للصيانة: ${horizon.ar} الحد الأقصى المقترح للانتظار قبل التدخل: نحو ${horizon.maxDays} يوماً.`;
+  const recs = recommendServices(issue, 4);
+  const companies = recs.map(({ company, rating }) => ({ company, rating }));
   const recLines = recs
     .map((r, i) => `${i + 1}. ${r.company} — ⭐ ${r.rating.toFixed(1)}`)
     .join("\n");
+
+  if (issue === "No_Issue") {
+    return {
+      issue,
+      summary: `${horizonBlock}\n\nلم يُستخلص عطل واضح من الوصف الحالي (التصنيف: ${label}).`,
+      suggestions:
+        "لو وُجدت أعراض إضافية، يرجى توضيحها (ماء، كهرباء، جدران، صرف، سقف) للحصول على توصية أدق.\n\n" +
+        `شركات مقترحة للاستعانة بها عند الحاجة:\n${recLines}`,
+      tag: label,
+      companies,
+    };
+  }
   return {
     issue,
-    summary: `توقّع النموذج التنبؤي (Amarati RandomForest، مبني على دفتر Colab): ${label}.`,
+    summary: `${horizonBlock}\n\nتوقّع التحليل التنبؤي: ${label}.`,
     suggestions: `فنّيون موصى بهم (مكة المكرمة):\n${recLines}`,
     tag: label,
+    companies,
   };
 }
+
+export type MaintenanceAiResult = {
+  summary: string;
+  suggestions: string;
+  tags: string[];
+  /** يُخزَّن لاحقاً في MaintenanceRequest.aiCompaniesJson (ربط الفرونت/الأكشن → Prisma). */
+  companies: { company: string; rating: number }[];
+};
 
 export async function analyzeMaintenance(options: {
   description: string;
   city: string;
   buildingId?: string;
-}) {
+}): Promise<MaintenanceAiResult> {
   const ext = await fetchExternalMaintenanceMl({
     description: options.description,
     city: options.city,
@@ -75,7 +130,12 @@ export async function analyzeMaintenance(options: {
   const suggestions = ext?.suggestions?.trim()
     ? `${ext.suggestions.trim()}\n\n${localSuggestions}`
     : localSuggestions;
-  return { summary, suggestions, tags };
+
+  // شركات التصويت/الاختيار: من خادم Colab إن وُجدت، وإلا من القائمة المحلية
+  const companies =
+    ext?.companies && ext.companies.length > 0 ? ext.companies : local.companies;
+
+  return { summary, suggestions, tags, companies };
 }
 
 function monthKey(d = new Date()) {
@@ -101,33 +161,4 @@ export async function supervisorMonthlyScore(buildingId: string) {
     update: { score, summary },
   });
   return { month: monthKey(), score, summary };
-}
-
-export async function addPredictiveAlerts(buildingId: string) {
-  const recent = await prisma.predictiveMaintenanceAlert.count({
-    where: {
-      buildingId,
-      createdAt: { gte: new Date(Date.now() - 1000 * 60 * 60 * 24) },
-    },
-  });
-  if (recent >= 2) return;
-  const samples = [
-    {
-      title: "فحص دوري للمصعد",
-      detail:
-        "بناءً على نمط الطلبات المجتمعية، يُنصح بجدولة فحص أمان للمصعد خلال 30 يوماً.",
-      severity: "medium",
-    },
-    {
-      title: "استباقي للسباكة المشتركة",
-      detail:
-        "ارتفاع طفيف في بلاغات الرطوبة في المباني المماثلة؛ راقب الشقق ذات التوصيلات المشتركة.",
-      severity: "low",
-    },
-  ];
-  for (const s of samples) {
-    await prisma.predictiveMaintenanceAlert.create({
-      data: { ...s, buildingId },
-    });
-  }
 }

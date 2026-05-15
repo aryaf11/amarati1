@@ -24,10 +24,6 @@ export default async function SignupCreatePage({
   const tl = ui(locale).login;
   const sp = await searchParams;
   const err = sp.error ? decodeURIComponent(sp.error) : null;
-  const splUrl =
-    locale === "en"
-      ? "https://splonline.com.sa/en/national-address-1/"
-      : "https://splonline.com.sa/ar/national-address-1/";
 
   return (
     <div className="flex min-h-full flex-col">
@@ -61,14 +57,14 @@ export default async function SignupCreatePage({
                 <Input name="name" required minLength={2} />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-muted">{tr.email}</label>
-                <Input name="email" type="email" required dir="ltr" className="text-left" autoComplete="email" />
-              </div>
-              <div>
                 <label className="mb-1 block text-xs text-muted">{tr.phone}</label>
-                <Input name="phone" dir="ltr" className="text-left" />
+                <Input name="phone" required minLength={8} dir="ltr" className="text-left" autoComplete="tel" />
               </div>
               <div>
+                <label className="mb-1 block text-xs text-muted">{tr.email}</label>
+                <Input name="email" type="email" dir="ltr" className="text-left" autoComplete="email" />
+              </div>
+              <div className="sm:col-span-2">
                 <label className="mb-1 block text-xs text-muted">{tr.password}</label>
                 <PasswordInput
                   name="password"
@@ -85,18 +81,7 @@ export default async function SignupCreatePage({
           </Card>
 
           <Card title={t.buildingInfoTitle}>
-            <p className="mb-4 text-xs leading-relaxed text-muted">
-              {td.splHintBefore}
-              <a
-                href={splUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium underline text-accent"
-              >
-                {td.splLink}
-              </a>
-              {td.splHintAfter}
-            </p>
+            <p className="mb-4 text-xs leading-relaxed text-muted">{td.addressHelp}</p>
             <div className="space-y-3">
               <div>
                 <label className="mb-1 block text-xs text-muted">{td.name}</label>
@@ -104,60 +89,17 @@ export default async function SignupCreatePage({
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="mb-1 block text-xs text-muted">{td.region}</label>
-                  <Input name="region" required placeholder={td.regionPh} />
-                </div>
-                <div>
                   <label className="mb-1 block text-xs text-muted">{td.city}</label>
                   <Input name="city" required placeholder={td.cityPh} />
                 </div>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="mb-1 block text-xs text-muted">{td.district}</label>
-                  <Input name="district" required />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs text-muted">{td.streetName}</label>
-                  <Input name="streetName" required />
-                </div>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <label className="mb-1 block text-xs text-muted">{td.buildingNumber}</label>
-                  <Input name="buildingNumber" required dir="ltr" className="text-left" />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs text-muted">{td.additionalNumber}</label>
-                  <Input name="additionalNumber" dir="ltr" className="text-left" />
-                </div>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <label className="mb-1 block text-xs text-muted">{td.postalCode}</label>
-                  <Input name="postalCode" required maxLength={5} minLength={5} dir="ltr" className="text-left" />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs text-muted">{td.shortAddressCode}</label>
-                  <Input name="shortAddressCode" maxLength={8} minLength={8} dir="ltr" className="text-left" />
+                  <label className="mb-1 block text-xs text-muted">{td.unitLabel}</label>
+                  <Input name="unitLabel" required placeholder={td.unitPh} />
                 </div>
               </div>
               <div>
-                <p className="mb-2 text-xs text-muted">{td.geoHint}</p>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <label className="mb-1 block text-xs text-muted">{td.latitude}</label>
-                    <Input name="latitude" dir="ltr" className="text-left" placeholder="24.7136" />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs text-muted">{td.longitude}</label>
-                    <Input name="longitude" dir="ltr" className="text-left" placeholder="46.6753" />
-                  </div>
-                </div>
-              </div>
-              <div>
-                <label className="mb-1 block text-xs text-muted">{td.unitLabel}</label>
-                <Input name="unitLabel" required placeholder={td.unitPh} />
+                <label className="mb-1 block text-xs text-muted">{td.addressLine}</label>
+                <Input name="address" required placeholder={td.addressLinePh} />
               </div>
             </div>
           </Card>

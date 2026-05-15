@@ -32,15 +32,11 @@ export default async function VotesPage({
   const v = ui(locale).votes;
   const th = ui(locale).buildingHome;
   const df = pickDateLocale(locale);
-  const [votes, supervisors, members] = await Promise.all([
+  const [votes, members] = await Promise.all([
     prisma.vote.findMany({
       where: { buildingId },
       orderBy: { createdAt: "desc" },
       include: { options: true, ballots: true, maintenanceRequest: true },
-    }),
-    prisma.membership.findMany({
-      where: { unit: { buildingId }, isSupervisor: true },
-      include: { user: true, unit: true },
     }),
     prisma.membership.findMany({
       where: { unit: { buildingId } },
@@ -64,24 +60,17 @@ export default async function VotesPage({
         </p>
       ) : null}
 
-      <Card title={th.currentSupervisor}>
-        {supervisors.length === 0 ? (
-          <p className="text-sm text-muted">{th.noSupervisor}</p>
-        ) : (
-          <ul className="space-y-1 text-sm">
-            {supervisors.map((s) => (
-              <li key={s.id}>
-                <strong>{s.user.name}</strong> ({th.unitPrefix} {s.unit.label})
-              </li>
-            ))}
-          </ul>
-        )}
+      <Card title={v.kindsTitle}>
+        <p className="text-sm text-muted">{v.kindsHint}</p>
         {isCreator ? (
           <div
-            className="mt-4 space-y-3 border-t pt-4"
-            style={{ borderColor: "var(--card-border)" }}
+            className="mb-6 space-y-3 rounded-2xl border p-4"
+            style={{
+              borderColor: "var(--card-border)",
+              backgroundColor: "color-mix(in srgb, var(--card) 92%, transparent)",
+            }}
           >
-            <p className="text-xs text-muted">{th.assignHint}</p>
+            <p className="text-xs font-semibold text-accent">{th.assignHint}</p>
             <form action={assignSupervisorAction} className="flex flex-wrap gap-2">
               <input type="hidden" name="buildingId" value={buildingId} />
               <select
@@ -105,22 +94,8 @@ export default async function VotesPage({
                 {th.assignSubmit}
               </Button>
             </form>
-            <form
-              action={openSupervisorVoteAction}
-              className="flex flex-wrap items-center gap-2"
-            >
-              <input type="hidden" name="buildingId" value={buildingId} />
-              <Button type="submit" variant="ghost" className="!py-2 !text-xs">
-                {th.startVote}
-              </Button>
-              <span className="text-xs text-muted">{th.ownersRequired}</span>
-            </form>
           </div>
         ) : null}
-      </Card>
-
-      <Card title={v.kindsTitle}>
-        <p className="text-sm text-muted">{v.kindsHint}</p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <div
             className="rounded-2xl border p-4"
@@ -272,7 +247,7 @@ function VoteList({
                       {vote.title}
                     </p>
                     <p className="mt-1 text-xs text-muted">
-                      {typeLabel} · {vote.status === "OPEN" ? v.open : v.closed} ·{" "}
+                      {vote.status !== "OPEN" ? `${typeLabel} · ${v.closed} · ` : `${typeLabel} · `}
                       {v.ends} {vote.endsAt.toLocaleString(df)}
                     </p>
                     {vote.description ? (

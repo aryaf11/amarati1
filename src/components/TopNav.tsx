@@ -51,7 +51,7 @@ export async function TopNav() {
           </Link>
         </div>
         <nav className="flex items-center gap-1.5 text-sm">
-          <NavToolbar locale={locale} loggedIn={false} />
+          <NavToolbar locale={locale} loggedIn={Boolean(user)} />
           {user ? (
             <form action={logoutAction}>
               <button

@@ -1,0 +1,4 @@
+# لا ترفع أسراراً مع `npx vercel` — Vercel يحترم .gitignore عادةً؛ نُؤكّد استبعاد .env
+.env
+.env.local
+.env.*.local
