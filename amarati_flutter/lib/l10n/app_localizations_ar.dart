@@ -113,7 +113,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'أهلاً بك في عمارتي! 👋 أنا مساعدك الذكي، جاهز أسهّل عليك إدارة شقتك وعمارتك بخطوات بسيطة وواضحة.\n\nمن متابعة الصيانة، واستقبال البلاغات، وتنظيم السكن... إلى متابعة المدفوعات والتنبيهات — كل شيء عندك في مكان واحد 👇\n\nإذا احتجت أي مساعدة، اسألني مباشرة... وأنا هنا دائماً لخدمتك ✨\n\nخلينا نبدأ معاً بتجربة إدارة أسهل، أسرع، وأذكى مع عمارتي 🏢💙';
 
   @override
-  String get assistantQuickStatus => 'ما حالة شقتي؟';
+  String get assistantQuickStatus => 'معلومات شقتي';
 
   @override
   String get assistantQuickMaintenance => 'عرض طلبات الصيانة';

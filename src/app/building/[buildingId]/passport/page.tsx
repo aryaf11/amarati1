@@ -27,7 +27,9 @@ export default async function PassportPage({
   return (
     <div className="space-y-6">
       <Card title={`${p.title} ${membership.unit.label}`}>
-        <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">{p.subtitle}</p>
+        {p.subtitle.trim() ? (
+          <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">{p.subtitle}</p>
+        ) : null}
         <ul className="space-y-3 text-sm">
           {events.map((e) => (
             <li key={e.id} className="rounded-xl border border-slate-100 p-3 dark:border-slate-800">

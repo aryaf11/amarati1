@@ -114,13 +114,7 @@ export default async function MaintenancePage({
                       <p className="text-xs text-muted">
                         {r.scope === "PERSONAL"
                           ? `${m.personalUnit} ${r.unit?.label ?? "-"}`
-                          : m.community}{" "}
-                        — {m.status}:{" "}
-                        {r.status === "DONE"
-                          ? m.statusDone
-                          : r.status === "CANCELLED"
-                            ? m.statusCancelled
-                            : m.statusInProgress}
+                          : m.community}
                       </p>
                     </div>
                     <span

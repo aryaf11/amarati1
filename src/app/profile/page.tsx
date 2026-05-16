@@ -208,9 +208,11 @@ export default async function ProfilePage({
         </Card>
 
         <Card title={t.passportTitle}>
-          <p className="mb-4 text-xs text-slate-500 dark:text-slate-300">
-            {t.passportHint}
-          </p>
+          {t.passportHint.trim() ? (
+            <p className="mb-4 text-xs text-slate-500 dark:text-slate-300">
+              {t.passportHint}
+            </p>
+          ) : null}
           {memberships.length === 0 ? (
             <p className="text-sm text-slate-600 dark:text-slate-300">{t.passportNoUnits}</p>
           ) : (
