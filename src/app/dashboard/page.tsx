@@ -22,14 +22,24 @@ export default async function DashboardPage({
 }) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
-  const [locale, items, sp] = await Promise.all([
-    getLocale(),
-    listMyBuildings(user.id),
-    searchParams,
-  ]);
+  const locale = await getLocale();
+  const sp = await searchParams;
+  let items: Awaited<ReturnType<typeof listMyBuildings>> = [];
+  let loadError: string | null = null;
+  try {
+    items = await listMyBuildings(user.id);
+  } catch (e) {
+    loadError =
+      e instanceof Error
+        ? e.message
+        : locale === "ar"
+          ? "تعذّر تحميل بيانات المباني. جرّب إعادة التحميل لاحقاً."
+          : "Could not load your buildings. Try again later.";
+  }
   const t = ui(locale).dashboard;
   const th = ui(locale).buildingHome;
-  const err = sp.error ? decodeURIComponent(sp.error) : null;
+  const err =
+    loadError ?? (sp.error ? decodeURIComponent(sp.error) : null);
   const memberIds = new Set(items.map((m) => m.unit.building.id));
   const openRaw = typeof sp.open === "string" ? sp.open.trim() : "";
   const focusBuildingId =
