@@ -22,13 +22,13 @@ function syncDatabaseEnv(): void {
   if (typeof window !== "undefined") return;
 
   const dbClean =
-    unquoteOuter(process.env.DATABASE_URL) ||
+    unquoteOuter(process.env.DATABASE_URL ?? "") ||
     trim(process.env.POSTGRES_PRISMA_URL) ||
     trim(process.env.POSTGRES_URL);
   if (dbClean) process.env.DATABASE_URL = dbClean;
 
   const dirClean =
-    unquoteOuter(process.env.DIRECT_URL) ||
+    unquoteOuter(process.env.DIRECT_URL ?? "") ||
     trim(process.env.POSTGRES_URL_NON_POOLING) ||
     trim(process.env.DATABASE_URL_UNPOOLED) ||
     trim(process.env.NEON_DATABASE_URL_UNPOOLED) ||
