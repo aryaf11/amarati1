@@ -184,7 +184,7 @@ const AR = {
     supervisor: "لوحة المشرف",
   },
   buildingHome: {
-    yourStatus: "حالتك في هذا المبنى",
+    membershipInBuilding: "عضويتك في المبنى",
     youSupervisor: "أنت المشرف",
     currentSupervisor: "المشرف الحالي",
     noSupervisor:
@@ -234,7 +234,7 @@ const AR = {
     noneRequests: "لا طلبات صيانة بعد.",
     personalUnit: "شخصي — شقة",
     community: "مجتمعي",
-    status: "الحالة",
+    status: "المرحلة",
     statusInProgress: "قيد المعالجة",
     statusDone: "مكتمل",
     statusCancelled: "ملغى",
@@ -265,7 +265,7 @@ const AR = {
     titleCompany: "تصويت شركات الصيانة (الأعطال المجتمعية)",
     titleOther: "تصويتات أخرى",
     kindsTitle: "خيارات التصويت",
-    kindsHint: "في عَمارتي يوجد نوعان من التصويت: اختيار مشرف المبنى، واختيار شركة صيانة لطلبات الصيانة المجتمعية.",
+    kindsHint: "",
     kindSupervisorTitle: "تصويت لاختيار مشرف",
     kindSupervisorDesc: "يحق لمنشئ المبنى فقط بدء تصويت اختيار المشرف.",
     kindCompanyTitle: "تصويت شركة صيانة (مجتمعي)",
@@ -294,21 +294,13 @@ const AR = {
     panelTitle: "لوحة المشرف",
     refreshTitle: "تحديث السكور والتنبؤات",
     refreshP1:
-      "زر «تحديث الآن» يُحدّث سكور الصحة الشهري من سجل طلبات الصيانة (جدول BuildingHealthScore في قاعدة البيانات).",
-    refreshP2:
-      "لربط نموذج من Colab أو أي خدمة: انشر API يرجع JSON واضبط MAINTENANCE_ML_API_URL في البيئة (العقد موثّق في ml-inference.ts).",
-    refreshP3:
-      "يمكن ربط نموذج تنبؤ خارجي عبر المتغير MAINTENANCE_ML_API_URL (راجع ml-inference.ts).",
+      "زر «تحديث الآن» يُحدّث سكور صحة المبنى الشهري من سجل طلبات الصيانة.",
     refreshBtn: "تحديث الآن",
     scoreTitle: "سجل السكور الشهري",
-    scoreEmpty: "اضغط تحديث لإنشاء أول سجل.",
-    alertsTitle: "تنبيهات صيانة تنبؤية",
-    reportTitle: "تقرير سريع (تصدير يدوي)",
-    reportHint:
-      "هذا الجدول يُبنى تلقائياً من آخر طلبات الصيانة في المبنى (حد أقصى 15 صفاً).",
-    thTitle: "العنوان",
-    thScope: "النطاق",
-    thStatus: "الحالة",
+    scoreEmpty: "اضغط «تحديث الآن» لإنشاء أول سجل.",
+    scoreScaleRange: "النطاق",
+    scoreScaleLabel: "التصنيف",
+    scoreScaleDesc: "الوصف",
   },
   announcements: {
     new: "إعلان جديد",
@@ -344,7 +336,7 @@ const AR = {
   },
   profile: {
     title: "الحساب",
-    subtitle: "معلومات حسابك وإعداداتك",
+    subtitle: "",
     accountTitle: "بيانات الحساب",
     name: "الاسم",
     email: "البريد",
@@ -365,7 +357,7 @@ const AR = {
     notificationsLabel: "إشعارات المتصفح",
     notificationsOn: "مفعّلة",
     notificationsOff: "متوقفة",
-    notificationsHint: "تفعيل أو إيقاف تنبيهات المتصفح من هذا الجهاز.",
+    notificationsHint: "",
     smsSendFailed: "تعذّر إرسال رسالة التحقق. جرّب لاحقاً أو راجع إعداد Twilio.",
     smsNotConfigured:
       "إرسال SMS غير مهيأ على الخادم — الرمز يظهر في سجل التشغيل للتطوير فقط.",
@@ -569,7 +561,7 @@ const EN = {
     supervisor: "Supervisor",
   },
   buildingHome: {
-    yourStatus: "Your status in this building",
+    membershipInBuilding: "Your membership",
     youSupervisor: "You are the supervisor",
     currentSupervisor: "Current supervisor",
     noSupervisor:
@@ -651,7 +643,7 @@ const EN = {
     titleCompany: "Maintenance-company votes (community issues)",
     titleOther: "Other votes",
     kindsTitle: "Vote types",
-    kindsHint: "Amarati supports two vote types: pick a building supervisor, and pick a maintenance company for a community-scoped maintenance request.",
+    kindsHint: "",
     kindSupervisorTitle: "Supervisor election",
     kindSupervisorDesc: "Only the building creator can start supervisor voting.",
     kindCompanyTitle: "Maintenance-company vote (community)",
@@ -680,21 +672,13 @@ const EN = {
     panelTitle: "Supervisor panel",
     refreshTitle: "Refresh score & predictions",
     refreshP1:
-      "“Update now” refreshes the monthly health score from maintenance history (BuildingHealthScore in the database).",
-    refreshP2:
-      "To use a Colab or other ML model: deploy a JSON API and set MAINTENANCE_ML_API_URL (see ml-inference.ts for the request/response contract).",
-    refreshP3:
-      "You can plug in an external prediction API via MAINTENANCE_ML_API_URL (see ml-inference.ts).",
+      "“Update now” refreshes the monthly building health score from the maintenance request log.",
     refreshBtn: "Update now",
-    scoreTitle: "Monthly score history",
-    scoreEmpty: "Click update to create the first record.",
-    alertsTitle: "Predictive maintenance alerts",
-    reportTitle: "Quick report (manual export)",
-    reportHint:
-      "This table is built from the latest maintenance requests (max 15 rows).",
-    thTitle: "Title",
-    thScope: "Scope",
-    thStatus: "Status",
+    scoreTitle: "Monthly score log",
+    scoreEmpty: "Click “Update now” to create the first record.",
+    scoreScaleRange: "Range",
+    scoreScaleLabel: "Rating",
+    scoreScaleDesc: "Description",
   },
   announcements: {
     new: "New announcement",
@@ -730,7 +714,7 @@ const EN = {
   },
   profile: {
     title: "Account",
-    subtitle: "Your account info and settings",
+    subtitle: "",
     accountTitle: "Account details",
     name: "Name",
     email: "Email",
@@ -751,7 +735,7 @@ const EN = {
     notificationsLabel: "Browser notifications",
     notificationsOn: "On",
     notificationsOff: "Off",
-    notificationsHint: "Enable or disable browser notifications on this device.",
+    notificationsHint: "",
     smsSendFailed: "Could not send the SMS verification code. Try again later or check Twilio settings.",
     smsNotConfigured:
       "SMS is not configured on the server — the code is printed in server logs for development only.",

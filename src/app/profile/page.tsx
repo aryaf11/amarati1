@@ -85,9 +85,11 @@ export default async function ProfilePage({
             <h1 className="text-2xl font-bold" style={{ color: accent }}>
               {t.title}
             </h1>
-            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-              {t.subtitle}
-            </p>
+            {t.subtitle.trim() ? (
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                {t.subtitle}
+              </p>
+            ) : null}
           </div>
         </header>
 

@@ -133,7 +133,9 @@ export function ProfileSettings({
           {notifyOn ? <BellIcon /> : <BellOffIcon />}
           <span>{notifyOn ? t.notificationsOn : t.notificationsOff}</span>
         </button>
-        <p className="mt-2 text-xs text-muted">{t.notificationsHint}</p>
+        {t.notificationsHint.trim() ? (
+          <p className="mt-2 text-xs text-muted">{t.notificationsHint}</p>
+        ) : null}
       </div>
     </div>
   );

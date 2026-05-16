@@ -57,7 +57,7 @@ function maintenanceHorizon(issue: FailureClass): { ar: string; maxDays: number 
       return { ar: "معالجة انسداد الصرف خلال أيام إلى أسبوع.", maxDays: 10 };
     default:
       return {
-        ar: "راجع الحالة أسبوعياً وحدّد موعداً مناسباً للكشف حسب التطوّر.",
+        ar: "راجع التقدّم أسبوعياً وحدّد موعداً مناسباً للكشف حسب التطوّر.",
         maxDays: 90,
       };
   }

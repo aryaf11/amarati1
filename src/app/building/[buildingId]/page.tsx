@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { supervisorRefreshInsightsAction } from "@/actions/platform";
-import { GaugeIcon } from "@/components/LandingIcons";
+import { MonthlyScoreLog } from "@/components/MonthlyScoreLog";
 import { loadBuildingContext } from "@/lib/building-context";
 import { getCurrentUser } from "@/lib/current-user";
 import type { AppLocale } from "@/lib/locale";
@@ -62,23 +62,18 @@ async function SupervisorOverview({
   locale: AppLocale;
   errorBanner: React.ReactNode;
 }) {
-  const t = ui(locale);
-  const s = t.supervisor;
-  const th = t.buildingHome;
+  const s = ui(locale).supervisor;
   const scores = await prisma.buildingHealthScore.findMany({
     where: { buildingId },
     orderBy: { month: "desc" },
     take: 6,
   });
-  const latest = scores[0];
   return (
     <div className="space-y-6">
       {errorBanner}
 
-      <Card title={th.supervisorOverviewTitle}>
-        <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">
-          {th.supervisorOverviewHint}
-        </p>
+      <Card title={s.refreshTitle}>
+        <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">{s.refreshP1}</p>
         <form action={supervisorRefreshInsightsAction}>
           <input type="hidden" name="buildingId" value={buildingId} />
           <Button type="submit" className="!py-2 !text-xs">
@@ -88,50 +83,7 @@ async function SupervisorOverview({
       </Card>
 
       <Card title={s.scoreTitle}>
-        {latest ? (
-          <div
-            className="mb-4 flex items-center gap-3 rounded-2xl border p-4"
-            style={{
-              borderColor: "var(--card-border)",
-              backgroundColor: "var(--accent-soft)",
-            }}
-          >
-            <span
-              className="inline-flex size-12 items-center justify-center rounded-2xl"
-              style={{
-                backgroundColor: "var(--accent)",
-                color: "var(--accent-foreground)",
-              }}
-              aria-hidden
-            >
-              <GaugeIcon />
-            </span>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-                {latest.month}
-              </p>
-              <p className="font-mono text-2xl font-bold text-accent">
-                {latest.score}
-              </p>
-            </div>
-          </div>
-        ) : null}
-        {scores.length === 0 ? (
-          <p className="text-sm text-slate-600 dark:text-slate-300">{s.scoreEmpty}</p>
-        ) : (
-          <ul className="space-y-2 text-sm">
-            {scores.map((sc) => (
-              <li
-                key={sc.id}
-                className="flex items-center justify-between gap-2 rounded-lg border px-3 py-2"
-                style={{ borderColor: "var(--card-border)" }}
-              >
-                <span className="text-muted">{sc.month}</span>
-                <span className="font-mono font-semibold">{sc.score}</span>
-              </li>
-            ))}
-          </ul>
-        )}
+        <MonthlyScoreLog scores={scores} locale={locale} />
       </Card>
     </div>
   );

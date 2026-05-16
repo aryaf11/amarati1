@@ -53,7 +53,6 @@ export default async function VotesPage({
       ) : null}
 
       <Card title={v.kindsTitle}>
-        <p className="text-sm text-muted">{v.kindsHint}</p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <div
             className="rounded-2xl border p-4"

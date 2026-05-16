@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { supervisorRefreshInsightsAction } from "@/actions/platform";
+import { MonthlyScoreLog } from "@/components/MonthlyScoreLog";
 import { loadBuildingContext } from "@/lib/building-context";
 import { getCurrentUser } from "@/lib/current-user";
 import { getLocale } from "@/lib/locale";
@@ -23,7 +24,6 @@ export default async function SupervisorPage({
   if (!building || !membership) notFound();
   const locale = await getLocale();
   const s = ui(locale).supervisor;
-  const m = ui(locale).maintenance;
   if (!membership.isSupervisor) {
     return (
       <Card title={s.panelTitle}>
@@ -36,14 +36,6 @@ export default async function SupervisorPage({
     orderBy: { month: "desc" },
     take: 6,
   });
-  const reportRows = await prisma.maintenanceRequest.findMany({
-    where: { buildingId },
-    orderBy: { createdAt: "desc" },
-    take: 15,
-    include: { unit: true },
-  });
-  const scopeCell = (scope: string) =>
-    scope === "PERSONAL" ? m.scopeLabelPersonal : m.scopeLabelCommunity;
   return (
     <div className="space-y-6">
       {err ? (
@@ -52,49 +44,14 @@ export default async function SupervisorPage({
         </p>
       ) : null}
       <Card title={s.refreshTitle}>
-        <p className="mb-3 text-sm text-slate-600 dark:text-slate-300">{s.refreshP1}</p>
-        <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">{s.refreshP2}</p>
-        <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">{s.refreshP3}</p>
+        <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">{s.refreshP1}</p>
         <form action={supervisorRefreshInsightsAction}>
           <input type="hidden" name="buildingId" value={buildingId} />
           <Button type="submit">{s.refreshBtn}</Button>
         </form>
       </Card>
       <Card title={s.scoreTitle}>
-        <ul className="space-y-2 text-sm">
-          {scores.map((sc) => (
-            <li key={sc.id} className="flex justify-between gap-2">
-              <span>{sc.month}</span>
-              <span className="font-mono font-semibold">{sc.score}</span>
-            </li>
-          ))}
-        </ul>
-        {scores.length === 0 ? (
-          <p className="text-sm text-slate-600 dark:text-slate-300">{s.scoreEmpty}</p>
-        ) : null}
-      </Card>
-      <Card title={s.reportTitle}>
-        <p className="mb-2 text-xs text-slate-500 dark:text-slate-400">{s.reportHint}</p>
-        <div className="overflow-x-auto text-xs">
-          <table className="w-full border-collapse text-right">
-            <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-800">
-                <th className="p-2">{s.thTitle}</th>
-                <th className="p-2">{s.thScope}</th>
-                <th className="p-2">{s.thStatus}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {reportRows.map((r) => (
-                <tr key={r.id} className="border-b border-slate-100 dark:border-slate-900">
-                  <td className="p-2">{r.title}</td>
-                  <td className="p-2">{scopeCell(r.scope)}</td>
-                  <td className="p-2">{r.status}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <MonthlyScoreLog scores={scores} locale={locale} />
       </Card>
     </div>
   );
