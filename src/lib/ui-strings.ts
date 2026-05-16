@@ -36,7 +36,7 @@ const AR = {
   },
   signup: {
     chooseTitle: "أنشئ حسابك",
-    chooseSubtitle: "أسرع طريق هي الانضمام برمز المبنى — أو أنشئ مبنًى جديدًا إذا كنت أوّل مسجّل.",
+    chooseSubtitle: "انضم إلى عمارتك برمز المبنى ورقم شقتك.",
     choiceCreateTitle: "إنشاء مبنى جديد",
     choiceCreateDesc: "تسجيل عمارة جديدة ومشاركة رمز الدعوة مع السكان.",
     choiceJoinTitle: "الانضمام إلى مبنى",
@@ -121,11 +121,10 @@ const AR = {
   },
   dashboard: {
     title: "ابدأ مع عَمارتي",
-    subtitle: "أنشئ عمارة جديدة أو انضم إلى مبنى قائم بالرمز.",
+    subtitle: "انضم إلى مبنى قائم برمز المبنى ورقم شقتك.",
     titleMy: "مبانيك",
     subtitleMy: "اختر المبنى لفتح لوحته (الصيانة، التصويت، الإعلانات).",
-    firstTimeHint:
-      "عندما لا تنتمي إلى أي مبنى بعد، يمكنك تسجيل عمارة جديدة أو الانضمام برمز الدعوة.",
+    createBuildingDisabled: "إنشاء مبنى جديد غير متاح من التطبيق. استخدم رمز المبنى للانضمام.",
     createBuilding: "إنشاء مبنى جديد",
     addressHelp:
       "اكتب وصفًا نصّيًا لموقع المبنى (الشارع أو الحي) مع المدينة — كما تناسبك.",
@@ -422,8 +421,7 @@ const EN = {
   },
   signup: {
     chooseTitle: "Create your account",
-    chooseSubtitle:
-      "Fastest path: join an existing building with a code — or register one new building if you are the first organizer.",
+    chooseSubtitle: "Join your building with the building code and unit number.",
     choiceCreateTitle: "Register a new building",
     choiceCreateDesc: "Register a new building and share the invite code with residents.",
     choiceJoinTitle: "Join a building",
@@ -508,11 +506,11 @@ const EN = {
   },
   dashboard: {
     title: "Get started with Amarati",
-    subtitle: "Create a new building or join an existing one with a code.",
+    subtitle: "Join an existing building with a code and your unit number.",
     titleMy: "Your buildings",
     subtitleMy: "Pick a building to open its dashboard (maintenance, voting, announcements).",
-    firstTimeHint:
-      "When you are not in any building yet, register a new one or join with an invite code.",
+    createBuildingDisabled:
+      "Creating a new building is not available in the app. Use a building code to join.",
     createBuilding: "Create a new building",
     addressHelp: "Describe the street or neighbourhood plus city — plain text.",
     nationalAddressTitle: "National address",

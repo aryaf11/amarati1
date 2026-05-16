@@ -26,7 +26,7 @@ export default async function SignupJoinPage({
   const err = sp.error ? decodeURIComponent(sp.error) : null;
 
   return (
-    <div className="flex min-h-full flex-col">
+    <div className="flex min-h-dvh flex-col">
       <TopNav />
       <AuthPageShell className="max-w-xl">
         <header className="flex items-center gap-3">
@@ -97,11 +97,6 @@ export default async function SignupJoinPage({
           </SubmitButton>
         </form>
 
-        <p className="text-center text-sm text-muted">
-          <Link href="/signup/create" className="font-semibold underline text-accent">
-            {t.choiceCreateTitle}
-          </Link>
-        </p>
         <p className="text-center text-sm text-muted">
           {t.haveAccount}{" "}
           <Link href="/login" className="font-semibold underline text-accent">

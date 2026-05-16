@@ -123,7 +123,7 @@ export function AuthPageShell({
 }) {
   return (
     <main
-      className={`mx-auto flex w-full max-w-md flex-1 flex-col justify-center space-y-6 px-4 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom,0px))] sm:px-6 ${className}`}
+      className={`mx-auto flex w-full max-w-md min-h-0 flex-1 flex-col justify-center gap-6 px-4 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom,0px))] sm:px-6 ${className}`}
     >
       {children}
     </main>

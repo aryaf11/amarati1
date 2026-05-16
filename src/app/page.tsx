@@ -17,7 +17,7 @@ export default async function HomePage() {
   const logoAlt = L.logoAlt;
 
   return (
-    <div className="flex min-h-full flex-col">
+    <div className="flex min-h-dvh flex-col">
       <TopNav />
       <AuthPageShell className="items-center text-center">
         <div className="flex flex-col items-center gap-4">
@@ -32,8 +32,7 @@ export default async function HomePage() {
           <h1 className="text-3xl font-bold tracking-tight" style={{ color: accent }}>
             {L.nameAr}
           </h1>
-          <p className="max-w-md text-sm text-muted">{L.tagline}</p>
-          <p className="max-w-lg text-sm leading-relaxed text-muted">{L.desc}</p>
+          <p className="max-w-md text-sm leading-relaxed text-muted">{L.tagline}</p>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-3">
           <Link href="/login">

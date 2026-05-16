@@ -15,9 +15,7 @@ import {
   isEmailVerificationRequired,
 } from "@/lib/send-verification-email";
 import { createSession } from "@/lib/session";
-import { buildingAddressFromForm } from "@/lib/building-address";
 import { sendPhoneOtpSms } from "@/lib/sms-otp";
-import { buildingPublicCode } from "@/lib/tokens";
 import { ui } from "@/lib/ui-strings";
 
 const personalSchema = z.object({
@@ -31,11 +29,6 @@ const personalSchema = z.object({
   ),
   password: z.string().min(6),
   phone: z.string().trim().min(8).max(24),
-});
-
-const buildingSchema = z.object({
-  buildingName: z.string().trim().min(2),
-  unitLabel: z.string().trim().min(1),
 });
 
 const joinSchema = z.object({
@@ -53,7 +46,7 @@ function readPersonal(formData: FormData) {
 }
 
 function backCreateError(msg: string): never {
-  redirect("/signup/create?error=" + encodeURIComponent(msg));
+  redirect("/signup/join?error=" + encodeURIComponent(msg));
 }
 function backJoinError(msg: string): never {
   redirect("/signup/join?error=" + encodeURIComponent(msg));
@@ -112,57 +105,10 @@ async function createUserWithVerification(
   return { user, gate: Boolean(gate && data.email) };
 }
 
-export async function signupAndCreateBuildingAction(formData: FormData) {
+export async function signupAndCreateBuildingAction(_formData: FormData) {
   const locale = await getLocale();
   const t = ui(locale);
-  const personal = readPersonal(formData);
-  if (!personal.success) backCreateError(t.register.invalidForm);
-  const building = buildingSchema.safeParse({
-    buildingName: formData.get("buildingName"),
-    unitLabel: formData.get("unitLabel"),
-  });
-  const addr = buildingAddressFromForm(formData);
-  if (!building.success || !addr) backCreateError(t.signup.addressInvalid);
-  try {
-    const { user, gate } = await createUserWithVerification(personal.data, backCreateError);
-    const inviteCode = buildingPublicCode();
-    const created = await prisma.building.create({
-      data: {
-        name: building.data.buildingName,
-        address: addr.address,
-        city: addr.city,
-        region: addr.region,
-        district: addr.district,
-        streetName: addr.streetName,
-        buildingNumber: addr.buildingNumber,
-        additionalNumber: addr.additionalNumber,
-        postalCode: addr.postalCode,
-        shortAddressCode: addr.shortAddressCode,
-        inviteCode,
-        creatorId: user.id,
-        units: { create: { label: building.data.unitLabel } },
-      },
-      include: { units: true },
-    });
-    const unit = created.units[0];
-    await prisma.membership.create({
-      data: {
-        userId: user.id,
-        unitId: unit.id,
-        kind: "OWNER",
-        isSupervisor: false,
-      },
-    });
-    if (gate) {
-      redirect("/register/check-email");
-    }
-    await createSession(user.id);
-    redirect(`/building/${created.id}`);
-  } catch (e) {
-    if (isRedirectError(e)) throw e;
-    console.error("signupAndCreateBuildingAction", flattenError(e), e);
-    backCreateError(dbOrSessionErrorHint(e));
-  }
+  redirect("/signup/join?error=" + encodeURIComponent(t.dashboard.createBuildingDisabled));
 }
 
 export async function signupAndJoinBuildingAction(formData: FormData) {

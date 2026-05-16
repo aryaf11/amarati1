@@ -35,7 +35,7 @@ export default async function LoginPage({
   const logoAlt = tLanding.logoAlt;
 
   return (
-    <div className="flex min-h-full flex-col">
+    <div className="flex min-h-dvh flex-col">
       <TopNav />
       <AuthPageShell>
         <div className="flex flex-col items-center text-center">
