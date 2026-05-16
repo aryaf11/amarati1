@@ -10,6 +10,7 @@ import '../features/auth/signup_page.dart';
 import '../features/auth/verify_email_page.dart';
 import '../features/building/announcements_page.dart';
 import '../features/building/building_home_page.dart';
+import '../features/building/assistant_page.dart';
 import '../features/building/chat_page.dart';
 import '../features/building/invite_page.dart';
 import '../features/building/maintenance_page.dart';
@@ -133,6 +134,13 @@ GoRouter createRouter(AppSession session) {
             builder: (context, state) {
               final id = state.pathParameters['buildingId']!;
               return BuildingChatPage(buildingId: id);
+            },
+          ),
+          GoRoute(
+            path: '/building/:buildingId/assistant',
+            builder: (context, state) {
+              final id = state.pathParameters['buildingId']!;
+              return BuildingAssistantPage(buildingId: id);
             },
           ),
           GoRoute(

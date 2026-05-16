@@ -2,7 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { signupAndCreateBuildingAction } from "@/actions/signup";
 import { TopNav } from "@/components/TopNav";
-import { Card, Input, PageShell } from "@/components/ui";
+import { NationalAddressFields } from "@/components/NationalAddressFields";
+import { AuthPageShell, Card, Input } from "@/components/ui";
 import { PasswordInput } from "@/components/PasswordInput";
 import { SubmitButton } from "@/components/SubmitButton";
 import { BuildingIcon } from "@/components/LandingIcons";
@@ -28,7 +29,7 @@ export default async function SignupCreatePage({
   return (
     <div className="flex min-h-full flex-col">
       <TopNav />
-      <PageShell className="max-w-2xl">
+      <AuthPageShell className="max-w-2xl">
         <header className="flex items-center gap-3">
           <span
             className="inline-flex size-12 items-center justify-center rounded-2xl"
@@ -80,27 +81,17 @@ export default async function SignupCreatePage({
             </div>
           </Card>
 
-          <Card title={t.buildingInfoTitle}>
-            <p className="mb-4 text-xs leading-relaxed text-muted">{td.addressHelp}</p>
+          <Card title={td.nationalAddressTitle}>
             <div className="space-y-3">
               <div>
                 <label className="mb-1 block text-xs text-muted">{td.name}</label>
                 <Input name="buildingName" required placeholder={td.namePh} />
               </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <label className="mb-1 block text-xs text-muted">{td.city}</label>
-                  <Input name="city" required placeholder={td.cityPh} />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs text-muted">{td.unitLabel}</label>
-                  <Input name="unitLabel" required placeholder={td.unitPh} />
-                </div>
-              </div>
               <div>
-                <label className="mb-1 block text-xs text-muted">{td.addressLine}</label>
-                <Input name="address" required placeholder={td.addressLinePh} />
+                <label className="mb-1 block text-xs text-muted">{td.unitLabel}</label>
+                <Input name="unitLabel" required placeholder={td.unitPh} />
               </div>
+              <NationalAddressFields locale={locale} />
             </div>
           </Card>
 
@@ -110,7 +101,6 @@ export default async function SignupCreatePage({
         </form>
 
         <p className="text-center text-sm text-muted">
-          {t.choiceJoinDesc}{" "}
           <Link href="/signup/join" className="font-semibold underline text-accent">
             {t.choiceJoinTitle}
           </Link>
@@ -121,7 +111,7 @@ export default async function SignupCreatePage({
             {t.backLogin}
           </Link>
         </p>
-      </PageShell>
+      </AuthPageShell>
     </div>
   );
 }

@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { TopNav } from "@/components/TopNav";
-import { Button, PageShell } from "@/components/ui";
+import { AuthPageShell, Button } from "@/components/ui";
 import { getCurrentUser } from "@/lib/current-user";
 import { getLocale } from "@/lib/locale";
 import { ui } from "@/lib/ui-strings";
@@ -19,7 +19,7 @@ export default async function HomePage() {
   return (
     <div className="flex min-h-full flex-col">
       <TopNav />
-      <PageShell className="flex flex-1 flex-col items-center justify-center gap-8 py-12 text-center">
+      <AuthPageShell className="items-center text-center">
         <div className="flex flex-col items-center gap-4">
           <Image
             src="/logo.svg"
@@ -47,7 +47,7 @@ export default async function HomePage() {
             </Button>
           </Link>
         </div>
-      </PageShell>
+      </AuthPageShell>
     </div>
   );
 }

@@ -10,36 +10,42 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/current-user";
 import { prisma } from "@/lib/prisma";
+import { buildingAddressFromForm } from "@/lib/building-address";
 import { buildingPublicCode } from "@/lib/tokens";
+import { getLocale } from "@/lib/locale";
+import { ui } from "@/lib/ui-strings";
 
 const createBuildingSchema = z.object({
   name: z.string().min(2),
-  city: z.string().min(2),
-  address: z.string().min(3),
   unitLabel: z.string().min(1),
 });
 
 export async function createBuildingAction(formData: FormData) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+  const locale = await getLocale();
+  const t = ui(locale).dashboard;
   const parsed = createBuildingSchema.safeParse({
     name: formData.get("name"),
-    city: formData.get("city"),
-    address: formData.get("address"),
     unitLabel: formData.get("unitLabel"),
   });
-  if (!parsed.success) {
-    redirect(
-      "/dashboard?error=" +
-        encodeURIComponent("تحقق من اسم العمارة والمدينة والعنوان ورقم الشقة"),
-    );
+  const addr = buildingAddressFromForm(formData);
+  if (!parsed.success || !addr) {
+    redirect("/dashboard?error=" + encodeURIComponent(t.nationalAddressInvalid));
   }
   const inviteCode = buildingPublicCode();
   const building = await prisma.building.create({
     data: {
       name: parsed.data.name.trim(),
-      address: parsed.data.address.trim(),
-      city: parsed.data.city.trim(),
+      address: addr.address,
+      city: addr.city,
+      region: addr.region,
+      district: addr.district,
+      streetName: addr.streetName,
+      buildingNumber: addr.buildingNumber,
+      additionalNumber: addr.additionalNumber,
+      postalCode: addr.postalCode,
+      shortAddressCode: addr.shortAddressCode,
       inviteCode,
       creatorId: user.id,
       units: { create: { label: parsed.data.unitLabel.trim() } },

@@ -83,9 +83,12 @@ export async function openSupervisorVoteAction(formData: FormData) {
   const user = await getCurrentUser();
   const buildingId = String(formData.get("buildingId") ?? "");
   if (!user) redirect("/login");
-  const m = await getMembership(user.id, buildingId);
-  if (!m) {
-    redirect(`/building/${buildingId}/votes?error=` + encodeURIComponent("لا عضوية"));
+  const building = await prisma.building.findUnique({ where: { id: buildingId } });
+  if (!building || building.creatorId !== user.id) {
+    redirect(
+      `/building/${buildingId}/votes?error=` +
+        encodeURIComponent("يحق لمنشئ المبنى فقط بدء التصويت"),
+    );
   }
   const ends = new Date(Date.now() + 1000 * 60 * 60 * 24 * 3);
   const candidates = await prisma.membership.findMany({
@@ -100,7 +103,7 @@ export async function openSupervisorVoteAction(formData: FormData) {
       buildingId,
       type: "SUPERVISOR",
       title: "اختيار مشرف المبنى",
-      description: "يصوّت الملاك على المشرف.",
+      description: "تصويت لاختيار مشرف المبنى.",
       endsAt: ends,
       options: {
         create: candidates.map((c) => ({

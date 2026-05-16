@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import {
-  assignSupervisorAction,
   closeMaintenanceCompanyVoteAction,
   closeVoteAndApplySupervisorAction,
   openSupervisorVoteAction,
@@ -30,19 +29,12 @@ export default async function VotesPage({
   if (!building || !membership) notFound();
   const locale = await getLocale();
   const v = ui(locale).votes;
-  const th = ui(locale).buildingHome;
   const df = pickDateLocale(locale);
-  const [votes, members] = await Promise.all([
-    prisma.vote.findMany({
-      where: { buildingId },
-      orderBy: { createdAt: "desc" },
-      include: { options: true, ballots: true, maintenanceRequest: true },
-    }),
-    prisma.membership.findMany({
-      where: { unit: { buildingId } },
-      include: { user: true, unit: true },
-    }),
-  ]);
+  const votes = await prisma.vote.findMany({
+    where: { buildingId },
+    orderBy: { createdAt: "desc" },
+    include: { options: true, ballots: true, maintenanceRequest: true },
+  });
   const isCreator = building.creatorId === user.id;
   const canManage = isCreator || membership.isSupervisor;
 
@@ -62,40 +54,6 @@ export default async function VotesPage({
 
       <Card title={v.kindsTitle}>
         <p className="text-sm text-muted">{v.kindsHint}</p>
-        {isCreator ? (
-          <div
-            className="mb-6 space-y-3 rounded-2xl border p-4"
-            style={{
-              borderColor: "var(--card-border)",
-              backgroundColor: "color-mix(in srgb, var(--card) 92%, transparent)",
-            }}
-          >
-            <p className="text-xs font-semibold text-accent">{th.assignHint}</p>
-            <form action={assignSupervisorAction} className="flex flex-wrap gap-2">
-              <input type="hidden" name="buildingId" value={buildingId} />
-              <select
-                name="targetUserId"
-                className="rounded-xl border px-3 py-2 text-sm"
-                style={{
-                  backgroundColor: "var(--field-bg)",
-                  borderColor: "var(--field-border)",
-                  color: "var(--foreground)",
-                }}
-                required
-              >
-                <option value="">{th.chooseMember}</option>
-                {members.map((x) => (
-                  <option key={x.userId} value={x.userId}>
-                    {x.user.name} — {x.unit.label}
-                  </option>
-                ))}
-              </select>
-              <Button type="submit" className="!py-2 !text-xs">
-                {th.assignSubmit}
-              </Button>
-            </form>
-          </div>
-        ) : null}
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <div
             className="rounded-2xl border p-4"
@@ -247,24 +205,13 @@ function VoteList({
                       {vote.title}
                     </p>
                     <p className="mt-1 text-xs text-muted">
-                      {vote.status !== "OPEN" ? `${typeLabel} · ${v.closed} · ` : `${typeLabel} · `}
-                      {v.ends} {vote.endsAt.toLocaleString(df)}
+                      {typeLabel} · {isOpen ? v.statusActive : v.statusEnded} · {v.ends}{" "}
+                      {vote.endsAt.toLocaleString(df)}
                     </p>
                     {vote.description ? (
                       <p className="mt-2 text-sm">{vote.description}</p>
                     ) : null}
                   </div>
-                  <span
-                    className="rounded-full px-2 py-0.5 text-[11px] font-medium"
-                    style={{
-                      backgroundColor: isOpen
-                        ? "var(--accent-soft)"
-                        : "color-mix(in srgb, var(--muted) 18%, transparent)",
-                      color: isOpen ? "var(--accent)" : "var(--muted)",
-                    }}
-                  >
-                    {isOpen ? v.open : v.closed}
-                  </span>
                 </div>
                 <ul className="mt-3 space-y-2 text-sm">
                   {vote.options.map((o) => {

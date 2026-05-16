@@ -77,6 +77,56 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chat => 'Chat';
 
   @override
+  String get conversationsTitle => 'Conversations';
+
+  @override
+  String get assistantTitle => 'Smart assistant';
+
+  @override
+  String chatWelcomeUser(String name) {
+    return 'Welcome, $name';
+  }
+
+  @override
+  String get chatRoleOwner => 'Unit owner';
+
+  @override
+  String get chatTypeMessage => 'Type your message...';
+
+  @override
+  String get chatTabResidents => 'Residents';
+
+  @override
+  String get chatTabAnnouncements => 'Announcements';
+
+  @override
+  String get chatTabGroup => 'Group chats';
+
+  @override
+  String get chatGroupPinnedHint =>
+      'To suggest a topic for the agenda, message us here';
+
+  @override
+  String get chatSendDemoOnly => 'Preview only — server sync coming soon';
+
+  @override
+  String get assistantWelcomeMessage =>
+      'Welcome to Amarati! 👋 I\'m your smart assistant, here to make managing your unit and building simple and clear.\n\nFrom maintenance and reports to housing organization, payments, and alerts — everything in one place 👇\n\nAsk me anytime — I\'m always here to help ✨\n\nLet\'s start an easier, faster, smarter building experience with Amarati 🏢💙';
+
+  @override
+  String get assistantQuickStatus => 'What is my unit status?';
+
+  @override
+  String get assistantQuickMaintenance => 'View maintenance requests';
+
+  @override
+  String get assistantQuickNextVisit => 'When is the next maintenance visit?';
+
+  @override
+  String get assistantDemoReply =>
+      'I\'ll guide you through the app step by step. Use the bottom bar: Home, Maintenance, Votes, and Account. Ask about joining with a building code or filing maintenance.';
+
+  @override
   String get invite => 'Invite';
 
   @override

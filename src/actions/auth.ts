@@ -14,6 +14,7 @@ import { getLocale } from "@/lib/locale";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
 import { deliverVerificationEmail, isEmailVerificationRequired } from "@/lib/send-verification-email";
+import { sendPhoneOtpSms } from "@/lib/sms-otp";
 import { createSession, destroySession } from "@/lib/session";
 import { ui } from "@/lib/ui-strings";
 import { userMeetsVerificationRequirement } from "@/lib/verification-gate";
@@ -343,9 +344,18 @@ export async function sendPhoneOtpAction() {
       phoneOtpExpires: new Date(Date.now() + 10 * 60 * 1000),
     },
   });
-  console.info(`[Amarati] Phone OTP for ${me.phone} (dev log): ${code}`);
+  const sms = await sendPhoneOtpSms(me.phone, code, locale);
+  if (!sms.ok) {
+    console.info(`[Amarati] Phone OTP for ${me.phone} (dev log): ${code}`);
+  }
   const idQ = me.email
     ? "email=" + encodeURIComponent(me.email)
     : "identifier=" + encodeURIComponent(me.phone);
-  redirect(`/register/verify-phone?${idQ}`);
+  const errQ =
+    sms.ok === false && sms.reason === "send_failed"
+      ? "&error=" + encodeURIComponent(t.smsSendFailed)
+      : sms.ok === false && sms.reason === "not_configured"
+        ? "&error=" + encodeURIComponent(t.smsNotConfigured)
+        : "";
+  redirect(`/register/verify-phone?${idQ}&sent=1${errQ}`);
 }

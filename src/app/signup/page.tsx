@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { TopNav } from "@/components/TopNav";
-import { Card, PageShell } from "@/components/ui";
+import { AuthPageShell, Card } from "@/components/ui";
 import { BuildingIcon, KeyIcon } from "@/components/LandingIcons";
 import { getCurrentUser } from "@/lib/current-user";
 import { getLocale } from "@/lib/locale";
@@ -20,7 +20,7 @@ export default async function SignupChoicePage() {
   return (
     <div className="flex min-h-full flex-col">
       <TopNav />
-      <PageShell className="max-w-3xl">
+      <AuthPageShell className="max-w-3xl">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-accent">{t.chooseTitle}</h1>
           <p className="mt-2 text-sm text-muted">{t.chooseSubtitle}</p>
@@ -78,7 +78,7 @@ export default async function SignupChoicePage() {
             </Link>
           </p>
         </Card>
-      </PageShell>
+      </AuthPageShell>
     </div>
   );
 }

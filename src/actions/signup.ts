@@ -2,7 +2,7 @@
 
 /** تسجيل مستخدم + إنشاء مبنى أو الانضمام — يتصل بـ Prisma (`User`, `Building`, `Membership`). */
 
-import { randomBytes } from "node:crypto";
+import { randomBytes, randomInt } from "node:crypto";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -15,6 +15,8 @@ import {
   isEmailVerificationRequired,
 } from "@/lib/send-verification-email";
 import { createSession } from "@/lib/session";
+import { buildingAddressFromForm } from "@/lib/building-address";
+import { sendPhoneOtpSms } from "@/lib/sms-otp";
 import { buildingPublicCode } from "@/lib/tokens";
 import { ui } from "@/lib/ui-strings";
 
@@ -33,8 +35,6 @@ const personalSchema = z.object({
 
 const buildingSchema = z.object({
   buildingName: z.string().trim().min(2),
-  city: z.string().trim().min(2),
-  address: z.string().trim().min(3),
   unitLabel: z.string().trim().min(1),
 });
 
@@ -82,6 +82,7 @@ async function createUserWithVerification(
       ? null
       : new Date();
 
+  const otpCode = String(randomInt(100000, 999999));
   const user = await prisma.user.create({
     data: {
       email: data.email ?? null,
@@ -93,8 +94,14 @@ async function createUserWithVerification(
       emailVerifyToken: verifyToken,
       emailVerifyExpires:
         gate && data.email ? new Date(Date.now() + 86400000) : null,
+      phoneOtpCode: otpCode,
+      phoneOtpExpires: new Date(Date.now() + 10 * 60 * 1000),
     },
   });
+  const sms = await sendPhoneOtpSms(data.phone, otpCode, locale);
+  if (!sms.ok) {
+    console.info(`[Amarati] Phone OTP for ${data.phone} (dev): ${otpCode}`);
+  }
   if (gate && data.email && verifyToken) {
     const sent = await deliverVerificationEmail(data.email, verifyToken, locale);
     if (!sent.ok) {
@@ -112,19 +119,25 @@ export async function signupAndCreateBuildingAction(formData: FormData) {
   if (!personal.success) backCreateError(t.register.invalidForm);
   const building = buildingSchema.safeParse({
     buildingName: formData.get("buildingName"),
-    city: formData.get("city"),
-    address: formData.get("address"),
     unitLabel: formData.get("unitLabel"),
   });
-  if (!building.success) backCreateError(t.signup.addressInvalid);
+  const addr = buildingAddressFromForm(formData);
+  if (!building.success || !addr) backCreateError(t.signup.addressInvalid);
   try {
     const { user, gate } = await createUserWithVerification(personal.data, backCreateError);
     const inviteCode = buildingPublicCode();
     const created = await prisma.building.create({
       data: {
         name: building.data.buildingName,
-        address: building.data.address,
-        city: building.data.city,
+        address: addr.address,
+        city: addr.city,
+        region: addr.region,
+        district: addr.district,
+        streetName: addr.streetName,
+        buildingNumber: addr.buildingNumber,
+        additionalNumber: addr.additionalNumber,
+        postalCode: addr.postalCode,
+        shortAddressCode: addr.shortAddressCode,
         inviteCode,
         creatorId: user.id,
         units: { create: { label: building.data.unitLabel } },

@@ -11,7 +11,7 @@ const labels: Record<
   { title: string; back: string; you: string; reply: string; ph: string; send: string }
 > = {
   ar: {
-    title: "مساعد عَمارتي",
+    title: "مساعد الاستخدام",
     back: "إغلاق والعودة",
     you: "سؤالك",
     reply: "الرد",
@@ -19,7 +19,7 @@ const labels: Record<
     send: "إرسال",
   },
   en: {
-    title: "Amarati assistant",
+    title: "Usage assistant",
     back: "Close and go back",
     you: "You",
     reply: "Reply",

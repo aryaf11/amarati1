@@ -77,6 +77,55 @@ class AppLocalizationsAr extends AppLocalizations {
   String get chat => 'المحادثة';
 
   @override
+  String get conversationsTitle => 'المحادثات';
+
+  @override
+  String get assistantTitle => 'المساعد الذكي';
+
+  @override
+  String chatWelcomeUser(String name) {
+    return 'مرحبًا $name';
+  }
+
+  @override
+  String get chatRoleOwner => 'مالك شقة';
+
+  @override
+  String get chatTypeMessage => 'اكتب رسالتك...';
+
+  @override
+  String get chatTabResidents => 'السكان';
+
+  @override
+  String get chatTabAnnouncements => 'الإعلانات';
+
+  @override
+  String get chatTabGroup => 'محادثات جماعية';
+
+  @override
+  String get chatGroupPinnedHint => 'إذا أحد يحتاج إضافة موضوع يكتب لنا';
+
+  @override
+  String get chatSendDemoOnly => 'معاينة فقط — الربط بالخادم قريباً';
+
+  @override
+  String get assistantWelcomeMessage =>
+      'أهلاً بك في عمارتي! 👋 أنا مساعدك الذكي، جاهز أسهّل عليك إدارة شقتك وعمارتك بخطوات بسيطة وواضحة.\n\nمن متابعة الصيانة، واستقبال البلاغات، وتنظيم السكن... إلى متابعة المدفوعات والتنبيهات — كل شيء عندك في مكان واحد 👇\n\nإذا احتجت أي مساعدة، اسألني مباشرة... وأنا هنا دائماً لخدمتك ✨\n\nخلينا نبدأ معاً بتجربة إدارة أسهل، أسرع، وأذكى مع عمارتي 🏢💙';
+
+  @override
+  String get assistantQuickStatus => 'ما حالة شقتي؟';
+
+  @override
+  String get assistantQuickMaintenance => 'عرض طلبات الصيانة';
+
+  @override
+  String get assistantQuickNextVisit => 'متى موعد الصيانة القادمة؟';
+
+  @override
+  String get assistantDemoReply =>
+      'سأساعدك في استخدام التطبيق خطوة بخطوة. جرّب من الشريط السفلي: الرئيسية، الصيانة، التصويت، والحساب. اسألني عن الانضمام برمز المبنى أو تقديم طلب صيانة.';
+
+  @override
   String get invite => 'دعوة';
 
   @override

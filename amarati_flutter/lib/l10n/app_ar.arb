@@ -22,6 +22,26 @@
   "buildingOverview": "المبنى",
   "announcements": "الإعلانات",
   "chat": "المحادثة",
+  "conversationsTitle": "المحادثات",
+  "assistantTitle": "المساعد الذكي",
+  "chatWelcomeUser": "مرحبًا {name}",
+  "@chatWelcomeUser": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "chatRoleOwner": "مالك شقة",
+  "chatTypeMessage": "اكتب رسالتك...",
+  "chatTabResidents": "السكان",
+  "chatTabAnnouncements": "الإعلانات",
+  "chatTabGroup": "محادثات جماعية",
+  "chatGroupPinnedHint": "إذا أحد يحتاج إضافة موضوع يكتب لنا",
+  "chatSendDemoOnly": "معاينة فقط — الربط بالخادم قريباً",
+  "assistantWelcomeMessage": "أهلاً بك في عمارتي! 👋 أنا مساعدك الذكي، جاهز أسهّل عليك إدارة شقتك وعمارتك بخطوات بسيطة وواضحة.\n\nمن متابعة الصيانة، واستقبال البلاغات، وتنظيم السكن... إلى متابعة المدفوعات والتنبيهات — كل شيء عندك في مكان واحد 👇\n\nإذا احتجت أي مساعدة، اسألني مباشرة... وأنا هنا دائماً لخدمتك ✨\n\nخلينا نبدأ معاً بتجربة إدارة أسهل، أسرع، وأذكى مع عمارتي 🏢💙",
+  "assistantQuickStatus": "ما حالة شقتي؟",
+  "assistantQuickMaintenance": "عرض طلبات الصيانة",
+  "assistantQuickNextVisit": "متى موعد الصيانة القادمة؟",
+  "assistantDemoReply": "سأساعدك في استخدام التطبيق خطوة بخطوة. جرّب من الشريط السفلي: الرئيسية، الصيانة، التصويت، والحساب. اسألني عن الانضمام برمز المبنى أو تقديم طلب صيانة.",
   "invite": "دعوة",
   "supervisor": "تصويت المشرف",
   "passport": "جواز المبنى",

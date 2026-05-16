@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { signupAndJoinBuildingAction } from "@/actions/signup";
 import { TopNav } from "@/components/TopNav";
-import { Card, Input, PageShell } from "@/components/ui";
+import { AuthPageShell, Card, Input } from "@/components/ui";
 import { PasswordInput } from "@/components/PasswordInput";
 import { SubmitButton } from "@/components/SubmitButton";
 import { KeyIcon } from "@/components/LandingIcons";
@@ -28,7 +28,7 @@ export default async function SignupJoinPage({
   return (
     <div className="flex min-h-full flex-col">
       <TopNav />
-      <PageShell className="max-w-xl">
+      <AuthPageShell className="max-w-xl">
         <header className="flex items-center gap-3">
           <span
             className="inline-flex size-12 items-center justify-center rounded-2xl"
@@ -39,7 +39,6 @@ export default async function SignupJoinPage({
           </span>
           <div>
             <h1 className="text-2xl font-bold text-accent">{t.headerJoin}</h1>
-            <p className="text-sm text-muted">{t.choiceJoinDesc}</p>
           </div>
         </header>
 
@@ -81,7 +80,6 @@ export default async function SignupJoinPage({
           </Card>
 
           <Card title={t.joinInfoTitle}>
-            <p className="mb-3 text-sm text-muted">{td.joinHint}</p>
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <label className="mb-1 block text-xs text-muted">{td.inviteCode}</label>
@@ -100,7 +98,6 @@ export default async function SignupJoinPage({
         </form>
 
         <p className="text-center text-sm text-muted">
-          {t.choiceCreateDesc}{" "}
           <Link href="/signup/create" className="font-semibold underline text-accent">
             {t.choiceCreateTitle}
           </Link>
@@ -111,7 +108,7 @@ export default async function SignupJoinPage({
             {t.backLogin}
           </Link>
         </p>
-      </PageShell>
+      </AuthPageShell>
     </div>
   );
 }

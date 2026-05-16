@@ -8,7 +8,7 @@ import { getLocale } from "@/lib/locale";
 import { isEmailVerificationRequired } from "@/lib/send-verification-email";
 import { ui } from "@/lib/ui-strings";
 import { SubmitButton } from "@/components/SubmitButton";
-import { Card, Input, PageShell } from "@/components/ui";
+import { AuthPageShell, Card, Input } from "@/components/ui";
 import { PasswordInput } from "@/components/PasswordInput";
 import { LoginDoorIcon, PlusIcon } from "@/components/LandingIcons";
 
@@ -37,7 +37,7 @@ export default async function LoginPage({
   return (
     <div className="flex min-h-full flex-col">
       <TopNav />
-      <PageShell className="max-w-md">
+      <AuthPageShell>
         <div className="flex flex-col items-center text-center">
           <Image
             src="/logo.svg"
@@ -132,7 +132,7 @@ export default async function LoginPage({
             {t.signUp}
           </Link>
         </div>
-      </PageShell>
+      </AuthPageShell>
     </div>
   );
 }

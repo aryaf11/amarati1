@@ -137,7 +137,7 @@ abstract class AppLocalizations {
   /// No description provided for @profile.
   ///
   /// In en, this message translates to:
-  /// **'Profile'**
+  /// **'Account'**
   String get profile;
 
   /// No description provided for @login.
@@ -167,7 +167,7 @@ abstract class AppLocalizations {
   /// No description provided for @landingBody.
   ///
   /// In en, this message translates to:
-  /// **'Owners and tenants: national address, maintenance, voting, payments, and building announcements. Connect your backend API to enable data.'**
+  /// **'Owners and tenants: join with a building code, maintenance, voting, and announcements. Connect your backend API to enable data.'**
   String get landingBody;
 
   /// No description provided for @placeholderNeedsApi.
@@ -229,6 +229,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Chat'**
   String get chat;
+
+  /// No description provided for @conversationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Conversations'**
+  String get conversationsTitle;
+
+  /// No description provided for @assistantTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart assistant'**
+  String get assistantTitle;
+
+  /// No description provided for @chatWelcomeUser.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome, {name}'**
+  String chatWelcomeUser(String name);
+
+  /// No description provided for @chatRoleOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit owner'**
+  String get chatRoleOwner;
+
+  /// No description provided for @chatTypeMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Type your message...'**
+  String get chatTypeMessage;
+
+  /// No description provided for @chatTabResidents.
+  ///
+  /// In en, this message translates to:
+  /// **'Residents'**
+  String get chatTabResidents;
+
+  /// No description provided for @chatTabAnnouncements.
+  ///
+  /// In en, this message translates to:
+  /// **'Announcements'**
+  String get chatTabAnnouncements;
+
+  /// No description provided for @chatTabGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Group chats'**
+  String get chatTabGroup;
+
+  /// No description provided for @chatGroupPinnedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'To suggest a topic for the agenda, message us here'**
+  String get chatGroupPinnedHint;
+
+  /// No description provided for @chatSendDemoOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview only — server sync coming soon'**
+  String get chatSendDemoOnly;
+
+  /// No description provided for @assistantWelcomeMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to Amarati! 👋 I\'m your smart assistant, here to make managing your unit and building simple and clear.\n\nFrom maintenance and reports to housing organization, payments, and alerts — everything in one place 👇\n\nAsk me anytime — I\'m always here to help ✨\n\nLet\'s start an easier, faster, smarter building experience with Amarati 🏢💙'**
+  String get assistantWelcomeMessage;
+
+  /// No description provided for @assistantQuickStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'What is my unit status?'**
+  String get assistantQuickStatus;
+
+  /// No description provided for @assistantQuickMaintenance.
+  ///
+  /// In en, this message translates to:
+  /// **'View maintenance requests'**
+  String get assistantQuickMaintenance;
+
+  /// No description provided for @assistantQuickNextVisit.
+  ///
+  /// In en, this message translates to:
+  /// **'When is the next maintenance visit?'**
+  String get assistantQuickNextVisit;
+
+  /// No description provided for @assistantDemoReply.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'ll guide you through the app step by step. Use the bottom bar: Home, Maintenance, Votes, and Account. Ask about joining with a building code or filing maintenance.'**
+  String get assistantDemoReply;
 
   /// No description provided for @invite.
   ///

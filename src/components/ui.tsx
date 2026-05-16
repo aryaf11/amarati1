@@ -112,3 +112,20 @@ export function PageShell({
     </main>
   );
 }
+
+/** صفحات الدخول والتسجيل — المحتوى في منتصف الشاشة عمودياً. */
+export function AuthPageShell({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <main
+      className={`mx-auto flex w-full max-w-md flex-1 flex-col justify-center space-y-6 px-4 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom,0px))] sm:px-6 ${className}`}
+    >
+      {children}
+    </main>
+  );
+}

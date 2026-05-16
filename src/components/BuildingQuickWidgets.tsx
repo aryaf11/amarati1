@@ -116,14 +116,19 @@ export async function BuildingQuickWidgets({
     <div className="space-y-6">
       <Card title={th.overviewSection}>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-            {th.yourStatus}
-          </p>
-          <p className="mt-1 text-sm">
-            {th.unitPrefix} <strong>{membership.unit.label}</strong> — {kindLabel}
-            {membership.isSupervisor ? ` — ${th.youSupervisor}` : ""}
-          </p>
-          <p className="mt-1 text-xs text-muted">{building.name}</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+              {th.yourStatus}
+            </p>
+            <p className="mt-1 text-base font-semibold" style={{ color: "var(--accent)" }}>
+              {building.name}
+            </p>
+            <p className="mt-1 text-sm">
+              {th.unitPrefix} <strong>{membership.unit.label}</strong>
+            </p>
+            <p className="mt-0.5 text-sm text-muted">
+              {kindLabel}
+              {membership.isSupervisor ? ` · ${th.youSupervisor}` : ""}
+            </p>
         </div>
       </Card>
 

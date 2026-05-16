@@ -42,9 +42,16 @@ model User {
 model Building {
   id          String   @id @default(cuid())
   name        String
-  /// سطر عنوان للعرض (نص حر)
+  /// سطر عنوان للعرض (مُجمَّع من العنوان الوطني)
   address     String
   city        String
+  region            String?
+  district          String?
+  streetName        String?
+  buildingNumber    String?
+  additionalNumber  String?
+  postalCode        String?
+  shortAddressCode  String?
   inviteCode  String   @unique
   createdAt   DateTime @default(now())
   creatorId   String

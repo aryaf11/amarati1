@@ -203,11 +203,6 @@ export default async function ProfilePage({
               {t.save}
             </SubmitButton>
           </form>
-          <form action={logoutAction} className="mt-4 border-t pt-4" style={{ borderColor: "var(--card-border)" }}>
-            <Button type="submit" variant="ghost" className="w-full">
-              {t.logout}
-            </Button>
-          </form>
         </Card>
 
         <Card title={t.passportTitle}>
@@ -302,7 +297,7 @@ export default async function ProfilePage({
           )}
         </Card>
 
-        <Card title={t.notificationsCardTitle}>
+        <Card title={t.settingsTitle}>
           <ProfileSettings
             locale={locale}
             t={{
@@ -316,6 +311,12 @@ export default async function ProfilePage({
             }}
           />
         </Card>
+
+        <form action={logoutAction}>
+          <Button type="submit" variant="ghost" className="w-full">
+            {t.logout}
+          </Button>
+        </form>
       </PageShell>
     </div>
   );

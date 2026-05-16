@@ -10,6 +10,7 @@ import { getCurrentUser } from "@/lib/current-user";
 import { TopNav } from "@/components/TopNav";
 import { getLocale } from "@/lib/locale";
 import { ui } from "@/lib/ui-strings";
+import { NationalAddressFields } from "@/components/NationalAddressFields";
 import { Button, Card, Input, PageShell } from "@/components/ui";
 
 const accent = "var(--accent)";
@@ -85,24 +86,16 @@ export default async function DashboardPage({
               <p className="mb-3 rounded-xl border px-3 py-2 text-xs leading-relaxed text-muted" style={{ borderColor: "var(--card-border)", backgroundColor: "var(--accent-soft)" }}>
                 {t.firstTimeHint}
               </p>
-              <p className="mb-4 text-xs leading-relaxed text-muted">{t.addressHelp}</p>
               <form action={createBuildingAction} className="space-y-3">
                 <div>
                   <label className="mb-1 block text-xs text-muted">{t.name}</label>
                   <Input name="name" required placeholder={t.namePh} />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs text-muted">{t.city}</label>
-                  <Input name="city" required placeholder={t.cityPh} />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs text-muted">{t.addressLine}</label>
-                  <Input name="address" required placeholder={t.addressLinePh} />
-                </div>
-                <div>
                   <label className="mb-1 block text-xs text-muted">{t.unitLabel}</label>
                   <Input name="unitLabel" placeholder={t.unitPh} required />
                 </div>
+                <NationalAddressFields locale={locale} />
                 <Button type="submit" className="w-full">
                   {t.createSubmit}
                 </Button>

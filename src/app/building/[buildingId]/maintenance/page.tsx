@@ -115,7 +115,12 @@ export default async function MaintenancePage({
                         {r.scope === "PERSONAL"
                           ? `${m.personalUnit} ${r.unit?.label ?? "-"}`
                           : m.community}{" "}
-                        — {m.status}: {r.status}
+                        — {m.status}:{" "}
+                        {r.status === "DONE"
+                          ? m.statusDone
+                          : r.status === "CANCELLED"
+                            ? m.statusCancelled
+                            : m.statusInProgress}
                       </p>
                     </div>
                     <span
@@ -166,7 +171,10 @@ export default async function MaintenancePage({
                               backgroundColor: "var(--card)",
                             }}
                           >
-                            <p className="font-semibold">{c.company}</p>
+                            <p className="text-[10px] font-semibold uppercase text-muted">
+                              {m.companySuggestion}
+                            </p>
+                            <p className="mt-1 font-semibold">{c.company}</p>
                             <p className="text-muted">⭐ {c.rating.toFixed(1)}</p>
                           </li>
                         ))}
