@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:amarati_flutter/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 
-/// Bottom navigation mirroring `src/components/BottomNav.tsx`.
+/// Bottom navigation mirroring `src/components/BottomNav.tsx` (4 tabs).
 class MainShell extends StatelessWidget {
   const MainShell({required this.child, super.key});
 
@@ -11,11 +11,10 @@ class MainShell extends StatelessWidget {
   static final _homePattern = RegExp(r'^/building/[^/]+/?$');
 
   int _indexForPath(String path) {
-    if (path.startsWith('/profile')) return 4;
+    if (path.startsWith('/profile')) return 3;
     if (path == '/dashboard' || _homePattern.hasMatch(path)) return 0;
     if (path.contains('/maintenance')) return 1;
-    if (path.contains('/payments')) return 2;
-    if (path.contains('/votes')) return 3;
+    if (path.contains('/votes')) return 2;
     return 0;
   }
 
@@ -48,14 +47,6 @@ class MainShell extends StatelessWidget {
       }
     }
 
-    void goPayments() {
-      if (hasBuilding) {
-        context.go('/building/$bid/payments');
-      } else {
-        context.go('/dashboard');
-      }
-    }
-
     void goVotes() {
       if (hasBuilding) {
         context.go('/building/$bid/votes');
@@ -67,7 +58,7 @@ class MainShell extends StatelessWidget {
     return Scaffold(
       body: child,
       bottomNavigationBar: NavigationBar(
-        selectedIndex: idx.clamp(0, 4),
+        selectedIndex: idx.clamp(0, 3),
         onDestinationSelected: (i) {
           switch (i) {
             case 0:
@@ -75,31 +66,38 @@ class MainShell extends StatelessWidget {
             case 1:
               goMaintenance();
             case 2:
-              goPayments();
-            case 3:
               goVotes();
-            case 4:
+            case 3:
               context.go('/profile');
           }
         },
         destinations: [
-          NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home), label: l10n.home),
           NavigationDestination(
-            icon: Icon(Icons.build_outlined, color: hasBuilding ? null : Theme.of(context).disabledColor),
+            icon: const Icon(Icons.home_outlined),
+            selectedIcon: const Icon(Icons.home),
+            label: l10n.home,
+          ),
+          NavigationDestination(
+            icon: Icon(
+              Icons.build_outlined,
+              color: hasBuilding ? null : Theme.of(context).disabledColor,
+            ),
             selectedIcon: const Icon(Icons.build),
             label: l10n.maintenance,
           ),
           NavigationDestination(
-            icon: Icon(Icons.payment_outlined, color: hasBuilding ? null : Theme.of(context).disabledColor),
-            selectedIcon: const Icon(Icons.payment),
-            label: l10n.payments,
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.how_to_vote_outlined, color: hasBuilding ? null : Theme.of(context).disabledColor),
+            icon: Icon(
+              Icons.how_to_vote_outlined,
+              color: hasBuilding ? null : Theme.of(context).disabledColor,
+            ),
             selectedIcon: const Icon(Icons.how_to_vote),
             label: l10n.votes,
           ),
-          NavigationDestination(icon: const Icon(Icons.person_outline), selectedIcon: const Icon(Icons.person), label: l10n.profile),
+          NavigationDestination(
+            icon: const Icon(Icons.person_outline),
+            selectedIcon: const Icon(Icons.person),
+            label: l10n.profile,
+          ),
         ],
       ),
     );

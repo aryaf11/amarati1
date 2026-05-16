@@ -27,7 +27,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get votes => 'Votes';
 
   @override
-  String get profile => 'Profile';
+  String get profile => 'Account';
 
   @override
   String get login => 'Log in';
@@ -43,7 +43,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get landingBody =>
-      'Owners and tenants: national address, maintenance, voting, payments, and building announcements. Connect your backend API to enable data.';
+      'Owners and tenants: join with a building code, maintenance, voting, and announcements. Connect your backend API to enable data.';
 
   @override
   String get placeholderNeedsApi =>

@@ -7,7 +7,7 @@ const nav = {
     login: "تسجيل الدخول",
     register: "تسجيل",
     logout: "خروج",
-    profile: "حساب",
+    profile: "الحساب",
     theme: "المظهر",
     themeLight: "فاتح",
     themeDark: "داكن",

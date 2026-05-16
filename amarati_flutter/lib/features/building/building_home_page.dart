@@ -21,14 +21,38 @@ class BuildingHomePage extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              ActionChip(label: Text(l10n.maintenance), onPressed: () => context.go('/building/$buildingId/maintenance')),
-              ActionChip(label: Text(l10n.votes), onPressed: () => context.go('/building/$buildingId/votes')),
-              ActionChip(label: Text(l10n.payments), onPressed: () => context.go('/building/$buildingId/payments')),
-              ActionChip(label: Text(l10n.chat), onPressed: () => context.go('/building/$buildingId/chat')),
-              ActionChip(label: Text(l10n.announcements), onPressed: () => context.go('/building/$buildingId/announcements')),
-              ActionChip(label: Text(l10n.invite), onPressed: () => context.go('/building/$buildingId/invite')),
-              ActionChip(label: Text(l10n.supervisor), onPressed: () => context.go('/building/$buildingId/supervisor')),
-              ActionChip(label: Text(l10n.passport), onPressed: () => context.go('/building/$buildingId/passport')),
+              ActionChip(
+                label: Text(l10n.maintenance),
+                onPressed: () => context.go('/building/$buildingId/maintenance'),
+              ),
+              ActionChip(
+                label: Text(l10n.votes),
+                onPressed: () => context.go('/building/$buildingId/votes'),
+              ),
+              ActionChip(
+                label: Text(l10n.chat),
+                onPressed: () => context.go('/building/$buildingId/chat'),
+              ),
+              ActionChip(
+                label: Text(l10n.announcements),
+                onPressed: () => context.go('/building/$buildingId/announcements'),
+              ),
+              ActionChip(
+                label: Text(l10n.chatbot),
+                onPressed: () => context.go('/building/$buildingId/assistant'),
+              ),
+              ActionChip(
+                label: Text(l10n.invite),
+                onPressed: () => context.go('/building/$buildingId/invite'),
+              ),
+              ActionChip(
+                label: Text(l10n.passport),
+                onPressed: () => context.go('/building/$buildingId/passport'),
+              ),
+              ActionChip(
+                label: Text(l10n.supervisor),
+                onPressed: () => context.go('/building/$buildingId/supervisor'),
+              ),
             ],
           ),
         ],

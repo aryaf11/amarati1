@@ -110,6 +110,12 @@ export default async function SignupCreatePage({
         </form>
 
         <p className="text-center text-sm text-muted">
+          {t.choiceJoinDesc}{" "}
+          <Link href="/signup/join" className="font-semibold underline text-accent">
+            {t.choiceJoinTitle}
+          </Link>
+        </p>
+        <p className="text-center text-sm text-muted">
           {t.haveAccount}{" "}
           <Link href="/login" className="font-semibold underline text-accent">
             {t.backLogin}

@@ -27,7 +27,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get votes => 'التصويتات';
 
   @override
-  String get profile => 'حساب';
+  String get profile => 'الحساب';
 
   @override
   String get login => 'تسجيل الدخول';
@@ -43,7 +43,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get landingBody =>
-      'للملاك والمستأجرين: العنوان الوطني، الصيانة، التصويت، المدفوعات، وإعلانات المبنى. اربط واجهة الخادم لتفعيل البيانات.';
+      'للملاك والمستأجرين: انضمام برمز المبنى، الصيانة، التصويت، وإعلانات المبنى. اربط واجهة الخادم لتفعيل البيانات.';
 
   @override
   String get placeholderNeedsApi =>

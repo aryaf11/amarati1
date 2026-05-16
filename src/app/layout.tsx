@@ -39,14 +39,14 @@ export async function generateMetadata(): Promise<Metadata> {
       ...shared,
       title: "Amarati — Smart building community",
       description:
-        "For owners and tenants: national address, maintenance with AI-assisted guidance, voting, and building announcements.",
+        "For owners and tenants: maintenance with AI-assisted guidance, voting, and building announcements.",
     };
   }
   return {
     ...shared,
     title: "عَمارتي — تواصل سكان العمارة",
     description:
-      "منصة للملاك والمستأجرين: تسجيل المبنى بالعنوان الوطني السعودي، صيانة مدعومة بالذكاء الاصطناعي، تصويت، وإعلانات داخل المبنى.",
+      "منصة للملاك والمستأجرين: انضمام برمز المبنى، صيانة مدعومة بالذكاء الاصطناعي، تصويت، وإعلانات داخل المبنى.",
   };
 }
 

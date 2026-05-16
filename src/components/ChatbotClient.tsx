@@ -15,7 +15,7 @@ const labels: Record<
     back: "إغلاق والعودة",
     you: "سؤالك",
     reply: "الرد",
-    ph: "اكتب سؤالك… مثال: «عندي تسريب ماء» أو «عطل كهربائي»",
+    ph: "اسأل عن استخدام التطبيق… مثال: «كيف أنضم برمز المبنى؟» أو «أين الإعدادات؟»",
     send: "إرسال",
   },
   en: {
@@ -23,7 +23,7 @@ const labels: Record<
     back: "Close and go back",
     you: "You",
     reply: "Reply",
-    ph: 'Type your question… e.g. "I have a water leak" or "electrical issue"',
+    ph: 'Ask how to use the app… e.g. "How do I join with a building code?" or "Where are settings?"',
     send: "Send",
   },
 };
