@@ -1,8 +1,9 @@
 import { notFound, redirect } from "next/navigation";
-import { ChatbotClient } from "@/components/ChatbotClient";
+import { AssistantClient } from "@/components/assistant/AssistantClient";
 import { loadBuildingContext } from "@/lib/building-context";
 import { getCurrentUser } from "@/lib/current-user";
 import { getLocale } from "@/lib/locale";
+import { ui } from "@/lib/ui-strings";
 
 export default async function BuildingAssistantPage({
   params,
@@ -15,11 +16,14 @@ export default async function BuildingAssistantPage({
   const { building, membership } = await loadBuildingContext(buildingId, user.id);
   if (!building || !membership) notFound();
   const locale = await getLocale();
-  const backHref = `/dashboard?open=${encodeURIComponent(buildingId)}`;
+  const a = ui(locale).assistant;
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-6">
-      <ChatbotClient locale={locale} backHref={backHref} />
-    </div>
+    <AssistantClient
+      buildingId={buildingId}
+      userName={user.name}
+      isOwner={membership.kind === "OWNER"}
+      strings={a}
+    />
   );
 }

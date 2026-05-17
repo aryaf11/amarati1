@@ -32,13 +32,18 @@ export async function postChatAction(formData: FormData) {
   const body = String(formData.get("body") ?? "");
   const m = await getMembership(user.id, buildingId);
   if (!m) {
-    redirect(`/building/${buildingId}/chat?error=` + encodeURIComponent("لا عضوية"));
+    redirect(
+      `/building/${buildingId}/chat?tab=group&error=` + encodeURIComponent("لا عضوية"),
+    );
   }
   await prisma.chatMessage.create({
     data: { buildingId, userId: user.id, body },
   });
+  const tab = String(formData.get("tab") ?? "group");
+  const safeTab =
+    tab === "residents" || tab === "announcements" || tab === "group" ? tab : "group";
   revalidatePath(`/building/${buildingId}/chat`);
-  redirect(`/building/${buildingId}/chat`);
+  redirect(`/building/${buildingId}/chat?tab=${safeTab}`);
 }
 
 export async function deleteAnnouncementAction(formData: FormData) {

@@ -44,6 +44,23 @@ const FAQ: Record<AppLocale, { match: (m: string) => boolean; reply: string }[]>
         "منشئ المبنى يعيّن مشرفًا من قسم «تصويت» (أدوات منشئ المبنى) أو يفتح تصويتًا للمالكين لاختيار مشرف.",
     },
     {
+      match: (m) =>
+        /معلومات\s*شقتي|شقتي|وحدتي|unit\s*info|my\s*unit/.test(m),
+      reply:
+        "من **الرئيسية** داخل المبنى: اختصار **جواز الشقة** يعرض سجل صيانة وحدتك. من الشريط السفلي: **الصيانة** لطلباتك الحالية، و**الحساب** لبياناتك.",
+    },
+    {
+      match: (m) => /عرض\s*طلبات\s*الصيانة|طلبات\s*الصيانة|maintenance\s*requests/.test(m),
+      reply:
+        "افتح **الصيانة** من الشريط السفلي لعرض طلباتك وتقديم طلب جديد (شخصي أو مجتمعي). من الرئيسية يمكنك أيضاً استخدام اختصار تقديم طلب صيانة.",
+    },
+    {
+      match: (m) =>
+        /موعد\s*الصيانة\s*القادم|الصيانة\s*القادمة|next\s*maintenance|next\s*visit/.test(m),
+      reply:
+        "لمعرفة موعد الصيانة: افتح **الصيانة** واطّلع على طلباتك المفتوحة. عند تقديم طلب جديد يمكن طلب **تحليل ذكي** يقترح نافذة زمنية تقريبية. للطلبات المجتمعية يُحدَّد الموعد بعد التصويت على شركة الصيانة.",
+    },
+    {
       match: (m) => /صيانه|صيانة|maintenance/.test(m) && !looksLikeMaintenanceQuery(m),
       reply:
         "من الشريط السفلي افتح **الصيانة** (أو من اختصار الرئيسية) لإنشاء طلب شخصي لشقتك أو طلبًا مجتمعيًا؛ يمكن طلب تحليل ذكي عند الإرسال.",
@@ -105,6 +122,21 @@ const FAQ: Record<AppLocale, { match: (m: string) => boolean; reply: string }[]>
       match: (m) => m.includes("supervisor") || m.includes("manager"),
       reply:
         "The creator assigns supervisors from Voting (creator-only tools), or launches an owner election when needed.",
+    },
+    {
+      match: (m) => /unit\s*info|my\s*unit|unit\s*overview/.test(m),
+      reply:
+        "From **Home** inside your building: **Unit passport** shows your maintenance history. Use **Maintenance** on the bottom bar for open requests, and **Account** for profile details.",
+    },
+    {
+      match: (m) => /view\s*maintenance\s*requests|maintenance\s*requests/.test(m),
+      reply:
+        "Open **Maintenance** on the bottom bar to see your tickets and submit new ones (unit or community). Home also has a maintenance shortcut.",
+    },
+    {
+      match: (m) => /next\s*maintenance|next\s*visit|upcoming\s*maintenance/.test(m),
+      reply:
+        "Check **Maintenance** for open tickets and timelines. New requests can use **smart analysis** for an estimated window. Community jobs are scheduled after the maintenance-company vote.",
     },
     {
       match: (m) => /maintenance/i.test(m) && !looksLikeMaintenanceQuery(m),
