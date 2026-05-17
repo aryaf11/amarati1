@@ -17,13 +17,21 @@ export default async function BuildingAssistantPage({
   if (!building || !membership) notFound();
   const locale = await getLocale();
   const a = ui(locale).assistant;
+  const c = ui(locale).chat;
 
   return (
     <AssistantClient
       buildingId={buildingId}
-      userName={user.name}
-      isOwner={membership.kind === "OWNER"}
-      strings={a}
+      strings={{
+        title: a.title,
+        back: c.back,
+        welcomeMessage: a.welcomeMessage,
+        quickStatus: a.quickStatus,
+        quickMaintenance: a.quickMaintenance,
+        quickNextVisit: a.quickNextVisit,
+        placeholder: a.placeholder,
+        demoReply: a.demoReply,
+      }}
     />
   );
 }

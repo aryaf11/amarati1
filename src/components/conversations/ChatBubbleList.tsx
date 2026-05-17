@@ -1,44 +1,47 @@
-import type { ChatLine } from "@/lib/chat-demo";
-
-const bubbleGreen = "#4B533C";
-const accentMaroon = "#5C2E35";
+import type { ChatLine } from "@/lib/chat-types";
 
 export function ChatBubbleList({
   lines,
-  pinnedText,
+  emptyText,
 }: {
   lines: ChatLine[];
-  pinnedText?: string | null;
+  emptyText?: string | null;
 }) {
+  if (lines.length === 0) {
+    return (
+      <p className="py-10 text-center text-sm text-muted">
+        {emptyText ?? "—"}
+      </p>
+    );
+  }
+
   return (
-    <div className="flex flex-1 flex-col gap-3.5 overflow-y-auto px-4 py-3">
+    <div className="max-h-[min(52vh,28rem)] space-y-4 overflow-y-auto pe-1">
       {lines.map((line, i) => (
         <div
           key={`${line.senderLabel}-${i}`}
-          className="flex flex-col items-end gap-1.5"
+          className={`flex flex-col gap-1 ${line.isOwn ? "items-end" : "items-start"}`}
         >
-          <span className="text-xs font-semibold text-foreground/80">
-            {line.senderLabel}
-          </span>
+          <span className="text-xs font-medium text-muted">{line.senderLabel}</span>
           <div
-            className="max-w-[88%] rounded-2xl px-4 py-3 text-[15px] leading-relaxed text-white"
-            style={{ backgroundColor: bubbleGreen }}
+            className="max-w-[92%] rounded-2xl px-4 py-3 text-sm leading-relaxed"
+            style={
+              line.isOwn
+                ? {
+                    backgroundColor: "var(--accent)",
+                    color: "var(--accent-foreground)",
+                  }
+                : {
+                    backgroundColor: "var(--accent-soft)",
+                    color: "var(--foreground)",
+                    border: "1px solid var(--card-border)",
+                  }
+            }
           >
             <p className="whitespace-pre-wrap text-end">{line.body}</p>
           </div>
         </div>
       ))}
-      {lines.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted">—</p>
-      ) : null}
-      {pinnedText ? (
-        <div
-          className="mt-2 w-full rounded-2xl px-4 py-3.5 text-center text-sm font-semibold text-white"
-          style={{ backgroundColor: accentMaroon }}
-        >
-          {pinnedText}
-        </div>
-      ) : null}
     </div>
   );
 }

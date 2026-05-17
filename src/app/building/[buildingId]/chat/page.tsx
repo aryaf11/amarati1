@@ -1,12 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { ConversationsScreen } from "@/components/conversations/ConversationsScreen";
 import type { ChatTabId } from "@/components/conversations/ChatTabs";
-import {
-  demoAnnouncementsChat,
-  demoGroupChat,
-  demoResidentsChat,
-  type ChatLine,
-} from "@/lib/chat-demo";
+import type { ChatLine, ResidentRow } from "@/lib/chat-types";
 import { loadBuildingContext } from "@/lib/building-context";
 import { getCurrentUser } from "@/lib/current-user";
 import { getLocale } from "@/lib/locale";
@@ -35,8 +30,9 @@ export default async function ChatPage({
   if (!building || !membership) notFound();
   const locale = await getLocale();
   const c = ui(locale).chat;
+  const td = ui(locale).dashboard;
 
-  const [rows, announcements, unitByUser] = await Promise.all([
+  const [rows, announcements, memberships] = await Promise.all([
     prisma.chatMessage.findMany({
       where: { buildingId },
       orderBy: { createdAt: "asc" },
@@ -51,70 +47,81 @@ export default async function ChatPage({
     }),
     prisma.membership.findMany({
       where: { unit: { buildingId } },
-      include: { unit: true },
+      include: { unit: true, user: true },
+      orderBy: { unit: { label: "asc" } },
     }),
   ]);
 
-  const unitLabel = new Map(unitByUser.map((m) => [m.userId, m.unit.label]));
+  const unitLabel = new Map(memberships.map((m) => [m.userId, m.unit.label]));
 
   function senderLabel(userId: string, name: string) {
     const unit = unitLabel.get(userId);
-    return unit ? `${name} - ${unit}` : name;
+    return unit ? `${name} — ${unit}` : name;
   }
 
-  const groupFromDb: ChatLine[] = rows.map((m) => ({
-    senderLabel: senderLabel(m.userId, m.user.name),
-    body: m.body,
+  const residents: ResidentRow[] = memberships.map((m) => ({
+    name: m.user.name,
+    unitLabel: m.unit.label,
+    roleLabel: m.kind === "OWNER" ? td.owner : td.tenant,
   }));
 
-  const announcementLines: ChatLine[] =
-    announcements.length > 0
-      ? announcements.map((a) => ({
-          senderLabel: c.buildingAdmin,
-          body: a.title ? `${a.title}\n${a.body}` : a.body,
-        }))
-      : demoAnnouncementsChat;
+  const groupLines: ChatLine[] = rows.map((m) => ({
+    senderLabel: senderLabel(m.userId, m.user.name),
+    body: m.body,
+    isOwn: m.userId === user.id,
+  }));
 
-  let lines: ChatLine[];
-  let pinnedText: string | null = null;
+  const announcementLines: ChatLine[] = announcements.map((a) => ({
+    senderLabel: a.user.name,
+    body: a.title ? `${a.title}\n\n${a.body}` : a.body,
+  }));
+
+  let lines: ChatLine[] = [];
+  let emptyText: string = c.emptyGroup;
+  let panelTitle: string = c.tabGroup;
   let composerDisabled = false;
 
   switch (tab) {
     case "residents":
-      lines = demoResidentsChat;
+      emptyText = c.emptyResidents;
+      panelTitle = c.tabResidents;
       composerDisabled = true;
       break;
     case "announcements":
       lines = announcementLines;
+      emptyText = c.emptyAnnouncements;
+      panelTitle = c.tabAnnouncements;
       composerDisabled = true;
       break;
     case "group":
     default:
-      lines = groupFromDb.length > 0 ? groupFromDb : demoGroupChat;
-      pinnedText = c.groupPinned;
+      lines = groupLines;
+      emptyText = c.emptyGroup;
+      panelTitle = c.tabGroup;
       composerDisabled = false;
       break;
   }
-
-  const welcomeLine = c.welcomeUser.replace("{name}", user.name);
-  const roleLine = membership.kind === "OWNER" ? c.roleOwner : c.roleTenant;
 
   return (
     <ConversationsScreen
       buildingId={buildingId}
       tab={tab}
-      welcomeLine={welcomeLine}
-      roleLine={roleLine}
-      screenTitle={c.conversationsTitle}
+      title={c.conversationsTitle}
+      hint={c.hint}
+      backLabel={c.back}
       tabLabels={{
         residents: c.tabResidents,
         announcements: c.tabAnnouncements,
         group: c.tabGroup,
       }}
       lines={lines}
-      pinnedText={pinnedText}
+      residents={residents}
+      emptyText={emptyText}
       inputPlaceholder={c.placeholder}
       composerDisabled={composerDisabled}
+      announcementsHref={`/building/${buildingId}/announcements`}
+      announcementsLinkLabel={c.openAnnouncements}
+      panelTitle={panelTitle}
       error={err}
     />
   );

@@ -1,62 +1,95 @@
-import type { ChatLine } from "@/lib/chat-demo";
+import Link from "next/link";
+import type { ChatLine, ResidentRow } from "@/lib/chat-types";
+import { Card } from "@/components/ui";
 import { ChatBubbleList } from "./ChatBubbleList";
 import { ChatComposer } from "./ChatComposer";
 import { ChatTabs, type ChatTabId } from "./ChatTabs";
-import { ConversationHeader } from "./ConversationHeader";
-
-const screenBg = "#F3F3F3";
+import { ResidentsList } from "./ResidentsList";
 
 export function ConversationsScreen({
   buildingId,
   tab,
-  welcomeLine,
-  roleLine,
-  screenTitle,
+  title,
+  hint,
+  backLabel,
   tabLabels,
   lines,
-  pinnedText,
+  residents,
+  emptyText,
   inputPlaceholder,
   composerDisabled,
+  announcementsHref,
+  announcementsLinkLabel,
+  panelTitle,
   error,
 }: {
   buildingId: string;
   tab: ChatTabId;
-  welcomeLine: string;
-  roleLine: string;
-  screenTitle: string;
+  title: string;
+  hint: string;
+  backLabel: string;
   tabLabels: { residents: string; announcements: string; group: string };
   lines: ChatLine[];
-  pinnedText?: string | null;
+  residents: ResidentRow[];
+  emptyText: string;
   inputPlaceholder: string;
   composerDisabled?: boolean;
+  announcementsHref: string;
+  announcementsLinkLabel: string;
+  panelTitle: string;
   error?: string | null;
 }) {
+  const backHref = `/dashboard?open=${encodeURIComponent(buildingId)}`;
+
   return (
-    <div
-      className="-mx-4 flex min-h-[min(720px,calc(100dvh-10rem))] flex-col sm:-mx-6"
-      style={{ backgroundColor: screenBg }}
-    >
+    <div className="space-y-6">
       {error ? (
-        <p className="mx-4 mt-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800">
+        <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-200">
           {error}
         </p>
       ) : null}
-      <ConversationHeader
-        backHref={`/building/${buildingId}`}
-        welcomeLine={welcomeLine}
-        roleLine={roleLine}
-        screenTitle={screenTitle}
-      />
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Link
+          href={backHref}
+          className="text-sm font-medium text-accent underline-offset-2 hover:underline"
+        >
+          {backLabel}
+        </Link>
+      </div>
+
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+        <p className="mt-1 text-sm text-muted">{hint}</p>
+      </div>
+
       <ChatTabs buildingId={buildingId} active={tab} labels={tabLabels} />
-      <div className="mt-2 flex min-h-0 flex-1 flex-col">
-        <ChatBubbleList lines={lines} pinnedText={pinnedText} />
+
+      <Card title={panelTitle}>
+        {tab === "residents" ? (
+          <ResidentsList residents={residents} emptyText={emptyText} />
+        ) : (
+          <>
+            <ChatBubbleList lines={lines} emptyText={emptyText} />
+            {tab === "announcements" && lines.length === 0 ? (
+              <p className="mt-4 text-center text-sm">
+                <Link
+                  href={announcementsHref}
+                  className="font-medium text-accent underline-offset-2 hover:underline"
+                >
+                  {announcementsLinkLabel}
+                </Link>
+              </p>
+            ) : null}
+          </>
+        )}
         <ChatComposer
           buildingId={buildingId}
           tab={tab}
           placeholder={inputPlaceholder}
           disabled={composerDisabled}
         />
-      </div>
+      </Card>
     </div>
   );
 }

@@ -1,7 +1,5 @@
 import Link from "next/link";
 
-const accentMaroon = "#5C2E35";
-
 export type ChatTabId = "residents" | "announcements" | "group";
 
 export function ChatTabs({
@@ -21,7 +19,7 @@ export function ChatTabs({
 
   return (
     <nav
-      className="mx-3 grid grid-cols-3 gap-1 rounded-xl bg-black/[0.06] p-1"
+      className="flex flex-wrap gap-2"
       aria-label="تبويبات المحادثة"
     >
       {items.map((item) => {
@@ -30,10 +28,21 @@ export function ChatTabs({
           <Link
             key={item.id}
             href={`/building/${buildingId}/chat?tab=${item.id}`}
-            className={`rounded-lg px-2 py-2.5 text-center text-[13px] font-semibold leading-tight transition ${
-              isActive ? "text-white shadow-md" : "text-foreground/85"
+            className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
+              isActive ? "shadow-sm" : "border"
             }`}
-            style={isActive ? { backgroundColor: accentMaroon } : undefined}
+            style={
+              isActive
+                ? {
+                    backgroundColor: "var(--accent)",
+                    color: "var(--accent-foreground)",
+                  }
+                : {
+                    backgroundColor: "var(--card)",
+                    borderColor: "var(--card-border)",
+                    color: "var(--foreground)",
+                  }
+            }
           >
             {item.label}
           </Link>
