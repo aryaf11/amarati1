@@ -6,6 +6,7 @@
  */
 import { randomBytes, randomInt } from "node:crypto";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { dbOrSessionErrorHint, flattenError } from "@/lib/action-error-hints";
@@ -18,6 +19,31 @@ import { sendPhoneOtpSms } from "@/lib/sms-otp";
 import { createSession, destroySession } from "@/lib/session";
 import { ui } from "@/lib/ui-strings";
 import { userMeetsVerificationRequirement } from "@/lib/verification-gate";
+
+async function issuePhoneOtpForUser(
+  userId: string,
+  phone: string,
+  locale: Awaited<ReturnType<typeof getLocale>>,
+) {
+  const code = String(randomInt(100000, 999999));
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      phoneOtpCode: code,
+      phoneOtpExpires: new Date(Date.now() + 10 * 60 * 1000),
+    },
+  });
+  const sms = await sendPhoneOtpSms(phone, code, locale);
+  if (!sms.ok) {
+    console.info(`[Amarati] Phone OTP for ${phone} (dev): ${code}`);
+  }
+}
+
+function verifyPhoneRedirect(phone: string) {
+  redirect(
+    `/register/verify-phone?identifier=${encodeURIComponent(phone)}`,
+  );
+}
 
 async function findUserByIdentifier(identifier: string) {
   const trimmed = identifier.trim();
@@ -124,6 +150,7 @@ export async function registerAction(formData: FormData) {
           gate && parsed.data.email ? new Date(Date.now() + 86400000) : null,
       },
     });
+    await issuePhoneOtpForUser(user.id, parsed.data.phone, locale);
     if (gate && parsed.data.email && verifyToken) {
       const sent = await deliverVerificationEmail(parsed.data.email, verifyToken, locale);
       if (!sent.ok) {
@@ -136,6 +163,9 @@ export async function registerAction(formData: FormData) {
       redirect("/register/check-email");
     }
     await createSession(user.id);
+    if (!user.phoneVerifiedAt) {
+      verifyPhoneRedirect(parsed.data.phone);
+    }
   } catch (e) {
     if (isRedirectError(e)) throw e;
     console.error("registerAction", flattenError(e), e);
@@ -169,7 +199,18 @@ export async function loginAction(formData: FormData) {
       redirect("/login?error=" + encodeURIComponent(t.login.invalidCredentials));
     }
     if (isEmailVerificationRequired() && !userMeetsVerificationRequirement(user)) {
+      if (!user.phoneVerifiedAt) {
+        await issuePhoneOtpForUser(user.id, user.phone, locale);
+        await createSession(user.id);
+        verifyPhoneRedirect(user.phone);
+      }
       redirect("/login?error=" + encodeURIComponent(t.login.verifyEmailFirst));
+    }
+
+    if (!user.phoneVerifiedAt) {
+      await issuePhoneOtpForUser(user.id, user.phone, locale);
+      await createSession(user.id);
+      verifyPhoneRedirect(user.phone);
     }
 
     await createSession(user.id);
@@ -231,6 +272,18 @@ export async function resendVerificationEmailAction(formData: FormData) {
 export async function logoutAction() {
   await destroySession();
   redirect("/");
+}
+
+export async function toggleVisibleInResidentsAction() {
+  const me = await getCurrentUser();
+  if (!me) redirect("/login?next=/profile");
+  await prisma.user.update({
+    where: { id: me.id },
+    data: { visibleInResidents: !me.visibleInResidents },
+  });
+  revalidatePath("/profile");
+  revalidatePath("/building", "layout");
+  redirect("/profile?saved=1");
 }
 
 const profileSchema = z.object({
@@ -324,7 +377,8 @@ export async function verifyPhoneOtpAction(formData: FormData) {
       phoneOtpExpires: null,
     },
   });
-  redirect("/login");
+  const me = await getCurrentUser();
+  redirect(me ? "/dashboard" : "/login");
 }
 
 /** يولّد OTP ويخزّنه في User — لاحقاً يُرسل عبر SMS (Twilio) من نفس المسار أو خدمة خارجية. */

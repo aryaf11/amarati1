@@ -10,6 +10,7 @@ import {
 } from "@/lib/maintenance-predictor";
 import { getLocale } from "@/lib/locale";
 import type { AppLocale } from "@/lib/locale";
+import { stripAssistantMarkdown } from "@/lib/strip-markdown";
 
 const FAQ: Record<AppLocale, { match: (m: string) => boolean; reply: string }[]> = {
   ar: [
@@ -53,12 +54,6 @@ const FAQ: Record<AppLocale, { match: (m: string) => boolean; reply: string }[]>
       match: (m) => /عرض\s*طلبات\s*الصيانة|طلبات\s*الصيانة|maintenance\s*requests/.test(m),
       reply:
         "افتح **الصيانة** من الشريط السفلي لعرض طلباتك وتقديم طلب جديد (شخصي أو مجتمعي). من الرئيسية يمكنك أيضاً استخدام اختصار تقديم طلب صيانة.",
-    },
-    {
-      match: (m) =>
-        /موعد\s*الصيانة\s*القادم|الصيانة\s*القادمة|next\s*maintenance|next\s*visit/.test(m),
-      reply:
-        "لمعرفة موعد الصيانة: افتح **الصيانة** واطّلع على طلباتك المفتوحة. عند تقديم طلب جديد يمكن طلب **تحليل ذكي** يقترح نافذة زمنية تقريبية. للطلبات المجتمعية يُحدَّد الموعد بعد التصويت على شركة الصيانة.",
     },
     {
       match: (m) => /صيانه|صيانة|maintenance/.test(m) && !looksLikeMaintenanceQuery(m),
@@ -132,11 +127,6 @@ const FAQ: Record<AppLocale, { match: (m: string) => boolean; reply: string }[]>
       match: (m) => /view\s*maintenance\s*requests|maintenance\s*requests/.test(m),
       reply:
         "Open **Maintenance** on the bottom bar to see your tickets and submit new ones (unit or community). Home also has a maintenance shortcut.",
-    },
-    {
-      match: (m) => /next\s*maintenance|next\s*visit|upcoming\s*maintenance/.test(m),
-      reply:
-        "Check **Maintenance** for open tickets and timelines. New requests can use **smart analysis** for an estimated window. Community jobs are scheduled after the maintenance-company vote.",
     },
     {
       match: (m) => /maintenance/i.test(m) && !looksLikeMaintenanceQuery(m),
@@ -231,15 +221,15 @@ function formatPrediction(message: string, locale: AppLocale): string {
 export async function chatbotReplyAction(message: string) {
   const locale = await getLocale();
   const m = (message || "").toLowerCase();
-  if (!m.trim()) return FALLBACK[locale];
+  if (!m.trim()) return stripAssistantMarkdown(FALLBACK[locale]);
 
   for (const item of FAQ[locale]) {
-    if (item.match(m)) return item.reply;
+    if (item.match(m)) return stripAssistantMarkdown(item.reply);
   }
 
   if (looksLikeMaintenanceQuery(m)) {
-    return formatPrediction(message, locale);
+    return stripAssistantMarkdown(formatPrediction(message, locale));
   }
 
-  return FALLBACK[locale];
+  return stripAssistantMarkdown(FALLBACK[locale]);
 }

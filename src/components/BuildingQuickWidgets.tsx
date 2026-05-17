@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import {
   ChatBubbleIcon,
-  ChevronLeftIcon,
   GaugeIcon,
   KeyIcon,
   MegaphoneIcon,
@@ -13,8 +12,7 @@ import {
 } from "@/components/LandingIcons";
 import { loadBuildingContext } from "@/lib/building-context";
 import type { AppLocale } from "@/lib/locale";
-import { pickDateLocale, ui } from "@/lib/ui-strings";
-import { prisma } from "@/lib/prisma";
+import { ui } from "@/lib/ui-strings";
 import { Card } from "@/components/ui";
 
 /** معاينة المبنى على `/dashboard` — ترتيب الاختصارات مطابق لتطبيق الجوال. */
@@ -56,24 +54,7 @@ async function BuildingQuickWidgetsInner({
   const td = t.dashboard;
   const bn = t.buildingNav;
 
-  const [announcements, chatMessages] = await Promise.all([
-    prisma.announcement.findMany({
-      where: { buildingId },
-      orderBy: { createdAt: "desc" },
-      include: { user: true },
-      take: 3,
-    }),
-    prisma.chatMessage.findMany({
-      where: { buildingId },
-      orderBy: { createdAt: "desc" },
-      include: { user: true },
-      take: 3,
-    }),
-  ]);
-
   const kindLabel = membership.kind === "OWNER" ? td.owner : td.tenant;
-  const df = pickDateLocale(locale);
-  const chevronFlip = locale === "ar" ? "rotate-180" : "";
 
   const shortcuts: {
     href: string;
@@ -92,7 +73,7 @@ async function BuildingQuickWidgetsInner({
     },
     {
       href: `/building/${buildingId}/chat`,
-      label: bn.chat,
+      label: th.openChat,
       icon: <ChatBubbleIcon className="size-5" />,
     },
     {
@@ -161,78 +142,6 @@ async function BuildingQuickWidgetsInner({
         </div>
       </Card>
 
-      <Card title={th.socialSection}>
-        <div className="grid gap-5 lg:grid-cols-2">
-          <section>
-            <Link
-              href={`/building/${buildingId}/chat`}
-              className="mb-3 flex items-center justify-between gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition hover:shadow"
-              style={{ borderColor: "var(--card-border)", color: "var(--accent)" }}
-            >
-              <span className="inline-flex items-center gap-2">
-                <ChatBubbleIcon />
-                {th.chatTitle}
-              </span>
-              <ChevronLeftIcon className={`size-5 shrink-0 ${chevronFlip}`} />
-            </Link>
-            {chatMessages.length === 0 ? (
-              <p className="text-sm text-muted">{th.noChatYet}</p>
-            ) : (
-              <ul className="space-y-2 text-sm">
-                {[...chatMessages].reverse().map((m) => (
-                  <li
-                    key={m.id}
-                    className="rounded-xl border p-2.5"
-                    style={{
-                      borderColor: "var(--card-border)",
-                      backgroundColor: "color-mix(in srgb, var(--card) 92%, transparent)",
-                    }}
-                  >
-                    <p className="text-xs font-semibold text-accent">{m.user.name}</p>
-                    <p className="mt-0.5 line-clamp-2 whitespace-pre-wrap">{m.body}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-
-          <section>
-            <Link
-              href={`/building/${buildingId}/announcements`}
-              className="mb-3 flex items-center justify-between gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition hover:shadow"
-              style={{ borderColor: "var(--card-border)", color: "var(--accent)" }}
-            >
-              <span className="inline-flex items-center gap-2">
-                <MegaphoneIcon />
-                {th.announcementsTitle}
-              </span>
-              <ChevronLeftIcon className={`size-5 shrink-0 ${chevronFlip}`} />
-            </Link>
-            {announcements.length === 0 ? (
-              <p className="text-sm text-muted">{th.noAnnouncementsYet}</p>
-            ) : (
-              <ul className="space-y-2 text-sm">
-                {announcements.map((a) => (
-                  <li
-                    key={a.id}
-                    className="rounded-xl border p-2.5"
-                    style={{
-                      borderColor: "var(--card-border)",
-                      backgroundColor: "color-mix(in srgb, var(--card) 92%, transparent)",
-                    }}
-                  >
-                    <p className="font-semibold">{a.title}</p>
-                    <p className="text-xs text-muted">
-                      {a.user.name} — {a.createdAt.toLocaleString(df)}
-                    </p>
-                    <p className="mt-1 line-clamp-2 whitespace-pre-line">{a.body}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        </div>
-      </Card>
     </div>
   );
 }

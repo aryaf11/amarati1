@@ -148,6 +148,11 @@ export async function signupAndJoinBuildingAction(formData: FormData) {
       redirect("/register/check-email");
     }
     await createSession(user.id);
+    if (!user.phoneVerifiedAt) {
+      redirect(
+        `/register/verify-phone?identifier=${encodeURIComponent(personal.data.phone)}`,
+      );
+    }
     redirect(`/building/${building.id}`);
   } catch (e) {
     if (isRedirectError(e)) throw e;

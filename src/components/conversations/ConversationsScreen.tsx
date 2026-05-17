@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { ChatLine, ResidentRow } from "@/lib/chat-types";
 import { Card } from "@/components/ui";
 import { ChatBubbleList } from "./ChatBubbleList";
@@ -10,37 +9,25 @@ export function ConversationsScreen({
   buildingId,
   tab,
   title,
-  hint,
-  backLabel,
   tabLabels,
   lines,
   residents,
   emptyText,
   inputPlaceholder,
-  composerDisabled,
-  announcementsHref,
-  announcementsLinkLabel,
   panelTitle,
   error,
 }: {
   buildingId: string;
   tab: ChatTabId;
   title: string;
-  hint: string;
-  backLabel: string;
-  tabLabels: { residents: string; announcements: string; group: string };
+  tabLabels: { residents: string; group: string };
   lines: ChatLine[];
   residents: ResidentRow[];
   emptyText: string;
   inputPlaceholder: string;
-  composerDisabled?: boolean;
-  announcementsHref: string;
-  announcementsLinkLabel: string;
   panelTitle: string;
   error?: string | null;
 }) {
-  const backHref = `/dashboard?open=${encodeURIComponent(buildingId)}`;
-
   return (
     <div className="space-y-6">
       {error ? (
@@ -49,19 +36,7 @@ export function ConversationsScreen({
         </p>
       ) : null}
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link
-          href={backHref}
-          className="text-sm font-medium text-accent underline-offset-2 hover:underline"
-        >
-          {backLabel}
-        </Link>
-      </div>
-
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-        <p className="mt-1 text-sm text-muted">{hint}</p>
-      </div>
+      <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
 
       <ChatTabs buildingId={buildingId} active={tab} labels={tabLabels} />
 
@@ -69,26 +44,15 @@ export function ConversationsScreen({
         {tab === "residents" ? (
           <ResidentsList residents={residents} emptyText={emptyText} />
         ) : (
-          <>
-            <ChatBubbleList lines={lines} emptyText={emptyText} />
-            {tab === "announcements" && lines.length === 0 ? (
-              <p className="mt-4 text-center text-sm">
-                <Link
-                  href={announcementsHref}
-                  className="font-medium text-accent underline-offset-2 hover:underline"
-                >
-                  {announcementsLinkLabel}
-                </Link>
-              </p>
-            ) : null}
-          </>
+          <ChatBubbleList lines={lines} emptyText={emptyText} />
         )}
-        <ChatComposer
-          buildingId={buildingId}
-          tab={tab}
-          placeholder={inputPlaceholder}
-          disabled={composerDisabled}
-        />
+        {tab === "group" ? (
+          <ChatComposer
+            buildingId={buildingId}
+            tab={tab}
+            placeholder={inputPlaceholder}
+          />
+        ) : null}
       </Card>
     </div>
   );

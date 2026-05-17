@@ -9,7 +9,7 @@ import { ui } from "@/lib/ui-strings";
 import { prisma } from "@/lib/prisma";
 
 function parseTab(raw: string | undefined): ChatTabId {
-  if (raw === "residents" || raw === "announcements" || raw === "group") return raw;
+  if (raw === "residents" || raw === "group") return raw;
   return "group";
 }
 
@@ -32,17 +32,11 @@ export default async function ChatPage({
   const c = ui(locale).chat;
   const td = ui(locale).dashboard;
 
-  const [rows, announcements, memberships] = await Promise.all([
+  const [rows, memberships] = await Promise.all([
     prisma.chatMessage.findMany({
       where: { buildingId },
       orderBy: { createdAt: "asc" },
       take: 80,
-      include: { user: true },
-    }),
-    prisma.announcement.findMany({
-      where: { buildingId },
-      orderBy: { createdAt: "desc" },
-      take: 30,
       include: { user: true },
     }),
     prisma.membership.findMany({
@@ -59,11 +53,13 @@ export default async function ChatPage({
     return unit ? `${name} — ${unit}` : name;
   }
 
-  const residents: ResidentRow[] = memberships.map((m) => ({
-    name: m.user.name,
-    unitLabel: m.unit.label,
-    roleLabel: m.kind === "OWNER" ? td.owner : td.tenant,
-  }));
+  const residents: ResidentRow[] = memberships
+    .filter((m) => m.user.visibleInResidents !== false)
+    .map((m) => ({
+      name: m.user.name,
+      unitLabel: m.unit.label,
+      roleLabel: m.kind === "OWNER" ? td.owner : td.tenant,
+    }));
 
   const groupLines: ChatLine[] = rows.map((m) => ({
     senderLabel: senderLabel(m.userId, m.user.name),
@@ -71,56 +67,23 @@ export default async function ChatPage({
     isOwn: m.userId === user.id,
   }));
 
-  const announcementLines: ChatLine[] = announcements.map((a) => ({
-    senderLabel: a.user.name,
-    body: a.title ? `${a.title}\n\n${a.body}` : a.body,
-  }));
-
-  let lines: ChatLine[] = [];
-  let emptyText: string = c.emptyGroup;
-  let panelTitle: string = c.tabGroup;
-  let composerDisabled = false;
-
-  switch (tab) {
-    case "residents":
-      emptyText = c.emptyResidents;
-      panelTitle = c.tabResidents;
-      composerDisabled = true;
-      break;
-    case "announcements":
-      lines = announcementLines;
-      emptyText = c.emptyAnnouncements;
-      panelTitle = c.tabAnnouncements;
-      composerDisabled = true;
-      break;
-    case "group":
-    default:
-      lines = groupLines;
-      emptyText = c.emptyGroup;
-      panelTitle = c.tabGroup;
-      composerDisabled = false;
-      break;
-  }
+  const lines = tab === "group" ? groupLines : [];
+  const emptyText = tab === "residents" ? c.emptyResidents : c.emptyGroup;
+  const panelTitle = tab === "residents" ? c.tabResidents : c.tabGroup;
 
   return (
     <ConversationsScreen
       buildingId={buildingId}
       tab={tab}
       title={c.conversationsTitle}
-      hint={c.hint}
-      backLabel={c.back}
       tabLabels={{
         residents: c.tabResidents,
-        announcements: c.tabAnnouncements,
         group: c.tabGroup,
       }}
       lines={lines}
       residents={residents}
       emptyText={emptyText}
       inputPlaceholder={c.placeholder}
-      composerDisabled={composerDisabled}
-      announcementsHref={`/building/${buildingId}/announcements`}
-      announcementsLinkLabel={c.openAnnouncements}
       panelTitle={panelTitle}
       error={err}
     />

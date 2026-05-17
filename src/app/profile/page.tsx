@@ -111,43 +111,18 @@ export default async function ProfilePage({
               <Input name="name" defaultValue={user.name} required minLength={2} />
             </div>
             <div>
-              <label className="mb-1 block text-xs text-slate-500">{t.email}</label>
-              {user.email ? (
-                <Input value={user.email} disabled readOnly dir="ltr" className="text-left opacity-70" />
-              ) : (
-                <Input
-                  name="newEmail"
-                  type="email"
-                  dir="ltr"
-                  className="text-left"
-                  placeholder={t.emailOptionalPlaceholder}
-                  autoComplete="email"
-                />
-              )}
+              <label className="mb-1 block text-xs text-slate-500">{t.phone}</label>
+              <Input
+                name="phone"
+                defaultValue={user.phone}
+                required
+                minLength={8}
+                dir="ltr"
+                className="text-left"
+                autoComplete="tel"
+              />
               {verifyOn ? (
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-                  {user.email ? (
-                    <>
-                      <span
-                        className={
-                          emailOk
-                            ? "inline-flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-teal-800 dark:bg-teal-950/50 dark:text-teal-200"
-                            : "inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
-                        }
-                      >
-                        ● {emailOk ? t.emailVerifiedYes : t.emailVerifiedNo}
-                      </span>
-                      {!emailOk ? (
-                        <a
-                          href="/register/check-email"
-                          className="font-medium underline"
-                          style={{ color: accent }}
-                        >
-                          {t.resendVerification}
-                        </a>
-                      ) : null}
-                    </>
-                  ) : null}
                   <span
                     className={
                       phoneOk
@@ -168,18 +143,6 @@ export default async function ProfilePage({
                   ) : null}
                 </div>
               ) : null}
-            </div>
-            <div>
-              <label className="mb-1 block text-xs text-slate-500">{t.phone}</label>
-              <Input
-                name="phone"
-                defaultValue={user.phone}
-                required
-                minLength={8}
-                dir="ltr"
-                className="text-left"
-                autoComplete="tel"
-              />
               {verifyOn && !phoneOk ? (
                 <SubmitButton
                   formAction={sendPhoneOtpAction}
@@ -189,6 +152,43 @@ export default async function ProfilePage({
                 >
                   {t.sendPhoneOtp}
                 </SubmitButton>
+              ) : null}
+            </div>
+            <div>
+              <label className="mb-1 block text-xs text-slate-500">{t.email}</label>
+              {user.email ? (
+                <Input value={user.email} disabled readOnly dir="ltr" className="text-left opacity-70" />
+              ) : (
+                <Input
+                  name="newEmail"
+                  type="email"
+                  dir="ltr"
+                  className="text-left"
+                  placeholder={t.emailOptionalPlaceholder}
+                  autoComplete="email"
+                />
+              )}
+              {verifyOn && user.email ? (
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                  <span
+                    className={
+                      emailOk
+                        ? "inline-flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-teal-800 dark:bg-teal-950/50 dark:text-teal-200"
+                        : "inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
+                    }
+                  >
+                    ● {emailOk ? t.emailVerifiedYes : t.emailVerifiedNo}
+                  </span>
+                  {!emailOk ? (
+                    <a
+                      href="/register/check-email"
+                      className="font-medium underline"
+                      style={{ color: accent }}
+                    >
+                      {t.resendVerification}
+                    </a>
+                  ) : null}
+                </div>
               ) : null}
             </div>
             {verifyOn && !fullyVerified ? (
@@ -304,10 +304,13 @@ export default async function ProfilePage({
         <Card title={t.settingsTitle}>
           <ProfileSettings
             locale={locale}
+            visibleInResidents={user.visibleInResidents}
             t={{
               themeLabel: t.themeLabel,
-              themeLight: t.themeLight,
-              themeDark: t.themeDark,
+              themeToggle: t.themeToggle,
+              residentsVisibilityLabel: t.residentsVisibilityLabel,
+              residentsVisibleOn: t.residentsVisibleOn,
+              residentsVisibleOff: t.residentsVisibleOff,
               notificationsLabel: t.notificationsLabel,
               notificationsOn: t.notificationsOn,
               notificationsOff: t.notificationsOff,

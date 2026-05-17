@@ -1,8 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toggleVisibleInResidentsAction } from "@/actions/auth";
 import type { AppLocale } from "@/lib/locale";
-import { BellIcon, BellOffIcon, MoonIcon, SunIcon } from "@/components/LandingIcons";
+import {
+  BellIcon,
+  BellOffIcon,
+  EyeIcon,
+  EyeOffIcon,
+  MoonIcon,
+  SunIcon,
+} from "@/components/LandingIcons";
 
 const THEME_KEY = "amarati-theme";
 const NOTIFY_KEY = "amarati-notifications";
@@ -11,8 +19,10 @@ type ThemeMode = "light" | "dark";
 
 type Labels = {
   themeLabel: string;
-  themeLight: string;
-  themeDark: string;
+  themeToggle: string;
+  residentsVisibilityLabel: string;
+  residentsVisibleOn: string;
+  residentsVisibleOff: string;
   notificationsLabel: string;
   notificationsOn: string;
   notificationsOff: string;
@@ -21,9 +31,11 @@ type Labels = {
 
 export function ProfileSettings({
   locale: _locale,
+  visibleInResidents,
   t,
 }: {
   locale: AppLocale;
+  visibleInResidents: boolean;
   t: Labels;
 }) {
   void _locale;
@@ -43,6 +55,10 @@ export function ProfileSettings({
     if (next === "dark") root.classList.add("dark");
     else root.classList.remove("dark");
     setTheme(next);
+  }
+
+  function toggleTheme() {
+    applyTheme(theme === "light" ? "dark" : "light");
   }
 
   async function toggleNotifications() {
@@ -82,30 +98,44 @@ export function ProfileSettings({
     <div className="space-y-6">
       <div>
         <p className="mb-3 text-xs font-semibold tracking-wide text-muted">{t.themeLabel}</p>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => applyTheme("light")}
-            aria-pressed={theme === "light"}
-            aria-label={t.themeLight}
-            title={t.themeLight}
-            className={iconRound}
-            style={theme === "light" ? iconActive : iconInactive}
-          >
+        <button
+          type="button"
+          onClick={toggleTheme}
+          aria-label={t.themeToggle}
+          title={t.themeToggle}
+          className={iconRound}
+          style={iconActive}
+        >
+          {theme === "light" ? (
             <SunIcon className="size-5 shrink-0" />
-          </button>
-          <button
-            type="button"
-            onClick={() => applyTheme("dark")}
-            aria-pressed={theme === "dark"}
-            aria-label={t.themeDark}
-            title={t.themeDark}
-            className={iconRound}
-            style={theme === "dark" ? iconActive : iconInactive}
-          >
+          ) : (
             <MoonIcon className="size-5 shrink-0" />
+          )}
+        </button>
+      </div>
+
+      <div>
+        <p className="mb-3 text-xs font-semibold tracking-wide text-muted">
+          {t.residentsVisibilityLabel}
+        </p>
+        <form action={toggleVisibleInResidentsAction}>
+          <button
+            type="submit"
+            aria-pressed={visibleInResidents}
+            className={iconRound}
+            style={visibleInResidents ? iconActive : iconInactive}
+            title={visibleInResidents ? t.residentsVisibleOn : t.residentsVisibleOff}
+          >
+            {visibleInResidents ? (
+              <EyeIcon className="size-5 shrink-0" />
+            ) : (
+              <EyeOffIcon className="size-5 shrink-0" />
+            )}
           </button>
-        </div>
+          <p className="mt-2 text-xs text-muted">
+            {visibleInResidents ? t.residentsVisibleOn : t.residentsVisibleOff}
+          </p>
+        </form>
       </div>
 
       <div>

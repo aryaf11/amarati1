@@ -40,8 +40,7 @@ export async function postChatAction(formData: FormData) {
     data: { buildingId, userId: user.id, body },
   });
   const tab = String(formData.get("tab") ?? "group");
-  const safeTab =
-    tab === "residents" || tab === "announcements" || tab === "group" ? tab : "group";
+  const safeTab = tab === "residents" || tab === "group" ? tab : "group";
   revalidatePath(`/building/${buildingId}/chat`);
   redirect(`/building/${buildingId}/chat?tab=${safeTab}`);
 }

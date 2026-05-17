@@ -27,6 +27,8 @@ model User {
   phoneVerifiedAt      DateTime?
   phoneOtpCode         String?
   phoneOtpExpires      DateTime?
+  /// إظهار الاسم في قائمة سكان المبنى
+  visibleInResidents   Boolean   @default(true)
 
   buildingsCreated Building[] @relation("BuildingCreator")
   memberships      Membership[]

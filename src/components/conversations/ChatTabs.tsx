@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export type ChatTabId = "residents" | "announcements" | "group";
+export type ChatTabId = "residents" | "group";
 
 export function ChatTabs({
   buildingId,
@@ -9,19 +9,15 @@ export function ChatTabs({
 }: {
   buildingId: string;
   active: ChatTabId;
-  labels: { residents: string; announcements: string; group: string };
+  labels: { residents: string; group: string };
 }) {
   const items: { id: ChatTabId; label: string }[] = [
     { id: "residents", label: labels.residents },
-    { id: "announcements", label: labels.announcements },
     { id: "group", label: labels.group },
   ];
 
   return (
-    <nav
-      className="flex flex-wrap gap-2"
-      aria-label="تبويبات المحادثة"
-    >
+    <nav className="flex flex-wrap gap-2" aria-label="تبويبات المحادثة">
       {items.map((item) => {
         const isActive = item.id === active;
         return (
