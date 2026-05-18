@@ -52,11 +52,15 @@ export default async function SignupJoinPage({
         <form action={signupAndJoinBuildingAction} className="space-y-6">
           <Card title={t.yourInfoTitle}>
             <div className="grid gap-3 sm:grid-cols-2">
-              <div>
+              <div className="sm:col-span-2">
                 <label className="mb-1 block text-xs text-muted">{tr.name}</label>
                 <Input name="name" required minLength={2} />
               </div>
-              <div>
+              <div className="sm:col-span-2">
+                <label className="mb-1 block text-xs text-muted">{tr.phone}</label>
+                <Input name="phone" required minLength={8} dir="ltr" className="text-left" autoComplete="tel" />
+              </div>
+              <div className="sm:col-span-2">
                 <label className="mb-1 block text-xs text-muted">{tr.email}</label>
                 <Input
                   name="email"
@@ -67,10 +71,6 @@ export default async function SignupJoinPage({
                   autoComplete="email"
                   placeholder={tp.emailOptionalPlaceholder}
                 />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs text-muted">{tr.phone}</label>
-                <Input name="phone" required minLength={8} dir="ltr" className="text-left" autoComplete="tel" />
               </div>
               <div className="sm:col-span-2">
                 <label className="mb-1 block text-xs text-muted">{tr.password}</label>
