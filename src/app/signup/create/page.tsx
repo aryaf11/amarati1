@@ -21,6 +21,7 @@ export default async function SignupCreatePage({
   const locale = await getLocale();
   const t = ui(locale).signup;
   const tr = ui(locale).register;
+  const tp = ui(locale).profile;
   const td = ui(locale).dashboard;
   const tl = ui(locale).login;
   const sp = await searchParams;
@@ -55,6 +56,18 @@ export default async function SignupCreatePage({
               <div>
                 <label className="mb-1 block text-xs text-muted">{tr.name}</label>
                 <Input name="name" required minLength={2} />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-muted">{tr.email}</label>
+                <Input
+                  name="email"
+                  type="email"
+                  inputMode="email"
+                  dir="ltr"
+                  className="text-left"
+                  autoComplete="email"
+                  placeholder={tp.emailOptionalPlaceholder}
+                />
               </div>
               <div>
                 <label className="mb-1 block text-xs text-muted">{tr.phone}</label>

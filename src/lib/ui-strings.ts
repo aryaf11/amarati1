@@ -54,6 +54,8 @@ const AR = {
     inviteCodeNotFound: "رمز المبنى غير صحيح أو غير موجود.",
     addressInvalid:
       "تحقق من اسم العمارة ورقم الشقة وحقول العنوان الوطني (المنطقة، المدينة، الحي، الشارع، رقم المبنى، الرمز البريدي).",
+    invalidEmail:
+      "صيغة البريد غير صالحة. أدخل بريداً صحيحاً أو اترك الحقل فارغاً.",
   },
   register: {
     title: "انضم إلى عَمارتي — حساب ساكن",
@@ -378,12 +380,14 @@ const AR = {
     subtitle: "",
     accountTitle: "بيانات الحساب",
     name: "الاسم",
-    email: "البريد",
+    email: "البريد (اختياري)",
     phone: "الجوال",
     save: "حفظ التغييرات",
     saving: "جاري الحفظ…",
     saved: "تم حفظ بياناتك.",
     invalidForm: "بيانات غير صالحة. يجب أن يكون الاسم حرفين فأكثر.",
+    invalidEmail:
+      "صيغة البريد غير صالحة. أدخل بريداً صحيحاً أو امسح الحقل.",
     emailVerifiedYes: "بريدك مؤكَّد.",
     emailVerifiedNo: "البريد غير مؤكَّد بعد.",
     emailOptionalPlaceholder: "يمكن إضافة بريد لاحقًا",
@@ -475,6 +479,8 @@ const EN = {
     inviteCodeNotFound: "Building code is invalid or not found.",
     addressInvalid:
       "Check the building name, unit number, and national address fields (region, city, district, street, building number, postal code).",
+    invalidEmail:
+      "That email doesn’t look valid. Enter a correct address or leave the field blank.",
   },
   register: {
     title: "Join Amarati — resident account",
@@ -800,12 +806,14 @@ const EN = {
     subtitle: "",
     accountTitle: "Account details",
     name: "Name",
-    email: "Email",
+    email: "Email (optional)",
     phone: "Phone",
     save: "Save changes",
     saving: "Saving…",
     saved: "Your profile has been updated.",
     invalidForm: "Invalid data. Name must be at least 2 characters.",
+    invalidEmail:
+      "That email doesn’t look valid. Enter a correct address or clear the field.",
     emailVerifiedYes: "Email verified.",
     emailVerifiedNo: "Email not verified yet.",
     emailOptionalPlaceholder: "You can add an email anytime",

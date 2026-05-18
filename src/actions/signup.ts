@@ -13,10 +13,15 @@ import { prisma } from "@/lib/prisma";
 import { createSession } from "@/lib/session";
 import { ui } from "@/lib/ui-strings";
 
+/** بريد اختياري: فارغ = لا يُخزَّن؛ غير فارغ يجب أن يمرّ بصيغة بريد صالحة قبل التخفيض. */
 const personalSchema = z.object({
   name: z.string().trim().min(2),
   password: z.string().min(6),
   phone: z.string().trim().min(8).max(24),
+  email: z.preprocess(
+    (v) => String(v ?? "").trim().toLowerCase(),
+    z.union([z.literal(""), z.string().email().max(190)]),
+  ),
 });
 
 const joinSchema = z.object({
@@ -56,6 +61,7 @@ function readPersonal(formData: FormData) {
     name: formData.get("name"),
     password: formData.get("password"),
     phone: formData.get("phone"),
+    email: formData.get("email"),
   });
 }
 
@@ -106,16 +112,21 @@ async function createSignupUser(
   const t = ui(locale);
   const byPhone = await prisma.user.findUnique({ where: { phone: data.phone } });
   if (byPhone) errorRedirect(t.register.phoneTaken);
+  const emailNorm = data.email === "" ? null : data.email;
+  if (emailNorm) {
+    const dupEmail = await prisma.user.findUnique({ where: { email: emailNorm } });
+    if (dupEmail) errorRedirect(t.register.emailTaken);
+  }
   const passwordHash = await hashPassword(data.password);
 
   const user = await prisma.user.create({
     data: {
-      email: null,
+      email: emailNorm,
       passwordHash,
       name: data.name,
       phone: data.phone,
       accountKind: "RESIDENT",
-      emailVerifiedAt: new Date(),
+      emailVerifiedAt: emailNorm ? null : new Date(),
       phoneVerifiedAt: new Date(),
       phoneOtpCode: null,
       phoneOtpExpires: null,
@@ -128,7 +139,12 @@ export async function signupAndCreateBuildingAction(formData: FormData) {
   const locale = await getLocale();
   const t = ui(locale);
   const personal = readPersonal(formData);
-  if (!personal.success) backCreateError(t.register.invalidForm);
+  if (!personal.success) {
+    const emailFmt = personal.error.flatten().fieldErrors.email;
+    backCreateError(
+      emailFmt?.length ? t.signup.invalidEmail : t.register.invalidForm,
+    );
+  }
   const buildingData = readBuilding(formData);
   if (!buildingData.success) backCreateError(t.signup.addressInvalid);
 
@@ -179,7 +195,12 @@ export async function signupAndJoinBuildingAction(formData: FormData) {
   const locale = await getLocale();
   const t = ui(locale);
   const personal = readPersonal(formData);
-  if (!personal.success) backJoinError(t.register.invalidForm);
+  if (!personal.success) {
+    const emailFmt = personal.error.flatten().fieldErrors.email;
+    backJoinError(
+      emailFmt?.length ? t.signup.invalidEmail : t.register.invalidForm,
+    );
+  }
   const join = joinSchema.safeParse({
     inviteCode: formData.get("inviteCode"),
     unitLabel: formData.get("unitLabel"),

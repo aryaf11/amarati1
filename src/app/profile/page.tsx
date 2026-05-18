@@ -106,6 +106,26 @@ export default async function ProfilePage({
               <Input name="name" defaultValue={user.name} required minLength={2} />
             </div>
             <div>
+              <label className="mb-1 block text-xs text-slate-500">{t.email}</label>
+              <Input
+                name="email"
+                type="email"
+                inputMode="email"
+                dir="ltr"
+                className="text-left"
+                autoComplete="email"
+                placeholder={t.emailOptionalPlaceholder}
+                defaultValue={user.email ?? ""}
+              />
+              <p className="mt-1 text-xs text-muted">
+                {user.email
+                  ? user.emailVerifiedAt
+                    ? t.emailVerifiedYes
+                    : t.emailVerifiedNo
+                  : null}
+              </p>
+            </div>
+            <div>
               <label className="mb-1 block text-xs text-slate-500">{t.phone}</label>
               <Input
                 name="phone"
