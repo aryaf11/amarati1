@@ -118,6 +118,12 @@ const AR = {
     submitPending: "جاري التحقق…",
     invalid: "بيانات غير صالحة",
     badCode: "رمز غير صحيح أو منتهٍ",
+    sendCode: "إرسال الرمز",
+    resendCode: "إعادة إرسال الرمز",
+    sendCodePending: "جارٍ الإرسال…",
+    codeSent: "تم إرسال الرمز إلى جوالك. تحقق من رسائل SMS.",
+    devCodeNotice:
+      "إرسال SMS غير مهيأ — هذا الرمز لأغراض التطوير فقط:",
   },
   dashboard: {
     title: "ابدأ مع عَمارتي",
@@ -520,6 +526,12 @@ const EN = {
     submitPending: "Verifying…",
     invalid: "Invalid data",
     badCode: "Wrong or expired code",
+    sendCode: "Send code",
+    resendCode: "Resend code",
+    sendCodePending: "Sending…",
+    codeSent: "The code was sent to your phone. Check your SMS.",
+    devCodeNotice:
+      "SMS is not configured — this code is for development only:",
   },
   dashboard: {
     title: "Get started with Amarati",

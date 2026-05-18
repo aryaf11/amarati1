@@ -16,15 +16,42 @@ import { hashPassword, verifyPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
 import { deliverVerificationEmail, isEmailVerificationRequired } from "@/lib/send-verification-email";
 import { sendPhoneOtpSms } from "@/lib/sms-otp";
+import {
+  checkTwilioVerification,
+  isTwilioVerifyConfigured,
+  startTwilioVerification,
+} from "@/lib/twilio-verify";
 import { createSession, destroySession } from "@/lib/session";
 import { ui } from "@/lib/ui-strings";
 import { userMeetsVerificationRequirement } from "@/lib/verification-gate";
 
+/**
+ * يبدأ تدفّق التحقق بالجوال: عبر Twilio Verify إن كانت مهيأة (Twilio يُولّد الرمز ويتحقّق منه)،
+ * أو بتوليد رمز محلي وإرساله عبر SMS/WhatsApp إن لم تكن Verify مهيأة.
+ */
 async function issuePhoneOtpForUser(
   userId: string,
   phone: string,
   locale: Awaited<ReturnType<typeof getLocale>>,
 ) {
+  if (isTwilioVerifyConfigured()) {
+    // Twilio يُدير الكود؛ لا نخزّن رمزاً محلياً. نضع علامة فقط حتى يتعرّف
+    // التدفّق العام على أن طلب تحقق نشط، ولرعاية فترة التهدئة في resend.
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        phoneOtpCode: null,
+        phoneOtpExpires: new Date(Date.now() + 10 * 60 * 1000),
+      },
+    });
+    const res = await startTwilioVerification(phone, locale);
+    if (!res.ok) {
+      console.info(
+        `[Amarati] Twilio Verify start failed for ${phone}: ${res.reason} ${res.detail ?? ""}`,
+      );
+    }
+    return { code: null, sms: res };
+  }
   const code = String(randomInt(100000, 999999));
   await prisma.user.update({
     where: { id: userId },
@@ -37,6 +64,7 @@ async function issuePhoneOtpForUser(
   if (!sms.ok) {
     console.info(`[Amarati] Phone OTP for ${phone} (dev): ${code}`);
   }
+  return { code, sms };
 }
 
 function verifyPhoneRedirect(phone: string) {
@@ -359,11 +387,19 @@ export async function verifyPhoneOtpAction(formData: FormData) {
     redirect("/register/verify-phone?error=" + encodeURIComponent(tv.badCode));
   }
   const dev = process.env.VERIFICATION_DEV_OTP?.trim();
-  const ok =
-    (dev && parsed.data.code === dev) ||
-    (user.phoneOtpCode === parsed.data.code &&
-      user.phoneOtpExpires &&
-      user.phoneOtpExpires.getTime() > Date.now());
+  let ok = Boolean(dev && parsed.data.code === dev);
+  if (!ok) {
+    if (isTwilioVerifyConfigured() && user.phone?.trim()) {
+      const check = await checkTwilioVerification(user.phone, parsed.data.code);
+      ok = check.ok;
+    } else {
+      ok = Boolean(
+        user.phoneOtpCode === parsed.data.code &&
+          user.phoneOtpExpires &&
+          user.phoneOtpExpires.getTime() > Date.now(),
+      );
+    }
+  }
   if (!ok) {
     const idParam =
       "identifier=" + encodeURIComponent(parsed.data.identifier);
@@ -381,7 +417,59 @@ export async function verifyPhoneOtpAction(formData: FormData) {
   redirect(me ? "/dashboard" : "/login");
 }
 
-/** يولّد OTP ويخزّنه في User — لاحقاً يُرسل عبر SMS (Twilio) من نفس المسار أو خدمة خارجية. */
+const resendPhoneOtpSchema = z.object({
+  identifier: z.string().trim().min(3),
+});
+
+/**
+ * إعادة إرسال رمز التحقق إلى الجوال انطلاقاً من المعرّف (جوال أو بريد).
+ * يُستخدم من صفحة `/register/verify-phone` قبل تأكيد الجلسة، فلا يعتمد على `getCurrentUser`.
+ */
+export async function resendPhoneOtpAction(formData: FormData) {
+  const locale = await getLocale();
+  const tv = ui(locale).verifyPhone;
+  const tp = ui(locale).profile;
+  const idRaw = String(
+    formData.get("identifier") ?? formData.get("email") ?? "",
+  ).trim();
+  const parsed = resendPhoneOtpSchema.safeParse({ identifier: idRaw });
+  if (!parsed.success) {
+    redirect(
+      "/register/verify-phone?error=" + encodeURIComponent(tv.invalid),
+    );
+  }
+  const idQ = "identifier=" + encodeURIComponent(parsed.data.identifier);
+  const user = await findUserByIdentifier(parsed.data.identifier);
+  // لا نُفصح عن وجود/عدم وجود المستخدم — نُظهر نفس الرسالة في الحالتين.
+  if (!user || !user.phone?.trim()) {
+    redirect(`/register/verify-phone?${idQ}&sent=1`);
+  }
+  // حدّ بسيط لمنع التكرار: لا نعيد إصدار رمز جديد إن مرّ أقل من 30 ثانية على الإصدار السابق.
+  if (user.phoneOtpExpires) {
+    const issuedAt = user.phoneOtpExpires.getTime() - 10 * 60 * 1000;
+    if (Date.now() - issuedAt < 30 * 1000) {
+      redirect(`/register/verify-phone?${idQ}&sent=1`);
+    }
+  }
+  const { sms } = await issuePhoneOtpForUser(user.id, user.phone, locale);
+  if (!sms.ok) {
+    const errMsg =
+      sms.reason === "not_configured"
+        ? tp.smsNotConfigured
+        : sms.reason === "invalid_phone"
+          ? tp.needPhoneForOtp
+          : sms.reason === "rate_limited"
+            ? tp.smsSendFailed
+            : tp.smsSendFailed;
+    redirect(
+      `/register/verify-phone?${idQ}&sent=1&error=` +
+        encodeURIComponent(errMsg),
+    );
+  }
+  redirect(`/register/verify-phone?${idQ}&sent=1`);
+}
+
+/** يبدأ تدفّق OTP من صفحة الملف الشخصي (Twilio Verify إن كانت مهيأة، وإلا توليد محلي). */
 export async function sendPhoneOtpAction() {
   const locale = await getLocale();
   const t = ui(locale).profile;
@@ -390,18 +478,7 @@ export async function sendPhoneOtpAction() {
   if (!me.phone?.trim()) {
     redirect("/profile?error=" + encodeURIComponent(t.needPhoneForOtp));
   }
-  const code = String(randomInt(100000, 999999));
-  await prisma.user.update({
-    where: { id: me.id },
-    data: {
-      phoneOtpCode: code,
-      phoneOtpExpires: new Date(Date.now() + 10 * 60 * 1000),
-    },
-  });
-  const sms = await sendPhoneOtpSms(me.phone, code, locale);
-  if (!sms.ok) {
-    console.info(`[Amarati] Phone OTP for ${me.phone} (dev log): ${code}`);
-  }
+  const { sms } = await issuePhoneOtpForUser(me.id, me.phone, locale);
   const idQ = me.email
     ? "email=" + encodeURIComponent(me.email)
     : "identifier=" + encodeURIComponent(me.phone);
