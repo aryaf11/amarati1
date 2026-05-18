@@ -59,10 +59,6 @@ export default async function SignupJoinPage({
                 <label className="mb-1 block text-xs text-muted">{tr.phone}</label>
                 <Input name="phone" required minLength={8} dir="ltr" className="text-left" autoComplete="tel" />
               </div>
-              <div>
-                <label className="mb-1 block text-xs text-muted">{tr.email}</label>
-                <Input name="email" type="email" dir="ltr" className="text-left" autoComplete="email" />
-              </div>
               <div className="sm:col-span-2">
                 <label className="mb-1 block text-xs text-muted">{tr.password}</label>
                 <PasswordInput

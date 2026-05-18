@@ -14,6 +14,7 @@
  */
 
 import type { AppLocale } from "@/lib/locale";
+import { ui } from "@/lib/ui-strings";
 import { normalizeSaudiMsisdn } from "@/lib/twilio-sms";
 
 export type VerifySendResult =
@@ -119,6 +120,40 @@ export async function startTwilioVerification(
   }
   const data = (await res.json().catch(() => ({}))) as { sid?: string };
   return { ok: true, sid: data.sid ?? "" };
+}
+
+/**
+ * ترجمة فشل `startTwilioVerification` إلى نصٍ قصير يفهمها المستخدم.
+ */
+export function messageForVerifySendFailure(
+  locale: AppLocale,
+  failure: { reason: string; code?: number; detail?: string },
+): string {
+  const t = ui(locale).verifyPhone;
+  const tp = ui(locale).profile;
+  const c = failure.code;
+  const d = (failure.detail ?? "").toLowerCase();
+
+  if (failure.reason === "invalid_phone") return t.verifyErrorInvalidPhone;
+  if (failure.reason === "rate_limited") return t.verifyErrorRateLimit;
+  if (failure.reason === "not_configured") return tp.smsNotConfigured;
+
+  if (c === 20003 || d.includes("authentication") || d.includes("invalid username")) {
+    return t.verifyErrorAuth;
+  }
+  if (
+    c === 21608 ||
+    c === 21610 ||
+    c === 21211 ||
+    d.includes("unverified") ||
+    (d.includes("trial") && d.includes("verify"))
+  ) {
+    return t.verifyErrorTrial;
+  }
+  if (c === 60203 || c === 60212) return t.verifyErrorRateLimit;
+  if (c === 60200) return t.verifyErrorInvalidPhone;
+
+  return t.verifyErrorGeneric;
 }
 
 /** يتحقّق من الرمز الذي أدخله المستخدم. */

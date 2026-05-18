@@ -111,8 +111,8 @@ const AR = {
   verifyPhone: {
     title: "تحقق من الجوال",
     subtitle:
-      "أدخل رقم جوالك المسجّل، ثم الرمز المكوّن من 6 أرقام المرسل برسالة SMS نصية.",
-    identifierLabel: "الجوال أو البريد",
+      "أدخل رقم الجوال المسجّل (مثل 05xxxxxxxx) ثم الرمز المكوّن من 6 أرقام المرسل برسالة SMS.",
+    phoneLabel: "رقم الجوال",
     codeLabel: "رمز التحقق",
     submit: "تأكيد",
     submitPending: "جاري التحقق…",
@@ -122,8 +122,20 @@ const AR = {
     resendCode: "إعادة إرسال الرمز",
     sendCodePending: "جارٍ الإرسال…",
     codeSent: "تم إرسال الرمز إلى جوالك. تحقق من رسائل SMS.",
+    resendTooSoon:
+      "طلبت إرسال الرمز للتو. انتظر قليلاً ثم أعد المحاولة (30 ثانية).",
     devCodeNotice:
       "إرسال SMS غير مهيأ — هذا الرمز لأغراض التطوير فقط:",
+    verifyErrorAuth:
+      "خطأ مصادقة Twilio (20003): تأكد أن TWILIO_ACCOUNT_SID يبدأ بـ «AC» وأن TWILIO_AUTH_TOKEN من Account → Auth Tokens في console.twilio.com، وأن TWILIO_VERIFY_SERVICE_SID يبدأ بـ «VA» من نفس الحساب.",
+    verifyErrorTrial:
+      "الحساب التجريبي لا يرسل إلا لأرقام مُضافة مسبقاً: من لوحة Twilio → Phone Numbers → Verified Caller IDs — أضف رقم جوالك واضغط «إعادة إرسال الرمز».",
+    verifyErrorRateLimit:
+      "طلبات إرسال كثيرة من Twilio — انتظر دقيقة ثم جرّب مرة أخرى.",
+    verifyErrorInvalidPhone:
+      "صيغة رقم الجوال غير صالحة. استخدم 05xxxxxxxx أو 9665xxxxxxxx.",
+    verifyErrorGeneric:
+      "تعذّر إرسال رمز التحقق. راجع خدمة Verify في Twilio ومتغيرات البيئة على Vercel.",
   },
   dashboard: {
     title: "ابدأ مع عَمارتي",
@@ -389,7 +401,8 @@ const AR = {
     notificationsOn: "مفعّلة",
     notificationsOff: "متوقفة",
     notificationsHint: "",
-    smsSendFailed: "تعذّر إرسال رسالة التحقق. جرّب لاحقاً أو راجع إعداد Twilio.",
+    smsSendFailed:
+      "تعذّر إرسال رمز التحقق. إن كان الحساب تجريبياً على Twilio، أضِف رقم جوالك في Verified Caller IDs. ثم راجع Account SID والرمز السري وخدمة Verify (VA) في لوحة Twilio وفي متغيرات البيئة.",
     smsNotConfigured:
       "إرسال SMS غير مهيأ على الخادم — الرمز يظهر في سجل التشغيل للتطوير فقط.",
     logout: "تسجيل الخروج",
@@ -519,8 +532,8 @@ const EN = {
   verifyPhone: {
     title: "Verify phone",
     subtitle:
-      "Enter your registered phone number, then the 6‑digit code sent by SMS text message.",
-    identifierLabel: "Phone or email",
+      "Enter your registered mobile number (e.g. 05xxxxxxxx), then the 6‑digit code sent by SMS.",
+    phoneLabel: "Mobile number",
     codeLabel: "Verification code",
     submit: "Confirm",
     submitPending: "Verifying…",
@@ -530,8 +543,20 @@ const EN = {
     resendCode: "Resend code",
     sendCodePending: "Sending…",
     codeSent: "The code was sent to your phone. Check your SMS.",
+    resendTooSoon:
+      "You asked for a code just now. Wait a moment and try again (30 seconds).",
     devCodeNotice:
       "SMS is not configured — this code is for development only:",
+    verifyErrorAuth:
+      "Twilio authentication failed (20003): TWILIO_ACCOUNT_SID must start with “AC”, TWILIO_AUTH_TOKEN must be from Account → Auth Tokens in console.twilio.com, and TWILIO_VERIFY_SERVICE_SID (VA…) must belong to the same account.",
+    verifyErrorTrial:
+      "Trial accounts only send to verified numbers. In Twilio Console go to Phone Numbers → Manage → Verified Caller IDs, add your mobile number, then tap “Resend code”.",
+    verifyErrorRateLimit:
+      "Too many send requests from Twilio — wait one minute and try again.",
+    verifyErrorInvalidPhone:
+      "Invalid phone format. Use 05xxxxxxxx or 9665xxxxxxxx.",
+    verifyErrorGeneric:
+      "Could not send the verification code. Check the Verify service in Twilio and environment variables on Vercel.",
   },
   dashboard: {
     title: "Get started with Amarati",
@@ -798,7 +823,8 @@ const EN = {
     notificationsOn: "On",
     notificationsOff: "Off",
     notificationsHint: "",
-    smsSendFailed: "Could not send the SMS verification code. Try again later or check Twilio settings.",
+    smsSendFailed:
+      "Could not send the verification code. On a Twilio trial account, add your mobile number under Verified Caller IDs, then check Account SID, Auth Token, and Verify Service SID in your environment variables.",
     smsNotConfigured:
       "SMS is not configured on the server — the code is printed in server logs for development only.",
     logout: "Log out",

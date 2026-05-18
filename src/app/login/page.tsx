@@ -5,7 +5,6 @@ import { loginAction } from "@/actions/auth";
 import { getCurrentUser } from "@/lib/current-user";
 import { TopNav } from "@/components/TopNav";
 import { getLocale } from "@/lib/locale";
-import { isEmailVerificationRequired } from "@/lib/send-verification-email";
 import { ui } from "@/lib/ui-strings";
 import { SubmitButton } from "@/components/SubmitButton";
 import { AuthPageShell, Card, Input } from "@/components/ui";
@@ -18,7 +17,6 @@ export default async function LoginPage({
   searchParams: Promise<{
     error?: string;
     next?: string;
-    verified?: string;
     noAccount?: string;
   }>;
 }) {
@@ -27,10 +25,8 @@ export default async function LoginPage({
   const locale = await getLocale();
   const t = ui(locale).login;
   const tLanding = ui(locale).landing;
-  const verifyOn = isEmailVerificationRequired();
   const sp = await searchParams;
   const err = sp.error ? decodeURIComponent(sp.error) : null;
-  const ok = sp.verified === "1";
   const noAccount = sp.noAccount === "1";
   const logoAlt = tLanding.logoAlt;
 
@@ -59,11 +55,6 @@ export default async function LoginPage({
         <Card title={t.title}>
           {t.subtitle.trim() ? (
             <p className="mb-4 text-xs leading-relaxed text-muted">{t.subtitle}</p>
-          ) : null}
-          {ok && verifyOn ? (
-            <p className="mb-3 rounded-xl border px-3 py-2 text-sm border-accent-soft bg-accent-soft text-accent-strong">
-              {t.emailVerified}
-            </p>
           ) : null}
           {err ? (
             <div className="mb-3 rounded-xl border border-red-200 bg-red-50/80 px-3 py-2 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
@@ -111,15 +102,6 @@ export default async function LoginPage({
               {t.submit}
             </SubmitButton>
           </form>
-
-          {verifyOn ? (
-            <p className="mt-3 text-center text-xs text-muted">
-              {t.resendVerifyHint}{" "}
-              <Link href="/register/check-email" className="font-medium underline text-accent">
-                {t.resendVerifyLink}
-              </Link>
-            </p>
-          ) : null}
         </Card>
 
         <div className="rounded-2xl border p-4 text-center text-sm border-accent-soft" style={{ backgroundColor: "color-mix(in srgb, var(--card) 70%, transparent)" }}>

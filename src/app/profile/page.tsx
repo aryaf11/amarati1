@@ -1,6 +1,7 @@
 import Link from "next/link";
+
 import { redirect } from "next/navigation";
-import { logoutAction, sendPhoneOtpAction, updateProfileAction } from "@/actions/auth";
+import { logoutAction, updateProfileAction } from "@/actions/auth";
 import { TopNav } from "@/components/TopNav";
 import { ProfileSettings } from "@/components/ProfileSettings";
 import { SubmitButton } from "@/components/SubmitButton";
@@ -10,9 +11,7 @@ import { listMyBuildings } from "@/lib/access";
 import { getCurrentUser } from "@/lib/current-user";
 import { getLocale } from "@/lib/locale";
 import { prisma } from "@/lib/prisma";
-import { isEmailVerificationRequired } from "@/lib/send-verification-email";
 import { ui, pickDateLocale } from "@/lib/ui-strings";
-import { userMeetsVerificationRequirement } from "@/lib/verification-gate";
 
 const accent = "var(--accent)";
 
@@ -28,10 +27,6 @@ export default async function ProfilePage({
   const sp = await searchParams;
   const err = sp.error ? decodeURIComponent(sp.error) : null;
   const saved = sp.saved === "1";
-  const verifyOn = isEmailVerificationRequired();
-  const fullyVerified = !verifyOn || userMeetsVerificationRequirement(user);
-  const emailOk = Boolean(user.emailVerifiedAt);
-  const phoneOk = Boolean(user.phoneVerifiedAt);
   const dateFmt = new Intl.DateTimeFormat(pickDateLocale(locale), {
     year: "numeric",
     month: "long",
@@ -121,82 +116,7 @@ export default async function ProfilePage({
                 className="text-left"
                 autoComplete="tel"
               />
-              {verifyOn ? (
-                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-                  <span
-                    className={
-                      phoneOk
-                        ? "inline-flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-teal-800 dark:bg-teal-950/50 dark:text-teal-200"
-                        : "inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
-                    }
-                  >
-                    ● {phoneOk ? t.phoneVerifiedYes : t.phoneVerifiedNo}
-                  </span>
-                  {!phoneOk ? (
-                    <Link
-                      href="/register/verify-phone"
-                      className="font-medium underline"
-                      style={{ color: accent }}
-                    >
-                      {locale === "ar" ? "إدخال رمز الجوال" : "Enter phone code"}
-                    </Link>
-                  ) : null}
-                </div>
-              ) : null}
-              {verifyOn && !phoneOk ? (
-                <SubmitButton
-                  formAction={sendPhoneOtpAction}
-                  className="mt-2 !py-2 !text-xs"
-                  pendingLabel="…"
-                  variant="ghost"
-                >
-                  {t.sendPhoneOtp}
-                </SubmitButton>
-              ) : null}
             </div>
-            <div>
-              <label className="mb-1 block text-xs text-slate-500">{t.email}</label>
-              {user.email ? (
-                <Input value={user.email} disabled readOnly dir="ltr" className="text-left opacity-70" />
-              ) : (
-                <Input
-                  name="newEmail"
-                  type="email"
-                  dir="ltr"
-                  className="text-left"
-                  placeholder={t.emailOptionalPlaceholder}
-                  autoComplete="email"
-                />
-              )}
-              {verifyOn && user.email ? (
-                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-                  <span
-                    className={
-                      emailOk
-                        ? "inline-flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-teal-800 dark:bg-teal-950/50 dark:text-teal-200"
-                        : "inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
-                    }
-                  >
-                    ● {emailOk ? t.emailVerifiedYes : t.emailVerifiedNo}
-                  </span>
-                  {!emailOk ? (
-                    <a
-                      href="/register/check-email"
-                      className="font-medium underline"
-                      style={{ color: accent }}
-                    >
-                      {t.resendVerification}
-                    </a>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
-            {verifyOn && !fullyVerified ? (
-              <p className="rounded-lg border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-100">
-                {t.emailVerifiedNo} / {t.phoneVerifiedNo} —{" "}
-                {locale === "ar" ? "أكمل أحدهما للدخول." : "Complete one to sign in."}
-              </p>
-            ) : null}
             <p className="text-xs text-slate-500 dark:text-slate-300">
               {t.memberSince}{" "}
               <span dir="ltr">{dateFmt.format(user.createdAt)}</span>

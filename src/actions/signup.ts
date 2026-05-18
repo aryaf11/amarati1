@@ -2,7 +2,7 @@
 
 /** تسجيل مستخدم + إنشاء مبنى أو الانضمام — يتصل بـ Prisma (`User`, `Building`, `Membership`). */
 
-import { randomBytes, randomInt } from "node:crypto";
+import { randomInt } from "node:crypto";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -10,27 +10,11 @@ import { dbOrSessionErrorHint, flattenError } from "@/lib/action-error-hints";
 import { getLocale } from "@/lib/locale";
 import { hashPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
-import {
-  deliverVerificationEmail,
-  isEmailVerificationRequired,
-} from "@/lib/send-verification-email";
 import { createSession } from "@/lib/session";
-import { sendPhoneOtpSms } from "@/lib/sms-otp";
-import {
-  isTwilioVerifyConfigured,
-  startTwilioVerification,
-} from "@/lib/twilio-verify";
 import { ui } from "@/lib/ui-strings";
 
 const personalSchema = z.object({
   name: z.string().trim().min(2),
-  email: z.preprocess(
-    (v) => {
-      const s = String(v ?? "").trim().toLowerCase();
-      return s === "" ? undefined : s;
-    },
-    z.union([z.undefined(), z.string().email()]),
-  ),
   password: z.string().min(6),
   phone: z.string().trim().min(8).max(24),
 });
@@ -70,7 +54,6 @@ const buildingSchema = z.object({
 function readPersonal(formData: FormData) {
   return personalSchema.safeParse({
     name: formData.get("name"),
-    email: formData.get("email"),
     password: formData.get("password"),
     phone: formData.get("phone"),
   });
@@ -115,7 +98,7 @@ async function ensureUniqueInviteCode(length = 6): Promise<string> {
   throw new Error("Failed to generate a unique inviteCode after 8 attempts");
 }
 
-async function createUserWithVerification(
+async function createSignupUser(
   data: z.infer<typeof personalSchema>,
   errorRedirect: (msg: string) => never,
 ) {
@@ -123,65 +106,22 @@ async function createUserWithVerification(
   const t = ui(locale);
   const byPhone = await prisma.user.findUnique({ where: { phone: data.phone } });
   if (byPhone) errorRedirect(t.register.phoneTaken);
-  if (data.email) {
-    const byEmail = await prisma.user.findUnique({ where: { email: data.email } });
-    if (byEmail) errorRedirect(t.register.emailTaken);
-  }
   const passwordHash = await hashPassword(data.password);
-  const gate = isEmailVerificationRequired();
-  const verifyToken = gate && data.email ? randomBytes(24).toString("base64url") : null;
 
-  /** بلا بريد لا يوجد تحقّق بريد؛ نُحمِّل نقطة الدخول عبر الجوال أو نُعلِّم البريد مؤكَّداً. */
-  const emailVerifiedAt = !gate
-    ? new Date()
-    : data.email
-      ? null
-      : new Date();
-
-  // Twilio Verify يُولّد رمزه على خوادمه؛ لا نولّد رمزاً محلياً ولا نخزّنه.
-  const useVerify = isTwilioVerifyConfigured();
-  const localOtpCode = useVerify ? null : String(randomInt(100000, 999999));
   const user = await prisma.user.create({
     data: {
-      email: data.email ?? null,
+      email: null,
       passwordHash,
       name: data.name,
       phone: data.phone,
       accountKind: "RESIDENT",
-      emailVerifiedAt,
-      emailVerifyToken: verifyToken,
-      emailVerifyExpires:
-        gate && data.email ? new Date(Date.now() + 86400000) : null,
-      phoneOtpCode: localOtpCode,
-      phoneOtpExpires: new Date(Date.now() + 10 * 60 * 1000),
+      emailVerifiedAt: new Date(),
+      phoneVerifiedAt: new Date(),
+      phoneOtpCode: null,
+      phoneOtpExpires: null,
     },
   });
-  if (useVerify) {
-    console.info(`[Amarati] Twilio Verify → start for ${data.phone}`);
-    const res = await startTwilioVerification(data.phone, locale);
-    if (res.ok) {
-      console.info(`[Amarati] Twilio Verify → sent sid=${res.sid}`);
-    } else {
-      console.warn(
-        `[Amarati] Twilio Verify FAILED for ${data.phone}: reason=${res.reason} code=${"code" in res ? res.code : ""} detail=${res.detail ?? ""}`,
-      );
-    }
-  } else if (localOtpCode) {
-    const sms = await sendPhoneOtpSms(data.phone, localOtpCode, locale);
-    if (!sms.ok) {
-      console.info(
-        `[Amarati] Phone OTP for ${data.phone} (dev): ${localOtpCode}`,
-      );
-    }
-  }
-  if (gate && data.email && verifyToken) {
-    const sent = await deliverVerificationEmail(data.email, verifyToken, locale);
-    if (!sent.ok) {
-      await prisma.user.delete({ where: { id: user.id } });
-      errorRedirect(t.register.verifySendFailed);
-    }
-  }
-  return { user, gate: Boolean(gate && data.email) };
+  return { user };
 }
 
 export async function signupAndCreateBuildingAction(formData: FormData) {
@@ -193,10 +133,7 @@ export async function signupAndCreateBuildingAction(formData: FormData) {
   if (!buildingData.success) backCreateError(t.signup.addressInvalid);
 
   try {
-    const { user, gate } = await createUserWithVerification(
-      personal.data,
-      backCreateError,
-    );
+    const { user } = await createSignupUser(personal.data, backCreateError);
     const inviteCode = await ensureUniqueInviteCode();
     const building = await prisma.building.create({
       data: {
@@ -229,15 +166,7 @@ export async function signupAndCreateBuildingAction(formData: FormData) {
         isSupervisor: true,
       },
     });
-    if (gate) {
-      redirect("/register/check-email");
-    }
     await createSession(user.id);
-    if (!user.phoneVerifiedAt) {
-      redirect(
-        `/register/verify-phone?identifier=${encodeURIComponent(personal.data.phone)}`,
-      );
-    }
     redirect(`/building/${building.id}`);
   } catch (e) {
     if (isRedirectError(e)) throw e;
@@ -264,7 +193,7 @@ export async function signupAndJoinBuildingAction(formData: FormData) {
   if (!building) backJoinError(t.signup.inviteCodeNotFound);
 
   try {
-    const { user, gate } = await createUserWithVerification(personal.data, backJoinError);
+    const { user } = await createSignupUser(personal.data, backJoinError);
     let unit = building.units.find((u) => u.label === join.data.unitLabel);
     if (!unit) {
       unit = await prisma.unit.create({
@@ -279,15 +208,7 @@ export async function signupAndJoinBuildingAction(formData: FormData) {
         isSupervisor: false,
       },
     });
-    if (gate) {
-      redirect("/register/check-email");
-    }
     await createSession(user.id);
-    if (!user.phoneVerifiedAt) {
-      redirect(
-        `/register/verify-phone?identifier=${encodeURIComponent(personal.data.phone)}`,
-      );
-    }
     redirect(`/building/${building.id}`);
   } catch (e) {
     if (isRedirectError(e)) throw e;
