@@ -125,7 +125,7 @@ export default async function LoginPage({
         <div className="rounded-2xl border p-4 text-center text-sm border-accent-soft" style={{ backgroundColor: "color-mix(in srgb, var(--card) 70%, transparent)" }}>
           <p className="text-muted">{t.noAccount}</p>
           <Link
-            href="/signup/join"
+            href="/signup"
             className="mt-2 inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-2.5 text-sm font-semibold border-2 border-accent text-accent transition hover:bg-[var(--accent-soft)]"
           >
             <PlusIcon className="size-4" />

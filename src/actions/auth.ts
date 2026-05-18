@@ -44,14 +44,20 @@ async function issuePhoneOtpForUser(
         phoneOtpExpires: new Date(Date.now() + 10 * 60 * 1000),
       },
     });
+    console.info(`[Amarati] Twilio Verify → start for ${phone}`);
     const res = await startTwilioVerification(phone, locale);
-    if (!res.ok) {
-      console.info(
-        `[Amarati] Twilio Verify start failed for ${phone}: ${res.reason} ${res.detail ?? ""}`,
+    if (res.ok) {
+      console.info(`[Amarati] Twilio Verify → sent sid=${res.sid}`);
+    } else {
+      console.warn(
+        `[Amarati] Twilio Verify FAILED for ${phone}: reason=${res.reason} code=${"code" in res ? res.code : ""} detail=${res.detail ?? ""}`,
       );
     }
     return { code: null, sms: res };
   }
+  console.info(
+    `[Amarati] Local OTP path (Twilio Verify not configured) for ${phone}`,
+  );
   const code = String(randomInt(100000, 999999));
   await prisma.user.update({
     where: { id: userId },

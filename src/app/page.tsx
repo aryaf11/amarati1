@@ -40,7 +40,7 @@ export default async function HomePage() {
               {L.login}
             </Button>
           </Link>
-          <Link href="/signup/join">
+          <Link href="/signup">
             <Button type="button" variant="ghost" className="min-w-[140px]">
               {L.register}
             </Button>

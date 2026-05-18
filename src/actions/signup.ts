@@ -16,6 +16,10 @@ import {
 } from "@/lib/send-verification-email";
 import { createSession } from "@/lib/session";
 import { sendPhoneOtpSms } from "@/lib/sms-otp";
+import {
+  isTwilioVerifyConfigured,
+  startTwilioVerification,
+} from "@/lib/twilio-verify";
 import { ui } from "@/lib/ui-strings";
 
 const personalSchema = z.object({
@@ -36,6 +40,33 @@ const joinSchema = z.object({
   unitLabel: z.string().trim().min(1),
 });
 
+/** بيانات المبنى عند إنشائه من نموذج التسجيل. الحقول الإلزامية تطابق `model Building` في prisma. */
+const buildingSchema = z.object({
+  name: z.string().trim().min(2).max(120),
+  addressLine: z.string().trim().min(2).max(240),
+  unitLabel: z.string().trim().min(1).max(40),
+  region: z.string().trim().min(1).max(80),
+  city: z.string().trim().min(1).max(80),
+  district: z.string().trim().min(1).max(80),
+  streetName: z.string().trim().min(1).max(120),
+  buildingNumber: z.string().trim().min(1).max(20),
+  additionalNumber: z.preprocess(
+    (v) => {
+      const s = String(v ?? "").trim();
+      return s === "" ? undefined : s;
+    },
+    z.union([z.undefined(), z.string().max(20)]),
+  ),
+  postalCode: z.string().trim().regex(/^\d{5}$/),
+  shortAddressCode: z.preprocess(
+    (v) => {
+      const s = String(v ?? "").trim().toUpperCase();
+      return s === "" ? undefined : s;
+    },
+    z.union([z.undefined(), z.string().max(8)]),
+  ),
+});
+
 function readPersonal(formData: FormData) {
   return personalSchema.safeParse({
     name: formData.get("name"),
@@ -45,11 +76,43 @@ function readPersonal(formData: FormData) {
   });
 }
 
+function readBuilding(formData: FormData) {
+  return buildingSchema.safeParse({
+    name: formData.get("buildingName"),
+    addressLine: formData.get("addressLine"),
+    unitLabel: formData.get("unitLabel"),
+    region: formData.get("region"),
+    city: formData.get("city"),
+    district: formData.get("district"),
+    streetName: formData.get("streetName"),
+    buildingNumber: formData.get("buildingNumber"),
+    additionalNumber: formData.get("additionalNumber"),
+    postalCode: formData.get("postalCode"),
+    shortAddressCode: formData.get("shortAddressCode"),
+  });
+}
+
 function backCreateError(msg: string): never {
-  redirect("/signup/join?error=" + encodeURIComponent(msg));
+  redirect("/signup/create?error=" + encodeURIComponent(msg));
 }
 function backJoinError(msg: string): never {
   redirect("/signup/join?error=" + encodeURIComponent(msg));
+}
+
+/** يولّد رمز دعوة فريداً (يتجنّب الأحرف المتشابهة I/O/0/1). */
+async function ensureUniqueInviteCode(length = 6): Promise<string> {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  for (let attempt = 0; attempt < 8; attempt++) {
+    let code = "";
+    for (let i = 0; i < length; i++) {
+      code += chars[randomInt(0, chars.length)];
+    }
+    const existing = await prisma.building.findUnique({
+      where: { inviteCode: code },
+    });
+    if (!existing) return code;
+  }
+  throw new Error("Failed to generate a unique inviteCode after 8 attempts");
 }
 
 async function createUserWithVerification(
@@ -75,7 +138,9 @@ async function createUserWithVerification(
       ? null
       : new Date();
 
-  const otpCode = String(randomInt(100000, 999999));
+  // Twilio Verify يُولّد رمزه على خوادمه؛ لا نولّد رمزاً محلياً ولا نخزّنه.
+  const useVerify = isTwilioVerifyConfigured();
+  const localOtpCode = useVerify ? null : String(randomInt(100000, 999999));
   const user = await prisma.user.create({
     data: {
       email: data.email ?? null,
@@ -87,13 +152,27 @@ async function createUserWithVerification(
       emailVerifyToken: verifyToken,
       emailVerifyExpires:
         gate && data.email ? new Date(Date.now() + 86400000) : null,
-      phoneOtpCode: otpCode,
+      phoneOtpCode: localOtpCode,
       phoneOtpExpires: new Date(Date.now() + 10 * 60 * 1000),
     },
   });
-  const sms = await sendPhoneOtpSms(data.phone, otpCode, locale);
-  if (!sms.ok) {
-    console.info(`[Amarati] Phone OTP for ${data.phone} (dev): ${otpCode}`);
+  if (useVerify) {
+    console.info(`[Amarati] Twilio Verify → start for ${data.phone}`);
+    const res = await startTwilioVerification(data.phone, locale);
+    if (res.ok) {
+      console.info(`[Amarati] Twilio Verify → sent sid=${res.sid}`);
+    } else {
+      console.warn(
+        `[Amarati] Twilio Verify FAILED for ${data.phone}: reason=${res.reason} code=${"code" in res ? res.code : ""} detail=${res.detail ?? ""}`,
+      );
+    }
+  } else if (localOtpCode) {
+    const sms = await sendPhoneOtpSms(data.phone, localOtpCode, locale);
+    if (!sms.ok) {
+      console.info(
+        `[Amarati] Phone OTP for ${data.phone} (dev): ${localOtpCode}`,
+      );
+    }
   }
   if (gate && data.email && verifyToken) {
     const sent = await deliverVerificationEmail(data.email, verifyToken, locale);
@@ -105,10 +184,66 @@ async function createUserWithVerification(
   return { user, gate: Boolean(gate && data.email) };
 }
 
-export async function signupAndCreateBuildingAction(_formData: FormData) {
+export async function signupAndCreateBuildingAction(formData: FormData) {
   const locale = await getLocale();
   const t = ui(locale);
-  redirect("/signup/join?error=" + encodeURIComponent(t.dashboard.createBuildingDisabled));
+  const personal = readPersonal(formData);
+  if (!personal.success) backCreateError(t.register.invalidForm);
+  const buildingData = readBuilding(formData);
+  if (!buildingData.success) backCreateError(t.signup.addressInvalid);
+
+  try {
+    const { user, gate } = await createUserWithVerification(
+      personal.data,
+      backCreateError,
+    );
+    const inviteCode = await ensureUniqueInviteCode();
+    const building = await prisma.building.create({
+      data: {
+        name: buildingData.data.name,
+        address: buildingData.data.addressLine,
+        city: buildingData.data.city,
+        region: buildingData.data.region,
+        district: buildingData.data.district,
+        streetName: buildingData.data.streetName,
+        buildingNumber: buildingData.data.buildingNumber,
+        additionalNumber: buildingData.data.additionalNumber ?? null,
+        postalCode: buildingData.data.postalCode,
+        shortAddressCode: buildingData.data.shortAddressCode ?? null,
+        inviteCode,
+        creatorId: user.id,
+      },
+    });
+    const unit = await prisma.unit.create({
+      data: {
+        buildingId: building.id,
+        label: buildingData.data.unitLabel,
+      },
+    });
+    // مُنشئ المبنى يصبح مالكاً ومشرفاً افتراضياً.
+    await prisma.membership.create({
+      data: {
+        userId: user.id,
+        unitId: unit.id,
+        kind: "OWNER",
+        isSupervisor: true,
+      },
+    });
+    if (gate) {
+      redirect("/register/check-email");
+    }
+    await createSession(user.id);
+    if (!user.phoneVerifiedAt) {
+      redirect(
+        `/register/verify-phone?identifier=${encodeURIComponent(personal.data.phone)}`,
+      );
+    }
+    redirect(`/building/${building.id}`);
+  } catch (e) {
+    if (isRedirectError(e)) throw e;
+    console.error("signupAndCreateBuildingAction", flattenError(e), e);
+    backCreateError(dbOrSessionErrorHint(e));
+  }
 }
 
 export async function signupAndJoinBuildingAction(formData: FormData) {
