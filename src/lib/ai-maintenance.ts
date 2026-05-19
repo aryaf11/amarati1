@@ -8,7 +8,6 @@ import type { FailureClass } from "./maintenance-predictor";
 import {
   issueLabel,
   predictFailure,
-  recommendServices,
   textToFeatures,
 } from "./maintenance-predictor";
 import { prisma } from "./prisma";
@@ -69,29 +68,23 @@ function localModelInsight(description: string, city: string) {
   const label = issueLabel(issue, "ar");
   const horizon = maintenanceHorizon(issue);
   const horizonBlock = `تقدير زمني للصيانة: ${horizon.ar} الحد الأقصى المقترح للانتظار قبل التدخل: نحو ${horizon.maxDays} يوماً.`;
-  const recs = recommendServices(issue, 4);
-  const companies = recs.map(({ company, rating }) => ({ company, rating }));
-  const recLines = recs
-    .map((r, i) => `${i + 1}. ${r.company} — ⭐ ${r.rating.toFixed(1)}`)
-    .join("\n");
 
   if (issue === "No_Issue") {
     return {
       issue,
       summary: `${horizonBlock}\n\nلم يُستخلص عطل واضح من الوصف الحالي (التصنيف: ${label}).`,
       suggestions:
-        "لو وُجدت أعراض إضافية، يرجى توضيحها (ماء، كهرباء، جدران، صرف، سقف) للحصول على توصية أدق.\n\n" +
-        `شركات مقترحة للاستعانة بها عند الحاجة:\n${recLines}`,
+        "لو وُجدت أعراض إضافية، يرجى توضيحها (ماء، كهرباء، جدران، صرف، سقف) للحصول على توصية أدق.",
       tag: label,
-      companies,
+      companies: [] as { company: string; rating: number }[],
     };
   }
   return {
     issue,
-    summary: `${horizonBlock}\n\nتوقّع التحليل التنبؤي: ${label}.`,
-    suggestions: `فنّيون موصى بهم (مكة المكرمة):\n${recLines}`,
+    summary: `${horizonBlock}\n\nتوقّع التصنيف: ${label}.`,
+    suggestions: "يُستفاد من التصنيف أعلاه لجدولة المعاينة والمتابعة — دون قائمة شركات صيانة ضمن النظام.",
     tag: label,
-    companies,
+    companies: [] as { company: string; rating: number }[],
   };
 }
 
@@ -99,7 +92,7 @@ export type MaintenanceAiResult = {
   summary: string;
   suggestions: string;
   tags: string[];
-  /** يُخزَّن لاحقاً في MaintenanceRequest.aiCompaniesJson (ربط الفرونت/الأكشن → Prisma). */
+  /** مُعطّل في المنتج الحالي — لا تُعرض شركات صيانة ضمن النظام */
   companies: { company: string; rating: number }[];
 };
 
@@ -127,15 +120,16 @@ export async function analyzeMaintenance(options: {
     : localSummary;
 
   const localSuggestions = local.suggestions;
-  const suggestions = ext?.suggestions?.trim()
-    ? `${ext.suggestions.trim()}\n\n${localSuggestions}`
-    : localSuggestions;
+  const mergedSuggestions =
+    localSuggestions +
+    (ext?.suggestions?.trim() ? `\n\n——\n${ext.suggestions.trim()}` : "");
 
-  // شركات التصويت/الاختيار: من خادم Colab إن وُجدت، وإلا من القائمة المحلية
-  const companies =
-    ext?.companies && ext.companies.length > 0 ? ext.companies : local.companies;
-
-  return { summary, suggestions, tags, companies };
+  return {
+    summary,
+    suggestions: mergedSuggestions,
+    tags,
+    companies: [],
+  };
 }
 
 function monthKey(d = new Date()) {

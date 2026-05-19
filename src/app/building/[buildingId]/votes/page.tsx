@@ -1,7 +1,5 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import {
-  closeMaintenanceCompanyVoteAction,
   closeVoteAndApplySupervisorAction,
   openSupervisorVoteAction,
 } from "@/actions/governance";
@@ -39,7 +37,6 @@ export default async function VotesPage({
   const canManage = isCreator || membership.isSupervisor;
 
   const supervisorVotes = votes.filter((x) => x.type === "SUPERVISOR");
-  const companyVotes = votes.filter((x) => x.type === "MAINTENANCE_COMPANY");
   const otherVotes = votes.filter(
     (x) => x.type !== "SUPERVISOR" && x.type !== "MAINTENANCE_COMPANY",
   );
@@ -53,53 +50,27 @@ export default async function VotesPage({
       ) : null}
 
       <Card title={v.kindsTitle}>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <div
-            className="rounded-2xl border p-4"
-            style={{
-              borderColor: "var(--card-border)",
-              backgroundColor: "color-mix(in srgb, var(--card) 90%, transparent)",
-            }}
-          >
-            <p className="text-sm font-semibold" style={{ color: "var(--accent)" }}>
-              {v.kindSupervisorTitle}
-            </p>
-            <p className="mt-1 text-xs text-muted">{v.kindSupervisorDesc}</p>
-            {isCreator ? (
-              <form action={openSupervisorVoteAction} className="mt-3">
-                <input type="hidden" name="buildingId" value={buildingId} />
-                <Button type="submit" variant="ghost" className="!py-1.5 !text-xs">
-                  {v.startSupervisor}
-                </Button>
-              </form>
-            ) : (
-              <p className="mt-3 text-xs text-muted">{v.creatorOnlyHint}</p>
-            )}
-          </div>
-
-          <div
-            className="rounded-2xl border p-4"
-            style={{
-              borderColor: "var(--card-border)",
-              backgroundColor: "color-mix(in srgb, var(--card) 90%, transparent)",
-            }}
-          >
-            <p className="text-sm font-semibold" style={{ color: "var(--accent)" }}>
-              {v.kindCompanyTitle}
-            </p>
-            <p className="mt-1 text-xs text-muted">{v.kindCompanyDesc}</p>
-            <Link
-              href={`/building/${buildingId}/maintenance`}
-              className="mt-3 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold shadow-sm transition hover:shadow"
-              style={{
-                borderColor: "var(--accent)",
-                color: "var(--accent)",
-                backgroundColor: "var(--card)",
-              }}
-            >
-              {v.openMaintenance}
-            </Link>
-          </div>
+        <div
+          className="mt-4 rounded-2xl border p-4"
+          style={{
+            borderColor: "var(--card-border)",
+            backgroundColor: "color-mix(in srgb, var(--card) 90%, transparent)",
+          }}
+        >
+          <p className="text-sm font-semibold" style={{ color: "var(--accent)" }}>
+            {v.kindSupervisorTitle}
+          </p>
+          <p className="mt-1 text-xs text-muted">{v.kindSupervisorDesc}</p>
+          {isCreator ? (
+            <form action={openSupervisorVoteAction} className="mt-3">
+              <input type="hidden" name="buildingId" value={buildingId} />
+              <Button type="submit" variant="ghost" className="!py-1.5 !text-xs">
+                {v.startSupervisor}
+              </Button>
+            </form>
+          ) : (
+            <p className="mt-3 text-xs text-muted">{v.creatorOnlyHint}</p>
+          )}
         </div>
       </Card>
 
@@ -111,16 +82,6 @@ export default async function VotesPage({
         v={v}
         canCloseSupervisor={canManage}
         canCloseCompany={false}
-      />
-
-      <VoteList
-        title={v.titleCompany}
-        votes={companyVotes}
-        userId={user.id}
-        df={df}
-        v={v}
-        canCloseSupervisor={false}
-        canCloseCompany={canManage}
       />
 
       {otherVotes.length > 0 ? (
@@ -270,14 +231,6 @@ function VoteList({
                         <input type="hidden" name="voteId" value={vote.id} />
                         <Button type="submit" variant="ghost" className="!py-1 !text-xs">
                           {v.closeSupervisor}
-                        </Button>
-                      </form>
-                    ) : null}
-                    {canCloseCompany && vote.type === "MAINTENANCE_COMPANY" ? (
-                      <form action={closeMaintenanceCompanyVoteAction}>
-                        <input type="hidden" name="voteId" value={vote.id} />
-                        <Button type="submit" variant="ghost" className="!py-1 !text-xs">
-                          {v.closeCompany}
                         </Button>
                       </form>
                     ) : null}
