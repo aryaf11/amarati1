@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
   resendPhoneOtpAction,
@@ -38,7 +37,6 @@ export default async function RegisterVerifyPhonePage({
 }) {
   const locale = await getLocale();
   const tv = ui(locale).verifyPhone;
-  const dash = ui(locale).dashboard;
   const tLanding = ui(locale).landing;
   const sp = await searchParams;
 
@@ -177,12 +175,6 @@ export default async function RegisterVerifyPhonePage({
               {tv.resendCode}
             </SubmitButton>
           </form>
-
-          <p className="mt-4 text-center text-xs text-muted">
-            <Link href="/dashboard" className="underline font-medium text-accent">
-              {dash.titleMy}
-            </Link>
-          </p>
         </Card>
       </AuthPageShell>
     </div>
