@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { openMaintenanceCompanyVoteAction } from "@/actions/governance";
 import { createMaintenanceAction } from "@/actions/maintenance";
 import { loadBuildingContext } from "@/lib/building-context";
 import { getCurrentUser } from "@/lib/current-user";
@@ -6,6 +8,27 @@ import { getLocale } from "@/lib/locale";
 import { ui } from "@/lib/ui-strings";
 import { prisma } from "@/lib/prisma";
 import { Button, Card, Input, TextArea } from "@/components/ui";
+
+function parseMaintCompanies(
+  raw: string | null,
+): { company: string; rating: number }[] {
+  if (!raw) return [];
+  try {
+    const p = JSON.parse(raw) as { company?: string; rating?: unknown }[];
+    if (!Array.isArray(p)) return [];
+    return p
+      .map((item) => ({
+        company: String(item.company ?? "").trim(),
+        rating:
+          typeof item.rating === "number"
+            ? item.rating
+            : Number(item.rating),
+      }))
+      .filter((x) => x.company.length > 0 && Number.isFinite(x.rating));
+  } catch {
+    return [];
+  }
+}
 
 export default async function MaintenancePage({
   params,
@@ -26,8 +49,10 @@ export default async function MaintenancePage({
   const rows = await prisma.maintenanceRequest.findMany({
     where: { buildingId },
     orderBy: { createdAt: "desc" },
-    include: { unit: true },
+    include: { unit: true, vote: true },
   });
+  const isCreator = building.creatorId === user.id;
+  const canManageMaintVote = isCreator || membership.isSupervisor;
   return (
     <div className="space-y-6">
       {err ? (
@@ -36,6 +61,7 @@ export default async function MaintenancePage({
         </p>
       ) : null}
       <Card title={m.newRequest}>
+        <p className="mb-3 text-xs leading-relaxed text-muted">{m.aiHint}</p>
         <form action={createMaintenanceAction} className="space-y-3">
           <input type="hidden" name="buildingId" value={buildingId} />
           <div>
@@ -71,7 +97,9 @@ export default async function MaintenancePage({
           <p className="text-sm text-muted">{m.noneRequests}</p>
         ) : (
           <ul className="space-y-4">
-            {rows.map((r) => (
+            {rows.map((r) => {
+              const companiesList = parseMaintCompanies(r.aiCompaniesJson);
+              return (
               <li
                 key={r.id}
                 className="rounded-2xl border p-4 text-sm shadow-sm"
@@ -125,8 +153,44 @@ export default async function MaintenancePage({
                     ) : null}
                   </div>
                 ) : null}
+                {companiesList.length > 0 ? (
+                  <div className="mt-3 rounded-xl border border-dashed px-3 py-2 text-xs" style={{ borderColor: "var(--card-border)" }}>
+                    <p className="font-semibold text-muted">{m.aiCompanies}</p>
+                    <ul className="mt-2 space-y-1 font-medium" dir="ltr">
+                      {companiesList.map((c) => (
+                        <li key={c.company} className="text-left">
+                          {c.company} — ⭐ {c.rating.toFixed(1)}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+                {r.scope === "COMMUNITY" ? (
+                  <div className="mt-3 rounded-xl border p-3 text-xs" style={{ borderColor: "var(--card-border)", backgroundColor: "var(--accent-soft)" }}>
+                    {r.vote ? (
+                      <Link
+                        href={`/building/${buildingId}/votes`}
+                        className="font-semibold underline"
+                        style={{ color: "var(--accent)" }}
+                      >
+                        {m.companyVoteOpen}
+                      </Link>
+                    ) : canManageMaintVote ? (
+                      <form action={openMaintenanceCompanyVoteAction} className="inline">
+                        <input type="hidden" name="buildingId" value={buildingId} />
+                        <input type="hidden" name="requestId" value={r.id} />
+                        <Button type="submit" variant="ghost" className="!h-auto !py-2 !text-xs underline">
+                          {m.startCompanyVote}
+                        </Button>
+                      </form>
+                    ) : (
+                      <p className="text-muted">{m.communityVotePending}</p>
+                    )}
+                  </div>
+                ) : null}
               </li>
-            ))}
+            );
+            })}
           </ul>
         )}
       </Card>

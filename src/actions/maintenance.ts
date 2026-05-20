@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getMembership } from "@/lib/access";
 import { analyzeMaintenance } from "@/lib/ai-maintenance";
+import { ensureCommunityMaintenanceCompanyVote } from "@/actions/governance";
 import { getCurrentUser } from "@/lib/current-user";
 import { prisma } from "@/lib/prisma";
 
@@ -28,6 +29,9 @@ export async function createMaintenanceAction(formData: FormData) {
     city: building.city,
     buildingId,
   });
+  const aiCompaniesJson = ai.companies.length
+    ? JSON.stringify(ai.companies)
+    : null;
   const req = await prisma.maintenanceRequest.create({
     data: {
       buildingId,
@@ -37,10 +41,13 @@ export async function createMaintenanceAction(formData: FormData) {
       description,
       aiSummary: ai.summary,
       aiSuggestions: ai.suggestions,
-      aiCompaniesJson: null,
+      aiCompaniesJson,
       createdById: user.id,
     },
   });
+  if (scope === "COMMUNITY") {
+    await ensureCommunityMaintenanceCompanyVote(buildingId, req.id, ai.companies);
+  }
   await prisma.apartmentHistoryEvent.create({
     data: {
       unitId: m.unitId,

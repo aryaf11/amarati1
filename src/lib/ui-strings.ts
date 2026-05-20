@@ -306,7 +306,8 @@ const AR = {
     titleCompany: "تصويت شركات الصيانة (الأعطال المجتمعية)",
     titleOther: "تصويتات أخرى",
     kindsTitle: "خيارات التصويت",
-    kindsHint: "",
+    kindsHint:
+      "في عمارتي نوعان من التصويت: اختيار مشرف المبنى، واختيار شركة صيانة لطلبات الصيانة المجتمعية.",
     kindSupervisorTitle: "تصويت لاختيار مشرف",
     kindSupervisorDesc: "يحق لمنشئ المبنى فقط بدء تصويت اختيار المشرف.",
     kindCompanyTitle: "تصويت شركة صيانة (مجتمعي)",
@@ -730,7 +731,8 @@ const EN = {
     titleCompany: "Maintenance-company votes (community issues)",
     titleOther: "Other votes",
     kindsTitle: "Vote types",
-    kindsHint: "",
+    kindsHint:
+      "Amarati has two voting flows: electing the building supervisor, and choosing a maintenance company for community-wide maintenance requests.",
     kindSupervisorTitle: "Supervisor election",
     kindSupervisorDesc: "Only the building creator can start supervisor voting.",
     kindCompanyTitle: "Maintenance-company vote (community)",

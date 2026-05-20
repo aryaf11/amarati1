@@ -8,6 +8,7 @@ import type { FailureClass } from "./maintenance-predictor";
 import {
   issueLabel,
   predictFailure,
+  recommendServices,
   textToFeatures,
 } from "./maintenance-predictor";
 import { prisma } from "./prisma";
@@ -62,29 +63,51 @@ function maintenanceHorizon(issue: FailureClass): { ar: string; maxDays: number 
   }
 }
 
+/** دمج مقترحات شركة من المصدر المحلي والخادم الخارجي (بدون ازدواجية اسم الشركة بنفس الاسم). */
+function mergeCompanies(
+  ...lists: ({ company: string; rating: number }[] | undefined)[]
+): { company: string; rating: number }[] {
+  const byName = new Map<string, number>();
+  for (const list of lists) {
+    if (!list?.length) continue;
+    for (const row of list) {
+      const n = row.company.trim();
+      if (!n) continue;
+      const prev = byName.get(n);
+      if (prev === undefined || row.rating > prev) byName.set(n, row.rating);
+    }
+  }
+  return Array.from(byName.entries())
+    .map(([company, rating]) => ({ company, rating }))
+    .sort((a, b) => b.rating - a.rating);
+}
+
 function localModelInsight(description: string, city: string) {
   const features = textToFeatures(description, city);
   const issue = predictFailure(features);
   const label = issueLabel(issue, "ar");
   const horizon = maintenanceHorizon(issue);
   const horizonBlock = `تقدير زمني للصيانة: ${horizon.ar} الحد الأقصى المقترح للانتظار قبل التدخل: نحو ${horizon.maxDays} يوماً.`;
+  const recRows = recommendServices(issue, 5);
+  const companies = recRows.map((r) => ({ company: r.company, rating: r.rating }));
 
   if (issue === "No_Issue") {
     return {
       issue,
       summary: `${horizonBlock}\n\nلم يُستخلص عطل واضح من الوصف الحالي (التصنيف: ${label}).`,
       suggestions:
-        "لو وُجدت أعراض إضافية، يرجى توضيحها (ماء، كهرباء، جدران، صرف، سقف) للحصول على توصية أدق.",
+        "لو وُجدت أعراض إضافية، يرجى توضيحها (ماء، كهرباء، جدران، صرف، سقف) للحصول على توصية أدق. للصيانة المجتمعية يمكن فتح تصويت على شركات مقترحة بعد الإرسال.",
       tag: label,
-      companies: [] as { company: string; rating: number }[],
+      companies,
     };
   }
   return {
     issue,
     summary: `${horizonBlock}\n\nتوقّع التصنيف: ${label}.`,
-    suggestions: "يُستفاد من التصنيف أعلاه لجدولة المعاينة والمتابعة — دون قائمة شركات صيانة ضمن النظام.",
+    suggestions:
+      "يُستفاد من التصنيف أعلاه لجدولة المعاينة والمتابعة؛ للبلاغ المجتمعي يمكن للسكان تصويت ترشيحات شركة الصيانة من التطبيق.",
     tag: label,
-    companies: [] as { company: string; rating: number }[],
+    companies,
   };
 }
 
@@ -92,7 +115,7 @@ export type MaintenanceAiResult = {
   summary: string;
   suggestions: string;
   tags: string[];
-  /** مُعطّل في المنتج الحالي — لا تُعرض شركات صيانة ضمن النظام */
+  /** مقترحات لخيارات تصويت أعطال مجتمعية + عرض مساعد على البطاقة */
   companies: { company: string; rating: number }[];
 };
 
@@ -124,11 +147,13 @@ export async function analyzeMaintenance(options: {
     localSuggestions +
     (ext?.suggestions?.trim() ? `\n\n——\n${ext.suggestions.trim()}` : "");
 
+  const companies = mergeCompanies(ext?.companies, local.companies).slice(0, 8);
+
   return {
     summary,
     suggestions: mergedSuggestions,
     tags,
-    companies: [],
+    companies,
   };
 }
 
