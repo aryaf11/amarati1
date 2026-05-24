@@ -34,3 +34,15 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Mobile app (Dart / Flutter)
+
+The repo includes an optional **`amarati_flutter/`** directory: a separate **Flutter** app written in **Dart**. It does not deploy with `vercel`/Next by default — build and run locally with Flutter ([install Flutter](https://docs.flutter.dev/get-started/install)), then:
+
+```bash
+cd amarati_flutter
+flutter pub get
+flutter run
+```
+
+API base URLs and networking are wired in **`lib/services/api_client.dart`**.
