@@ -55,8 +55,6 @@ __pycache__/
 *.tsbuildinfo
 next-env.d.ts
 
-.vercel
-
 # local scratch / log captures
 ad.txt
 rm.txt

@@ -2,7 +2,7 @@ import type { AppLocale } from "@/lib/locale";
 import { allScoreBands, getScoreBand } from "@/lib/building-score-band";
 import { ui } from "@/lib/ui-strings";
 
-type ScoreRow = { id: string; month: string; score: number };
+type ScoreRow = { id: string; month: string; score: number; summary?: string | null };
 
 export function MonthlyScoreLog({
   scores,
@@ -68,6 +68,11 @@ export function MonthlyScoreLog({
                   <span aria-hidden>{band.emoji}</span> {band.label} · {band.rangeLabel}
                 </p>
                 <p className="mt-0.5 text-xs">{band.description}</p>
+                {sc.summary?.trim() ? (
+                  <p className="mt-2 rounded-lg border px-2 py-1.5 text-[11px] leading-snug text-muted" style={{ borderColor: "var(--card-border)" }}>
+                    {sc.summary}
+                  </p>
+                ) : null}
               </li>
             );
           })}

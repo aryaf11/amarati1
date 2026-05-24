@@ -1,6 +1,6 @@
 /**
  * تحليل صيانة + سكور المبنى الشهري.
- * الربط مع قاعدة البيانات: `supervisorMonthlyScore` → جدول BuildingHealthScore (Prisma upsert).
+ * الربط مع قاعدة البيانات: `supervisorMonthlyScore` يكتب إلى `BuildingHealthScore` بحسب عدد الطلبات فقط، دون اعتماد `status`.
  * الربط مع خدمة خارجية اختيارية: `fetchExternalMaintenanceMl` (MAINTENANCE_ML_API_URL في البيئة).
  */
 import { fetchExternalMaintenanceMl } from "./ml-inference";
@@ -165,13 +165,16 @@ export async function supervisorMonthlyScore(buildingId: string) {
   const requests = await prisma.maintenanceRequest.findMany({
     where: { buildingId },
   });
-  const done = requests.filter((r) => r.status === "DONE").length;
-  const open = requests.filter((r) => r.status === "OPEN").length;
+  /** لا تمييز بين طلب «مكتمل» و«مفتوح»؛ يُعتدّ بعدد الطلبات المسجّلة فقط. */
+  const n = requests.length;
   const score = Math.max(
     0,
-    Math.min(100, Math.round(70 + done * 3 - open * 2))
+    Math.min(100, Math.round(88 - Math.min(n, 35))),
   );
-  const summary = `بناءً على ${requests.length} طلبات مسجلة: ${done} مكتمل، ${open} مفتوح.`;
+  const summary =
+    n === 0
+      ? "لا توجد طلبات صيانة مسجّلة في هذا الشهر؛ تُعتمد درجة الأساس المرجعية."
+      : `يُحتسب السكّور اعتمادًا على ${n} طلبًا مسجلًا هذا الشهر (من دون اعتماد حقل حالة كل طلب).`;
   await prisma.buildingHealthScore.upsert({
     where: {
       buildingId_month: { buildingId, month: monthKey() },

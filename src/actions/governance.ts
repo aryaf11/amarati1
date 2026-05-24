@@ -52,33 +52,6 @@ export async function ensureCommunityMaintenanceCompanyVote(
   });
 }
 
-export async function assignSupervisorAction(formData: FormData) {
-  const user = await getCurrentUser();
-  const buildingId = String(formData.get("buildingId") ?? "");
-  if (!user) redirect("/login");
-  const targetUserId = String(formData.get("targetUserId") ?? "");
-  const building = await prisma.building.findUnique({ where: { id: buildingId } });
-  if (!building || building.creatorId !== user.id) {
-    redirect(`/building/${buildingId}?error=` + encodeURIComponent("فقط منشئ المبنى يعيّن المشرف"));
-  }
-  await prisma.membership.updateMany({
-    where: { unit: { buildingId } },
-    data: { isSupervisor: false },
-  });
-  const m = await prisma.membership.findFirst({
-    where: { userId: targetUserId, unit: { buildingId } },
-  });
-  if (!m) {
-    redirect(`/building/${buildingId}?error=` + encodeURIComponent("المستخدم ليس ضمن المبنى"));
-  }
-  await prisma.membership.update({
-    where: { id: m.id },
-    data: { isSupervisor: true },
-  });
-  revalidatePath(`/building/${buildingId}`);
-  redirect(`/building/${buildingId}`);
-}
-
 export async function openSupervisorVoteAction(formData: FormData) {
   const user = await getCurrentUser();
   const buildingId = String(formData.get("buildingId") ?? "");
