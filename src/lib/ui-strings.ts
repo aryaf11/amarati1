@@ -27,7 +27,7 @@ const AR = {
     signUp: "أنشئ حساباً جديداً",
     noAccountFull: "لا يوجد حساب بهذا الجوال أو البريد.",
     verifyEmailFirst:
-      "يرجى تأكيد البريد من الرابط المرسل، أو تأكيد الجوال برمز OTP من صفحة «تحقق من الجوال»، قبل تسجيل الدخول.",
+      "يرجى تأكيد البريد من الرابط المرسل قبل تسجيل الدخول (إن كان لحسابك بريد مفعّل).",
     invalidForm: "بيانات غير صالحة",
     invalidCredentials: "رقم الجوال أو البريد أو كلمة المرور غير صحيحة",
     passwordMinForNew: "للحسابات الجديدة: كلمة المرور 6 أحرف على الأقل.",
@@ -109,35 +109,6 @@ const AR = {
     invalidBody: "لم نجد رمز التحقق. اطلب إعادة التسجيل أو راجع الرابط في البريد.",
     goLogin: "الذهاب لتسجيل الدخول",
     linkExpired: "انتهت صلاحية رابط التحقق أو غير صالح",
-  },
-  verifyPhone: {
-    title: "تحقق من الجوال",
-    subtitle:
-      "أدخل رقم الجوال المسجّل (مثل 05xxxxxxxx) ثم الرمز المكوّن من 6 أرقام المرسل برسالة SMS.",
-    phoneLabel: "رقم الجوال",
-    codeLabel: "رمز التحقق",
-    submit: "تأكيد",
-    submitPending: "جاري التحقق…",
-    invalid: "بيانات غير صالحة",
-    badCode: "رمز غير صحيح أو منتهٍ",
-    sendCode: "إرسال الرمز",
-    resendCode: "إعادة إرسال الرمز",
-    sendCodePending: "جارٍ الإرسال…",
-    codeSent: "تم إرسال الرمز إلى جوالك. تحقق من رسائل SMS.",
-    resendTooSoon:
-      "طلبت إرسال الرمز للتو. انتظر قليلاً ثم أعد المحاولة (30 ثانية).",
-    devCodeNotice:
-      "إرسال SMS غير مهيأ — هذا الرمز لأغراض التطوير فقط:",
-    verifyErrorAuth:
-      "خطأ مصادقة Twilio (20003): تأكد أن TWILIO_ACCOUNT_SID يبدأ بـ «AC» وأن TWILIO_AUTH_TOKEN من Account → Auth Tokens في console.twilio.com، وأن TWILIO_VERIFY_SERVICE_SID يبدأ بـ «VA» من نفس الحساب.",
-    verifyErrorTrial:
-      "الحساب التجريبي لا يرسل إلا لأرقام مُضافة مسبقاً: من لوحة Twilio → Phone Numbers → Verified Caller IDs — أضف رقم جوالك واضغط «إعادة إرسال الرمز».",
-    verifyErrorRateLimit:
-      "طلبات إرسال كثيرة من Twilio — انتظر دقيقة ثم جرّب مرة أخرى.",
-    verifyErrorInvalidPhone:
-      "صيغة رقم الجوال غير صالحة. استخدم 05xxxxxxxx أو 9665xxxxxxxx.",
-    verifyErrorGeneric:
-      "تعذّر إرسال رمز التحقق. راجع خدمة Verify في Twilio ومتغيرات البيئة على Vercel.",
   },
   dashboard: {
     title: "ابدأ مع عَمارتي",
@@ -404,10 +375,6 @@ const AR = {
     notificationsOn: "مفعّلة",
     notificationsOff: "متوقفة",
     notificationsHint: "",
-    smsSendFailed:
-      "تعذّر إرسال رمز التحقق. إن كان الحساب تجريبياً على Twilio، أضِف رقم جوالك في Verified Caller IDs. ثم راجع Account SID والرمز السري وخدمة Verify (VA) في لوحة Twilio وفي متغيرات البيئة.",
-    smsNotConfigured:
-      "إرسال SMS غير مهيأ على الخادم — الرمز يظهر في سجل التشغيل للتطوير فقط.",
     logout: "تسجيل الخروج",
     memberSince: "عضو منذ",
     passportTitle: "جواز الشقة",
@@ -415,10 +382,6 @@ const AR = {
     passportNoUnits: "لم تنضم إلى أي مبنى بعد.",
     passportNoEvents: "لا سجلات لهذه الوحدة بعد.",
     passportOpen: "فتح جواز الوحدة",
-    phoneVerifiedYes: "الجوال مؤكَّد.",
-    phoneVerifiedNo: "الجوال غير مؤكَّد.",
-    sendPhoneOtp: "إرسال رمز تحقق للجوال",
-    needPhoneForOtp: "أدخل رقم الجوال واحفظ التغييرات قبل طلب رمز التحقق.",
     notificationsCardTitle: "الإعدادات",
   },
 } as const;
@@ -451,7 +414,7 @@ const EN = {
     signUp: "Create a new account",
     noAccountFull: "No account with this phone number or email.",
     verifyEmailFirst:
-      "Please confirm your email using the link we sent, or confirm your phone with the OTP on the “Verify phone” page, before signing in.",
+      "Please confirm your email using the link we sent before signing in (if your account has email verification enabled).",
     invalidForm: "Invalid data",
     invalidCredentials: "Incorrect phone/email or password.",
     passwordMinForNew: "New accounts need a password of at least 6 characters.",
@@ -533,35 +496,6 @@ const EN = {
     invalidBody: "No verification token found. Register again or use the link from your email.",
     goLogin: "Go to log in",
     linkExpired: "This verification link has expired or is invalid.",
-  },
-  verifyPhone: {
-    title: "Verify phone",
-    subtitle:
-      "Enter your registered mobile number (e.g. 05xxxxxxxx), then the 6‑digit code sent by SMS.",
-    phoneLabel: "Mobile number",
-    codeLabel: "Verification code",
-    submit: "Confirm",
-    submitPending: "Verifying…",
-    invalid: "Invalid data",
-    badCode: "Wrong or expired code",
-    sendCode: "Send code",
-    resendCode: "Resend code",
-    sendCodePending: "Sending…",
-    codeSent: "The code was sent to your phone. Check your SMS.",
-    resendTooSoon:
-      "You asked for a code just now. Wait a moment and try again (30 seconds).",
-    devCodeNotice:
-      "SMS is not configured — this code is for development only:",
-    verifyErrorAuth:
-      "Twilio authentication failed (20003): TWILIO_ACCOUNT_SID must start with “AC”, TWILIO_AUTH_TOKEN must be from Account → Auth Tokens in console.twilio.com, and TWILIO_VERIFY_SERVICE_SID (VA…) must belong to the same account.",
-    verifyErrorTrial:
-      "Trial accounts only send to verified numbers. In Twilio Console go to Phone Numbers → Manage → Verified Caller IDs, add your mobile number, then tap “Resend code”.",
-    verifyErrorRateLimit:
-      "Too many send requests from Twilio — wait one minute and try again.",
-    verifyErrorInvalidPhone:
-      "Invalid phone format. Use 05xxxxxxxx or 9665xxxxxxxx.",
-    verifyErrorGeneric:
-      "Could not send the verification code. Check the Verify service in Twilio and environment variables on Vercel.",
   },
   dashboard: {
     title: "Get started with Amarati",
@@ -829,10 +763,6 @@ const EN = {
     notificationsOn: "On",
     notificationsOff: "Off",
     notificationsHint: "",
-    smsSendFailed:
-      "Could not send the verification code. On a Twilio trial account, add your mobile number under Verified Caller IDs, then check Account SID, Auth Token, and Verify Service SID in your environment variables.",
-    smsNotConfigured:
-      "SMS is not configured on the server — the code is printed in server logs for development only.",
     logout: "Log out",
     memberSince: "Member since",
     passportTitle: "Unit passport",
@@ -840,10 +770,6 @@ const EN = {
     passportNoUnits: "You have not joined any building yet.",
     passportNoEvents: "No records for this unit yet.",
     passportOpen: "Open unit passport",
-    phoneVerifiedYes: "Phone verified.",
-    phoneVerifiedNo: "Phone not verified yet.",
-    sendPhoneOtp: "Send verification code to phone",
-    needPhoneForOtp: "Enter your phone number and save before requesting a code.",
     notificationsCardTitle: "Settings",
   },
 } as unknown as Messages;

@@ -12,7 +12,6 @@ import { hashPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
 import { createSession } from "@/lib/session";
 import { ui } from "@/lib/ui-strings";
-import { issuePhoneOtpForUser } from "@/actions/auth";
 
 /** بريد اختياري: فارغ = لا يُخزَّن؛ غير فارغ يجب أن يمرّ بصيغة بريد صالحة قبل التخفيض. */
 const personalSchema = z.object({
@@ -127,7 +126,7 @@ async function createSignupUser(
       phone: data.phone,
       accountKind: "RESIDENT",
       emailVerifiedAt: emailNorm ? null : new Date(),
-      phoneVerifiedAt: null,
+      phoneVerifiedAt: new Date(),
       phoneOtpCode: null,
       phoneOtpExpires: null,
     },
@@ -182,11 +181,8 @@ export async function signupAndCreateBuildingAction(formData: FormData) {
         isSupervisor: true,
       },
     });
-    await issuePhoneOtpForUser(user.id, personal.data.phone, locale);
     await createSession(user.id);
-    redirect(
-      `/register/verify-phone?phone=${encodeURIComponent(personal.data.phone)}&next=${encodeURIComponent(`/building/${building.id}`)}`,
-    );
+    redirect(`/building/${building.id}`);
   } catch (e) {
     if (isRedirectError(e)) throw e;
     console.error("signupAndCreateBuildingAction", flattenError(e), e);
@@ -232,11 +228,8 @@ export async function signupAndJoinBuildingAction(formData: FormData) {
         isSupervisor: false,
       },
     });
-    await issuePhoneOtpForUser(user.id, personal.data.phone, locale);
     await createSession(user.id);
-    redirect(
-      `/register/verify-phone?phone=${encodeURIComponent(personal.data.phone)}&next=${encodeURIComponent(`/building/${building.id}`)}`,
-    );
+    redirect(`/building/${building.id}`);
   } catch (e) {
     if (isRedirectError(e)) throw e;
     console.error("signupAndJoinBuildingAction", flattenError(e), e);

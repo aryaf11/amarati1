@@ -23,8 +23,9 @@ model User {
   emailVerifiedAt      DateTime?
   emailVerifyToken     String?   @unique
   emailVerifyExpires   DateTime?
-  /// تأكيد رقم الجوال (OTP) — بديل/مكمّل للتحقق بالبريد.
+  /// يُعبأ عند التسجيل أو حفظ رقم جوال صالح (لا مسار OTP في التطبيق).
   phoneVerifiedAt      DateTime?
+  /// حقول قديمة لمسار OTP مُزال — تُصفّى لاحقاً إن رُفع مخطّط الإنتاج بدون الحاجة لها.
   phoneOtpCode         String?
   phoneOtpExpires      DateTime?
   /// إظهار الاسم في قائمة سكان المبنى

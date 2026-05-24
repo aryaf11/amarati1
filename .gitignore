@@ -51,6 +51,12 @@ yarn-error.log*
 __pycache__/
 *.py[cod]
 
+# local Dart experiments (outside Next.js web app)
+/amarati_server/
+
+# Optional local Flutter client (not built with Next.js; keep out of this repo or use a branch)
+/amarati_flutter/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
