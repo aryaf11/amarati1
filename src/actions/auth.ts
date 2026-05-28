@@ -10,7 +10,7 @@ import { z } from "zod";
 import { dbOrSessionErrorHint, flattenError } from "@/lib/action-error-hints";
 import { getCurrentUser } from "@/lib/current-user";
 import { getLocale } from "@/lib/locale";
-import { hashPassword, verifyPassword } from "@/lib/password";
+import { verifyPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
 import { createSession, destroySession } from "@/lib/session";
 import { ui } from "@/lib/ui-strings";
@@ -22,78 +22,6 @@ async function findUserByIdentifier(identifier: string) {
   }
   const ph = trimmed.replace(/\s+/g, "");
   return prisma.user.findUnique({ where: { phone: ph } });
-}
-
-const registerSchema = z.object({
-  password: z.string().min(6),
-  name: z.string().min(2),
-  phone: z.string().trim().min(8).max(24),
-  email: z.preprocess(
-    (v) => String(v ?? "").trim().toLowerCase(),
-    z.union([z.literal(""), z.string().email().max(190)]),
-  ),
-});
-
-export async function registerAction(formData: FormData) {
-  const locale = await getLocale();
-  const t = ui(locale);
-  const tc = ui(locale).signup;
-  const nameRaw = String(formData.get("name") ?? "").trim();
-  const passwordRaw = String(formData.get("password") ?? "");
-  const phoneRaw = String(formData.get("phone") ?? "").trim();
-  const emailRaw = formData.get("email");
-  const parsed = registerSchema.safeParse({
-    password: passwordRaw,
-    name: nameRaw,
-    phone: phoneRaw,
-    email: emailRaw,
-  });
-  if (!parsed.success) {
-    const fe = parsed.error.flatten().fieldErrors;
-    redirect(
-      "/login?error=" +
-        encodeURIComponent(
-          fe.email?.length ? tc.invalidEmail : t.register.invalidForm,
-        ),
-    );
-  }
-  const emailNorm = parsed.data.email === "" ? null : parsed.data.email;
-  const dupPhone = await prisma.user.findUnique({
-    where: { phone: parsed.data.phone },
-  });
-  if (dupPhone) {
-    redirect("/login?error=" + encodeURIComponent(t.register.phoneTaken));
-  }
-  if (emailNorm) {
-    const dupEmail = await prisma.user.findUnique({
-      where: { email: emailNorm },
-    });
-    if (dupEmail) {
-      redirect("/login?error=" + encodeURIComponent(t.register.emailTaken));
-    }
-  }
-  const passwordHash = await hashPassword(parsed.data.password);
-  try {
-    const user = await prisma.user.create({
-      data: {
-        email: emailNorm,
-        passwordHash,
-        name: parsed.data.name,
-        phone: parsed.data.phone,
-        accountKind: "RESIDENT",
-        emailVerifiedAt: emailNorm ? null : new Date(),
-        phoneVerifiedAt: new Date(),
-        phoneOtpCode: null,
-        phoneOtpExpires: null,
-      },
-    });
-    await createSession(user.id);
-    redirect("/dashboard");
-  } catch (e) {
-    if (isRedirectError(e)) throw e;
-    console.error("registerAction", flattenError(e), e);
-    redirect("/login?error=" + encodeURIComponent(dbOrSessionErrorHint(e).trim()));
-  }
 }
 
 const loginSchema = z.object({

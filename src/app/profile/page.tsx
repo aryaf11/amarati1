@@ -7,13 +7,110 @@ import { ProfileSettings } from "@/components/ProfileSettings";
 import { SubmitButton } from "@/components/SubmitButton";
 import { Button, Card, Input, PageShell } from "@/components/ui";
 import { PassportIcon, UserCircleIcon } from "@/components/LandingIcons";
-import { listMyBuildings } from "@/lib/access";
+import { getMyMembership } from "@/lib/access";
 import { getCurrentUser } from "@/lib/current-user";
-import { getLocale } from "@/lib/locale";
+import { getLocale, type AppLocale } from "@/lib/locale";
 import { prisma } from "@/lib/prisma";
 import { ui, pickDateLocale } from "@/lib/ui-strings";
 
 const accent = "var(--accent)";
+
+type PassportEvent = {
+  id: string;
+  title: string;
+  detail: string | null;
+  createdAt: Date;
+};
+
+function PassportCard({
+  membership,
+  events,
+  locale,
+  t,
+  eventDateFmt,
+  accent: accentColor,
+}: {
+  membership: NonNullable<Awaited<ReturnType<typeof getMyMembership>>>;
+  events: PassportEvent[];
+  locale: AppLocale;
+  t: ReturnType<typeof ui>["profile"];
+  eventDateFmt: Intl.DateTimeFormat;
+  accent: string;
+}) {
+  const b = membership.unit.building;
+  return (
+    <div
+      className="rounded-2xl border p-4"
+      style={{
+        borderColor: "var(--card-border)",
+        backgroundColor: "color-mix(in srgb, var(--card) 92%, transparent)",
+      }}
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex items-start gap-3">
+          <span
+            className="mt-0.5 inline-flex size-10 shrink-0 items-center justify-center rounded-2xl"
+            style={{ backgroundColor: "var(--accent-soft)", color: accentColor }}
+            aria-hidden
+          >
+            <PassportIcon />
+          </span>
+          <div className="min-w-0">
+            <p className="font-semibold" style={{ color: accentColor }}>
+              {b.name}
+            </p>
+            <p className="text-xs text-muted">
+              {ui(locale).buildingHome.unitPrefix} {membership.unit.label}
+              {b.city ? ` · ${b.city}` : ""}
+            </p>
+            <p className="mt-2 whitespace-pre-line text-xs leading-relaxed text-muted">
+              {b.address}
+            </p>
+          </div>
+        </div>
+        <Link
+          href={`/building/${b.id}/passport`}
+          className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold shadow-sm transition hover:shadow"
+          style={{
+            borderColor: "var(--accent)",
+            color: accentColor,
+            backgroundColor: "var(--card)",
+          }}
+        >
+          {t.passportOpen}
+        </Link>
+      </div>
+      {events.length === 0 ? (
+        <p className="mt-3 text-xs text-muted">{t.passportNoEvents}</p>
+      ) : (
+        <ul className="mt-3 space-y-2 text-sm">
+          {events.map((e) => (
+            <li
+              key={e.id}
+              className="rounded-xl border p-2.5"
+              style={{
+                borderColor: "var(--card-border)",
+                backgroundColor: "var(--card)",
+              }}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <p className="font-medium">{e.title}</p>
+                <span dir="ltr" className="text-[11px] text-muted">
+                  {eventDateFmt.format(e.createdAt)}
+                </span>
+              </div>
+              {e.detail ? (
+                <p className="mt-1 line-clamp-2 whitespace-pre-line text-xs text-muted">
+                  {e.detail}
+                </p>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 export default async function ProfilePage({
   searchParams,
@@ -38,8 +135,8 @@ export default async function ProfilePage({
     day: "numeric",
   });
 
-  const memberships = await listMyBuildings(user.id);
-  const unitIds = memberships.map((m) => m.unitId);
+  const membership = await getMyMembership(user.id);
+  const unitIds = membership ? [membership.unitId] : [];
   const recentEvents = unitIds.length
     ? await prisma.apartmentHistoryEvent.findMany({
         where: { unitId: { in: unitIds } },
@@ -146,91 +243,17 @@ export default async function ProfilePage({
               {t.passportHint}
             </p>
           ) : null}
-          {memberships.length === 0 ? (
+          {!membership ? (
             <p className="text-sm text-slate-600 dark:text-slate-300">{t.passportNoUnits}</p>
           ) : (
-            <ul className="space-y-4">
-              {memberships.map((m) => {
-                const events = eventsByUnit.get(m.unitId) ?? [];
-                const b = m.unit.building;
-                return (
-                  <li
-                    key={m.id}
-                    className="rounded-2xl border p-4"
-                    style={{
-                      borderColor: "var(--card-border)",
-                      backgroundColor: "color-mix(in srgb, var(--card) 92%, transparent)",
-                    }}
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="flex items-start gap-3">
-                        <span
-                          className="mt-0.5 inline-flex size-10 shrink-0 items-center justify-center rounded-2xl"
-                          style={{
-                            backgroundColor: "var(--accent-soft)",
-                            color: accent,
-                          }}
-                          aria-hidden
-                        >
-                          <PassportIcon />
-                        </span>
-                        <div className="min-w-0">
-                          <p className="font-semibold" style={{ color: accent }}>
-                            {b.name}
-                          </p>
-                          <p className="text-xs text-muted">
-                            {ui(locale).buildingHome.unitPrefix} {m.unit.label}
-                            {b.city ? ` · ${b.city}` : ""}
-                          </p>
-                          <p className="mt-2 whitespace-pre-line text-xs leading-relaxed text-muted">
-                            {b.address}
-                          </p>
-                        </div>
-                      </div>
-                      <Link
-                        href={`/building/${b.id}/passport`}
-                        className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold shadow-sm transition hover:shadow"
-                        style={{
-                          borderColor: "var(--accent)",
-                          color: accent,
-                          backgroundColor: "var(--card)",
-                        }}
-                      >
-                        {t.passportOpen}
-                      </Link>
-                    </div>
-                    {events.length === 0 ? (
-                      <p className="mt-3 text-xs text-muted">{t.passportNoEvents}</p>
-                    ) : (
-                      <ul className="mt-3 space-y-2 text-sm">
-                        {events.map((e) => (
-                          <li
-                            key={e.id}
-                            className="rounded-xl border p-2.5"
-                            style={{
-                              borderColor: "var(--card-border)",
-                              backgroundColor: "var(--card)",
-                            }}
-                          >
-                            <div className="flex items-center justify-between gap-2">
-                              <p className="font-medium">{e.title}</p>
-                              <span dir="ltr" className="text-[11px] text-muted">
-                                {eventDateFmt.format(e.createdAt)}
-                              </span>
-                            </div>
-                            {e.detail ? (
-                              <p className="mt-1 line-clamp-2 whitespace-pre-line text-xs text-muted">
-                                {e.detail}
-                              </p>
-                            ) : null}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
+            <PassportCard
+              membership={membership}
+              events={eventsByUnit.get(membership.unitId) ?? []}
+              locale={locale}
+              t={t}
+              eventDateFmt={eventDateFmt}
+              accent={accent}
+            />
           )}
         </Card>
 

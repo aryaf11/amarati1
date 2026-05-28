@@ -3,7 +3,7 @@ import { prisma } from "./prisma";
 
 export async function getMembership(
   userId: string,
-  buildingId: string
+  buildingId: string,
 ): Promise<
   (Membership & {
     unit: { id: string; label: string; buildingId: string };
@@ -15,8 +15,9 @@ export async function getMembership(
   });
 }
 
-export async function listMyBuildings(userId: string) {
-  return prisma.membership.findMany({
+/** عضوية المستخدم — المنتج يفترض مبنى واحد لكل حساب. */
+export async function getMyMembership(userId: string) {
+  return prisma.membership.findFirst({
     where: { userId },
     include: {
       unit: { include: { building: true } },
@@ -25,6 +26,12 @@ export async function listMyBuildings(userId: string) {
   });
 }
 
-export function canAddTenants(kind: string, isSupervisor: boolean) {
-  return kind === "OWNER" || isSupervisor;
+/** هل المستخدم مرتبط بمبنى آخر غير buildingId؟ */
+export async function userLockedToOtherBuilding(
+  userId: string,
+  buildingId: string,
+): Promise<boolean> {
+  const m = await getMyMembership(userId);
+  if (!m) return false;
+  return m.unit.buildingId !== buildingId;
 }

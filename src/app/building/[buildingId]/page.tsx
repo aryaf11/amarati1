@@ -32,10 +32,8 @@ export default async function BuildingHomePage({
   if (!building || !membership) notFound();
 
   if (!membership.isSupervisor) {
-    const qs = new URLSearchParams();
-    qs.set("open", buildingId);
-    if (err) qs.set("error", err);
-    redirect(`/dashboard?${qs.toString()}`);
+    if (err) redirect(`/dashboard?error=${encodeURIComponent(err)}`);
+    redirect("/dashboard");
   }
 
   const errorBanner = err ? (

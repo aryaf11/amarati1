@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Cairo } from "next/font/google";
 import { BottomNav } from "@/components/BottomNav";
-import { listMyBuildings } from "@/lib/access";
+import { getMyMembership } from "@/lib/access";
 import { getCurrentUser } from "@/lib/current-user";
 import { getLocale } from "@/lib/locale";
 import { THEME_BOOTSTRAP_SCRIPT } from "@/lib/theme-bootstrap";
@@ -58,15 +58,15 @@ export default async function RootLayout({
   const locale = await getLocale();
   const dir = locale === "en" ? "ltr" : "rtl";
   const user = await getCurrentUser();
-  let memberships: Awaited<ReturnType<typeof listMyBuildings>> = [];
+  let fallbackBuildingId: string | null = null;
   if (user) {
     try {
-      memberships = await listMyBuildings(user.id);
+      const membership = await getMyMembership(user.id);
+      fallbackBuildingId = membership?.unit.buildingId ?? null;
     } catch {
-      memberships = [];
+      fallbackBuildingId = null;
     }
   }
-  const fallbackBuildingId = memberships[0]?.unit.buildingId ?? null;
   return (
     <html lang={locale} dir={dir} className={`${cairo.variable} h-full`} suppressHydrationWarning>
       <head>

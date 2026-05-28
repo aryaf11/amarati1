@@ -1,23 +1,14 @@
 "use server";
 
-/**
- * إنشاء مبنٍ والانضمام برمز دعوة.
- * الربط مع PostgreSQL عبر Prisma: `prisma.building.create` + `membership.create`
- * (انظر prisma/schema.prisma → Building, Unit, Membership).
- */
+/** الانضمام لمبنى قائم برمز الدعوة — إنشاء مبنى جديد من التطبيق غير متاح. */
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { userLockedToOtherBuilding } from "@/lib/access";
 import { getCurrentUser } from "@/lib/current-user";
-import { prisma } from "@/lib/prisma";
 import { getLocale } from "@/lib/locale";
+import { prisma } from "@/lib/prisma";
 import { ui } from "@/lib/ui-strings";
-
-export async function createBuildingAction(_formData: FormData) {
-  const locale = await getLocale();
-  const t = ui(locale).dashboard;
-  redirect("/dashboard?error=" + encodeURIComponent(t.createBuildingDisabled));
-}
 
 const joinSchema = z.object({
   inviteCode: z.string().min(4),
@@ -41,6 +32,10 @@ export async function joinBuildingPublicCodeAction(formData: FormData) {
   if (!building) {
     redirect("/dashboard?error=" + encodeURIComponent("لم يُعثر على مبنى بهذا الرمز"));
   }
+  if (await userLockedToOtherBuilding(user.id, building.id)) {
+    const locale = await getLocale();
+    redirect("/dashboard?error=" + encodeURIComponent(ui(locale).dashboard.alreadyInBuilding));
+  }
   let unit = building.units.find(
     (u) => u.label === parsed.data.unitLabel.trim(),
   );
@@ -55,7 +50,7 @@ export async function joinBuildingPublicCodeAction(formData: FormData) {
   const existing = await prisma.membership.findUnique({
     where: { userId_unitId: { userId: user.id, unitId: unit.id } },
   });
-  if (existing) redirect(`/building/${building.id}`);
+  if (existing) redirect("/dashboard");
   await prisma.membership.create({
     data: {
       userId: user.id,
@@ -65,5 +60,5 @@ export async function joinBuildingPublicCodeAction(formData: FormData) {
     },
   });
   revalidatePath("/dashboard");
-  redirect(`/building/${building.id}`);
+  redirect("/dashboard");
 }

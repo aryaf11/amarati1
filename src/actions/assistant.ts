@@ -26,7 +26,7 @@ const FAQ: Record<AppLocale, { match: (m: string) => boolean; reply: string }[]>
       match: (m) =>
         /شريط|تنقل\s*سفلي|قائمة\s*سفل|bottom|navigation|تبويب/.test(m),
       reply:
-        "الشريط السفلي (مثل تطبيق الجوال): **الرئيسية** = لوحة المبنى واختصاراته؛ **الصيانة** = طلباتك؛ **التصويتات** = قرارات المبنى؛ **الحساب** = بياناتك وإعدادات المظهر والإشعارات. اختر مبنى من الرئيسية إن لم تُفتح الأقسام بعد.",
+        "الشريط السفلي (مثل تطبيق الجوال): **الرئيسية** = لوحة المبنى واختصاراته؛ **الصيانة** = طلباتك؛ **التصويتات** = قرارات المبنى؛ **الحساب** = بياناتك وإعدادات المظهر والإشعارات. انضم لمبناك من الرئيسية إن لم تُفتح الأقسام بعد.",
     },
     {
       match: (m) =>
@@ -106,7 +106,7 @@ const FAQ: Record<AppLocale, { match: (m: string) => boolean; reply: string }[]>
     {
       match: (m) => /bottom\s*nav|navigation|tab\s*bar/.test(m),
       reply:
-        "Bottom navigation (matches the mobile app): **Home** = building overview; **Maintenance** = requests; **Votes** = community decisions; **Account** = profile + theme/notifications settings. Pick a building from Home if other tabs are dimmed.",
+        "Bottom navigation (matches the mobile app): **Home** = building overview; **Maintenance** = requests; **Votes** = community decisions; **Account** = profile + theme/notifications settings. Join your building from Home if other tabs are dimmed.",
     },
     {
       match: (m) => /join|invite|building code|sign\s*up|register|new\s*account/.test(m),
@@ -218,7 +218,7 @@ function formatPrediction(message: string, locale: AppLocale): string {
   ].join("\n");
 }
 
-export async function chatbotReplyAction(message: string) {
+export async function assistantReplyAction(message: string) {
   const locale = await getLocale();
   const m = (message || "").toLowerCase();
   if (!m.trim()) return stripAssistantMarkdown(FALLBACK[locale]);

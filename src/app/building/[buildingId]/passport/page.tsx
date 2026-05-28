@@ -18,6 +18,7 @@ export default async function PassportPage({
   if (!building || !membership) notFound();
   const locale = await getLocale();
   const p = ui(locale).passport;
+  const tp = ui(locale).profile;
   const df = pickDateLocale(locale);
   const events = await prisma.apartmentHistoryEvent.findMany({
     where: { unitId: membership.unitId },
@@ -27,9 +28,6 @@ export default async function PassportPage({
   return (
     <div className="space-y-6">
       <Card title={`${p.title} ${membership.unit.label}`}>
-        {p.subtitle.trim() ? (
-          <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">{p.subtitle}</p>
-        ) : null}
         <ul className="space-y-3 text-sm">
           {events.map((e) => (
             <li key={e.id} className="rounded-xl border border-slate-100 p-3 dark:border-slate-800">
@@ -40,7 +38,7 @@ export default async function PassportPage({
           ))}
         </ul>
         {events.length === 0 ? (
-          <p className="text-sm text-slate-600 dark:text-slate-300">{p.none}</p>
+          <p className="text-sm text-slate-600 dark:text-slate-300">{tp.passportNoEvents}</p>
         ) : null}
       </Card>
     </div>

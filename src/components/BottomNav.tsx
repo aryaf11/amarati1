@@ -21,9 +21,7 @@ export function BottomNav({
   const buildingId = pathBuildingId ?? fallbackBuildingId;
 
   const hasBuilding = Boolean(buildingId);
-  const homeHref = buildingId
-    ? `/dashboard?open=${encodeURIComponent(buildingId)}`
-    : "/dashboard";
+  const homeHref = "/dashboard";
   const maintenanceHref = buildingId ? `/building/${buildingId}/maintenance` : "/dashboard";
   const votesHref = buildingId ? `/building/${buildingId}/votes` : "/dashboard";
 
@@ -128,5 +126,5 @@ export function BottomNav({
 }
 
 function homeHrefHint(locale: AppLocale) {
-  return locale === "en" ? "Pick a building first" : "اختر مبنى أولاً";
+  return locale === "en" ? "Join your building first" : "انضم لمبناك أولاً";
 }

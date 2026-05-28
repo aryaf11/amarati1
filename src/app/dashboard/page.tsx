@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { joinBuildingPublicCodeAction } from "@/actions/building";
 import { BuildingQuickWidgets } from "@/components/BuildingQuickWidgets";
-import { listMyBuildings } from "@/lib/access";
+import { getMyMembership } from "@/lib/access";
 import { getCurrentUser } from "@/lib/current-user";
 import { TopNav } from "@/components/TopNav";
 import { getLocale } from "@/lib/locale";
@@ -13,36 +13,31 @@ const accent = "var(--accent)";
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; open?: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   const locale = await getLocale();
   const sp = await searchParams;
-  let items: Awaited<ReturnType<typeof listMyBuildings>> = [];
+  let membership: Awaited<ReturnType<typeof getMyMembership>> = null;
   let loadError: string | null = null;
   try {
-    items = await listMyBuildings(user.id);
+    membership = await getMyMembership(user.id);
   } catch (e) {
     loadError =
       e instanceof Error
         ? e.message
         : locale === "ar"
-          ? "تعذّر تحميل بيانات المباني. جرّب إعادة التحميل لاحقاً."
-          : "Could not load your buildings. Try again later.";
+          ? "تعذّر تحميل بيانات مبناك. جرّب إعادة التحميل لاحقاً."
+          : "Could not load your building. Try again later.";
   }
   const t = ui(locale).dashboard;
   const th = ui(locale).buildingHome;
   const err =
     loadError ?? (sp.error ? decodeURIComponent(sp.error) : null);
-  const memberIds = new Set(items.map((m) => m.unit.building.id));
-  const openRaw = typeof sp.open === "string" ? sp.open.trim() : "";
-  const focusBuildingId =
-    openRaw && memberIds.has(openRaw) ? openRaw : items[0]?.unit.building.id ?? null;
-  const focusBuilding = focusBuildingId
-    ? items.find((m) => m.unit.building.id === focusBuildingId)?.unit.building
-    : null;
-  const hasBuildings = items.length > 0;
+  const focusBuilding = membership?.unit.building ?? null;
+  const focusBuildingId = focusBuilding?.id ?? null;
+  const hasBuilding = Boolean(focusBuildingId);
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -50,13 +45,13 @@ export default async function DashboardPage({
       <PageShell>
         <header className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold tracking-tight" style={{ color: accent }}>
-            {hasBuildings && focusBuilding
+            {hasBuilding && focusBuilding
               ? focusBuilding.name
-              : hasBuildings
+              : hasBuilding
                 ? th.overviewSection
                 : t.title}
           </h1>
-          {hasBuildings ? null : (
+          {hasBuilding ? null : (
             <p className="text-sm text-muted">{t.subtitle}</p>
           )}
         </header>
@@ -66,7 +61,7 @@ export default async function DashboardPage({
           </p>
         ) : null}
 
-        {hasBuildings ? (
+        {hasBuilding ? (
           focusBuildingId ? (
             <BuildingQuickWidgets
               buildingId={focusBuildingId}

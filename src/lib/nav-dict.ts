@@ -3,7 +3,6 @@ import type { AppLocale } from "./locale";
 const nav = {
   ar: {
     brand: "عَمارتي",
-    chatbot: "المساعد",
     login: "تسجيل الدخول",
     register: "تسجيل",
     logout: "خروج",
@@ -21,7 +20,6 @@ const nav = {
   },
   en: {
     brand: "Amarati",
-    chatbot: "Assistant",
     login: "Log in",
     register: "Sign up",
     logout: "Log out",

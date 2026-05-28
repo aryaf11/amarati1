@@ -51,8 +51,6 @@ export default async function MaintenancePage({
     orderBy: { createdAt: "desc" },
     include: { unit: true, vote: true },
   });
-  const isCreator = building.creatorId === user.id;
-  const canManageMaintVote = isCreator || membership.isSupervisor;
   return (
     <div className="space-y-6">
       {err ? (
@@ -175,7 +173,7 @@ export default async function MaintenancePage({
                       >
                         {m.companyVoteOpen}
                       </Link>
-                    ) : canManageMaintVote ? (
+                    ) : (
                       <form action={openMaintenanceCompanyVoteAction} className="inline">
                         <input type="hidden" name="buildingId" value={buildingId} />
                         <input type="hidden" name="requestId" value={r.id} />
@@ -183,8 +181,6 @@ export default async function MaintenancePage({
                           {m.startCompanyVote}
                         </Button>
                       </form>
-                    ) : (
-                      <p className="text-muted">{m.communityVotePending}</p>
                     )}
                   </div>
                 ) : null}

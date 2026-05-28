@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { chatbotReplyAction } from "@/actions/chatbot";
+import { assistantReplyAction } from "@/actions/assistant";
 import { MessageInputBar } from "@/components/messaging/MessageInputBar";
 import { Button, Card } from "@/components/ui";
 
@@ -30,7 +30,7 @@ export function AssistantClient({ strings }: { strings: AssistantStrings }) {
     setLines((prev) => [...prev, { isUser: true, text: trimmed }]);
     start(async () => {
       try {
-        const reply = await chatbotReplyAction(trimmed);
+        const reply = await assistantReplyAction(trimmed);
         setLines((prev) => [...prev, { isUser: false, text: reply }]);
       } catch {
         setLines((prev) => [...prev, { isUser: false, text: strings.demoReply }]);

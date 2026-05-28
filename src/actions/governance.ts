@@ -159,10 +159,6 @@ export async function openMaintenanceCompanyVoteAction(formData: FormData) {
   if (!m || !building) {
     redirect(back + "?error=" + encodeURIComponent("لا عضوية أو مبنى غير موجود"));
   }
-  const isCreator = building.creatorId === user.id;
-  if (!m.isSupervisor && !isCreator) {
-    redirect(back + "?error=" + encodeURIComponent("فقط المشرف أو منشئ المبنى يفتح تصويت شركة صيانة"));
-  }
   const req = await prisma.maintenanceRequest.findUnique({
     where: { id: requestId },
     include: { vote: true },
