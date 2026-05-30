@@ -55,9 +55,6 @@ export default async function VotesPage({
       ) : null}
 
       <Card title={v.kindsTitle}>
-        {v.kindsHint ? (
-          <p className="mb-4 text-sm leading-relaxed text-muted">{v.kindsHint}</p>
-        ) : null}
         <div
           className="rounded-2xl border p-4"
           style={{
