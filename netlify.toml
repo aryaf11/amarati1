@@ -9,6 +9,13 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  # Allow the build to proceed when DATABASE_URL is not provided to the build scope.
+  # When DATABASE_URL IS set, the build still runs prisma migrate deploy normally;
+  # this flag only takes effect inside scripts/netlify-build.cjs when DATABASE_URL is absent,
+  # in which case prisma migrate is skipped and migrations must be applied manually
+  # (npx prisma migrate deploy) against Neon. DATABASE_URL is still required at runtime
+  # for Functions to connect to the database.
+  NETLIFY_BUILD_NO_DATABASE = "true"
   # مطلوب في لوحة Netlify → Environment variables مع اختيار **All scopes** (أو Builds + Functions + Post processing):
 #   DATABASE_URL   — PostgreSQL (مع Supabase: Transaction pooler + ?pgbouncer=true)
 #   DIRECT_URL     — رابط مباشر 5432 (Supabase / migrate؛ مطلوب في schema)
