@@ -9,6 +9,10 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  # تخطّي prisma migrate deploy وقت البناء حين لا يكون DATABASE_URL متاحاً للـ Build scope.
+  # شغّل الهجرات يدوياً ضد Neon: npx prisma migrate deploy
+  # ولا تنسَ ضبط DATABASE_URL لنطاق Functions/Runtime لكي يعمل الموقع.
+  NETLIFY_BUILD_NO_DATABASE = "true"
   # مطلوب في لوحة Netlify → Environment variables مع اختيار **All scopes** (أو Builds + Functions + Post processing):
 #   DATABASE_URL   — PostgreSQL (مع Supabase: Transaction pooler + ?pgbouncer=true)
 #   DIRECT_URL     — رابط مباشر 5432 (Supabase / migrate؛ مطلوب في schema)
